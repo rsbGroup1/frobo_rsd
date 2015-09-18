@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>rsd_mission_planner</name>
+  <name>mr_mission_planner</name>
   <version>0.0.0</version>
   <description>The RSD MissionPlanner package</description>
   <maintainer email="yoali11@student.sdu.dk">Yonas Alizadeh</maintainer>

@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>rsd_navigation_controller</name>
+  <name>mr_navigation_controller</name>
   <version>0.0.0</version>
-  <description>The RSD Navigation Controller package</description>
+  <description>The MR Navigation Controller package</description>
   <maintainer email="yoali11@student.sdu.dk">Yonas Alizadeh</maintainer>
   <license>TODO</license>
 

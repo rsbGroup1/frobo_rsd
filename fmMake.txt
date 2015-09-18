@@ -16,7 +16,10 @@
 /frobomind/fmLib/monitors/plot_velocity
 /frobomind/fmLib/monitors/plot_propulsion_feedback_leftright
 /frobomind/fmLib/monitors/plot_pid
-/frobo_rsd/MR_PythonExample
+/frobo_rsd/image_common
 /frobo_rsd/serial
+/frobo_rsd/MR_PythonExample
 /frobo_rsd/MR_NavigationController
 /frobo_rsd/MR_MissionPlanner
+/frobo_rsd/MR_Camera
+/frobo_rsd/MR_MESServer

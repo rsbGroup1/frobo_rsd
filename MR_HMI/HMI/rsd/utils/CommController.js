@@ -1,5 +1,7 @@
 window.rsdNamespace = window.rsdNamespace || { };
 
+rsdNamespace.connection;
+
 rsdNamespace.StartListening = function( port ) {
 
     // $('#main_title').text( port );
@@ -16,30 +18,52 @@ rsdNamespace.StartListening = function( port ) {
     // ws.onmessage = function( evt ) { console.log( evt.data ); }; //on message event
     // ws.onerror = function( evt ) { console.log( evt.data ); }; //on error event
 
-    var connection = new WebSocket( 'ws://localhost:' + port );
+    rsdNamespace.connection = new WebSocket( 'ws://localhost:' + port );
 
     // When the connection is open, send some data to the server
-    connection.onopen = function () {
+    rsdNamespace.connection.onopen = function () {
 
-        connection.send('Pingx'); // Send the message 'Ping' to the server
+        // rsdNamespace.connection.send( 'Ping' ); // Send the message 'Ping' to the server
 
-        setInterval(function () {
+        // Request information on the Mobile Platform's location in every second
+        setInterval( function () {
 
-            connection.send('location_request');
+            messageOut = {
+                "messageType":"location_request",
+                "data": {}
+            }
+
+            rsdNamespace.connection.send( JSON.stringify( messageOut ) );
 
         }, 1000);
+
+        // Send information on the remote's status
+        setInterval( function () {
+
+            messageOut = {
+                "messageType":"remote_update",
+                "data":{
+                    "left": rsdNamespace.activeButtonLeft,
+                    "right": rsdNamespace.activeButtonRight
+                }
+            }
+
+            rsdNamespace.connection.send( JSON.stringify( messageOut ) );
+
+        }, 200);
 
     };
 
     // Log errors
-    connection.onerror = function (error) {
+    rsdNamespace.connection.onerror = function ( error ) {
 
+        $('#availability').css( 'background-color', 'red' );
         console.log('WebSocket Error ' + error );
 
     };
 
     // Log messages from the server
-    connection.onmessage = function (e) {
+    rsdNamespace.connection.onmessage = function ( e ) {
 
         var messageIn = $.parseJSON( e.data );
         console.log( 'Server: ' + e.data );

@@ -18,6 +18,10 @@ rsdNamespace.cameraZone = 'cameraZone';
 rsdNamespace.box = 'box';
 rsdNamespace.zoneSelected = '0';
 
+// Control filters
+rsdNamespace.activeButtonLeft = 'n';
+rsdNamespace.activeButtonRight = 'n';
+
 rsdNamespace.ToggleHighlighting = function( selector ) {
 
     var id;
@@ -99,88 +103,73 @@ rsdNamespace.WindowResizeHandler = function( event ) {
 
 rsdNamespace.RegisterTouchSurfaces = function() {
 
+    // var messageOutRw = {
+    //     "messageType":"controller_update",
+    //     "data": "l"
+    // }
+
+
+
   // Left Controller
 
   // Button Left
-  $('#button_l').on( "click", function() {
-
-
-
-  });
 
   $('#button_l').on( "mouseover", function() {
-
     $('#remoteLeftLayer1').attr('style', 'display:none');
     $('#remoteLeftLayerL').attr('style', 'display:inline');
+    rsdNamespace.activeButtonLeft = 'l';
 
-  });
-
-  $('#button_l').on( "mouseout", function() {
+  }).on( "mouseout", function() {
 
     $('#remoteLeftLayer1').attr('style', 'display:inline');
     $('#remoteLeftLayerL').attr('style', 'display:none');
+    rsdNamespace.activeButtonLeft = 'n';
 
   });
 
   // Button Right
-  $('#button_r').on( "click", function() {
-
-
-
-  });
-
   $('#button_r').on( "mouseover", function() {
 
     $('#remoteLeftLayer1').attr('style', 'display:none');
     $('#remoteLeftLayerR').attr('style', 'display:inline');
+    rsdNamespace.activeButtonLeft = 'r';
 
-  });
-
-  $('#button_r').on( "mouseout", function() {
+  }).on( "mouseout", function() {
 
     $('#remoteLeftLayer1').attr('style', 'display:inline');
     $('#remoteLeftLayerR').attr('style', 'display:none');
+    rsdNamespace.activeButtonLeft = 'n';
 
   });
   // Button Up
-  $('#button_u').on( "click", function() {
-
-
-
-  });
 
   $('#button_u').on( "mouseover", function() {
 
+    console.log( 'retek' );
     $('#remoteLeftLayer1').attr('style', 'display:none');
     $('#remoteLeftLayerU').attr('style', 'display:inline');
+    rsdNamespace.activeButtonLeft = 'u';
 
-  });
-
-  $('#button_u').on( "mouseout", function() {
+  }).on( "mouseout", function() {
 
     $('#remoteLeftLayer1').attr('style', 'display:inline');
     $('#remoteLeftLayerU').attr('style', 'display:none');
+    rsdNamespace.activeButtonLeft = 'n';
 
   });
 
   // Button Down
-  $('#button_d').on( "click", function() {
-
-
-
-  });
-
   $('#button_d').on( "mouseover", function() {
 
     $('#remoteLeftLayer1').attr('style', 'display:none');
     $('#remoteLeftLayerD').attr('style', 'display:inline');
+    rsdNamespace.activeButtonLeft = 'd';
 
-  });
-
-  $('#button_d').on( "mouseout", function() {
+  }).on( "mouseout", function() {
 
     $('#remoteLeftLayer1').attr('style', 'display:inline');
     $('#remoteLeftLayerD').attr('style', 'display:none');
+    rsdNamespace.activeButtonLeft = 'n';
 
   });
 
@@ -188,16 +177,11 @@ rsdNamespace.RegisterTouchSurfaces = function() {
   // Right Controller
 
   // Button X
-  $('#button_x').on( "click", function() {
-
-
-
-  });
-
   $('#button_x').on( "mouseover", function() {
 
     $('#remoteRightLayer1').attr('style', 'display:none');
     $('#remoteRightLayerX').attr('style', 'display:inline');
+    rsdNamespace.activeButtonRight = 'x';
 
   });
 
@@ -205,68 +189,52 @@ rsdNamespace.RegisterTouchSurfaces = function() {
 
     $('#remoteRightLayer1').attr('style', 'display:inline');
     $('#remoteRightLayerX').attr('style', 'display:none');
+    rsdNamespace.activeButtonRight = 'n';
 
   });
 
   // Button Y
-  $('#button_y').on( "click", function() {
-
-
-
-  });
-
   $('#button_y').on( "mouseover", function() {
 
     $('#remoteRightLayer1').attr('style', 'display:none');
     $('#remoteRightLayerY').attr('style', 'display:inline');
+    rsdNamespace.activeButtonRight = 'y';
 
-  });
-
-  $('#button_y').on( "mouseout", function() {
+  }).on( "mouseout", function() {
 
     $('#remoteRightLayer1').attr('style', 'display:inline');
     $('#remoteRightLayerY').attr('style', 'display:none');
+    rsdNamespace.activeButtonRight = 'n';
 
   });
   // Button A
-  $('#button_a').on( "click", function() {
-
-
-
-  });
-
   $('#button_a').on( "mouseover", function() {
 
     $('#remoteRightLayer1').attr('style', 'display:none');
     $('#remoteRightLayerA').attr('style', 'display:inline');
+    rsdNamespace.activeButtonRight = 'a';
 
-  });
-
-  $('#button_a').on( "mouseout", function() {
+  }).on( "mouseout", function() {
 
     $('#remoteRightLayer1').attr('style', 'display:inline');
     $('#remoteRightLayerA').attr('style', 'display:none');
+    rsdNamespace.activeButtonRight = 'n';
 
   });
 
   // Button B
-  $('#button_b').on( "click", function() {
-
-
-
-  });
 
   $('#button_b').on( "mouseover", function() {
 
     $('#remoteRightLayer1').attr('style', 'display:none');
     $('#remoteRightLayerB').attr('style', 'display:inline');
+    rsdNamespace.activeButtonRight = 'b';
 
-  });
-
-  $('#button_b').on( "mouseout", function() {
+  }).on( "mouseout", function() {
 
     $('#remoteRightLayer1').attr('style', 'display:inline');
     $('#remoteRightLayerB').attr('style', 'display:none');
+    rsdNamespace.activeButtonRight = 'n';
 
   });
 
@@ -282,9 +250,7 @@ rsdNamespace.RegisterTouchSurfaces = function() {
     $('#HomeButtonInactive').attr('style', 'display:none');
     $('#HomeButtonActive').attr('style', 'display:inline');
 
-  });
-
-  $('#button_home').on( "mouseout", function() {
+  }).on( "mouseout", function() {
 
     $('#HomeButtonInactive').attr('style', 'display:inline');
     $('#HomeButtonActive').attr('style', 'display:none');

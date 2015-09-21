@@ -1,7 +1,6 @@
 <!-- IMU launch file -->
 
 <launch>
-
 	<group ns="fmProcessors">
 		<!--calculate odometry based on wheel encoders and IMU yaw axis orientation-->
 		<node pkg="differential_odometry" name="differential_odometry" type="differential_odometry_node" output="screen" >
@@ -18,7 +17,6 @@
 			<param name="imu_angular_velocity_yaw_axis" value="z" />
 		</node>
 	</group>
-
 
 	<!-- serial communication with the IMU -->
 	<node pkg="serial_string" name="imu_serial" type="serial_string_node" respawn="true" output="screen">

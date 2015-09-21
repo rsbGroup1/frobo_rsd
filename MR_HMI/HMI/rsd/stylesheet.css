@@ -42,7 +42,7 @@
 #availability{
   top: 40px;
 
-  background-color: green !important;
+  background-color: green;
 }
 
 #controls{

@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(mr_pythonExample)
+project(mr_bridgewalltracking)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS msgs roscpp rospy)
+find_package(catkin REQUIRED COMPONENTS msgs roscpp rospy cv_bridge image_transport)
+find_package(OpenCV REQUIRED )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -13,7 +14,7 @@ find_package(catkin REQUIRED COMPONENTS msgs roscpp rospy)
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-catkin_python_setup()
+#catkin_python_setup()
 
 #######################################
 ## Declare ROS messages and services ##
@@ -50,7 +51,7 @@ catkin_python_setup()
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES frobit_demo
+#  LIBRARIES MR_bridge_wall_tracking
 #  CATKIN_DEPENDS msgs roscpp rospy
 #  DEPENDS system_lib
 )
@@ -58,30 +59,35 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-
+find_package(OpenCV REQUIRED core imgproc highgui)
+set(OpenCV_DIR "/usr/lib/opencv")
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
-#  ${catkin_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
-# add_library(frobit_demo
-#   src/${PROJECT_NAME}/frobit_demo.cpp
+# add_library(MR_bridge_wall_tracking
+#   src/${PROJECT_NAME}/MR_bridge_wall_tracking.cpp
 # )
 
 ## Declare a cpp executable
-# add_executable(frobit_demo_node src/frobit_demo_node.cpp)
+ add_executable(BridgeWallTracking src/bridge_wall_tracking.cpp src/linreg.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(frobit_demo_node frobit_demo_generate_messages_cpp)
+# add_dependencies(MR_bridge_wall_tracking_node MR_bridge_wall_tracking_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(frobit_demo_node
-#   ${catkin_LIBRARIES}
-# )
+
+target_link_libraries(BridgeWallTracking
+   ${catkin_LIBRARIES}
+   ${OpenCV_LIBS}
+)
+
 
 #############
 ## Install ##
@@ -98,7 +104,7 @@ include_directories(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS frobit_demo frobit_demo_node
+# install(TARGETS MR_bridge_wall_tracking MR_bridge_wall_tracking_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -123,7 +129,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_frobit_demo.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_MR_bridge_wall_tracking.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

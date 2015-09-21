@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(MR_ExtendedKalmanFilter)
+project(mr_extendedkalmanfilter)
 
 # bfl (Bayesian Filtering Library) is a third party package that uses pkg-config
 find_package(PkgConfig)

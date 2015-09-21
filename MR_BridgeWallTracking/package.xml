@@ -1,17 +1,19 @@
 <?xml version="1.0"?>
 <package>
-  <name>mr_python_xample</name>
+  <name>mr_bridgewalltracking</name>
   <version>0.0.0</version>
-  <description>The MR Python Example package</description>
+  <description>The MR_BridgeWallTracking$ package</description>
 
-  <maintainer email="yoali11@student.sdu.dk">Yonas ALizadeh</maintainer>
+  <maintainer email="kjeld@frobomind.org">Kjeld Jensen</maintainer>
+  <url type="website">http://www.frobomind.org</url>
   <license>BSD 3-Clause</license>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>msgs</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>rospy</build_depend>
-
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>image_transport</build_depend>
   <run_depend>msgs</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>

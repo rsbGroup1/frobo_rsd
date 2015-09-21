@@ -1,2 +1,8 @@
 CATKIN_IGNORE
 *~
+
+*.config
+*.creator
+*.files
+*.user
+*.includes

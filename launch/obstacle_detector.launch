@@ -1,7 +1,6 @@
 <!-- obstacle_detector launch file -->
 
 <launch>
-
 	<group ns="obstacle_detector">
 		<node pkg="obstacle_detector" name="obstacle_detector" type="obstacle_detector.py">
 			<param name="threshold_slow" value="1.0" />
@@ -10,6 +9,5 @@
 			<param name="laser_scan" value="/scan" />
 		</node>
 	</group>
-
 </launch>
 

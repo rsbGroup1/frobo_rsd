@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>obstacle_detector</name>
+  <name>mr_obstacle_detector</name>
   <version>0.0.0</version>
-  <description>The obstacle_detector package</description>
+  <description>The MR Obstacle Detector package</description>
 
   <maintainer email="dowei14@student.sdu.dk">Dominik Weickgenannt</maintainer>
   <url type="website">http://www.sdu.dk</url>

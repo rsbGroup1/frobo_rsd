@@ -1,0 +1,111 @@
+<!-- FroboScout launch file -->
+
+<launch>
+	<!-- FROBIT Parameters --> 
+	<param name="diff_steer_wheel_distance" value="0.215"/>
+	<param name="ticks_per_meter_left" value="562" />
+	<param name="ticks_per_meter_right" value="562" />
+
+ 	<node pkg="stage_ros" type="stageros" name="simulator" args="$(find frobit_demo)/stage/frobit_row_navigation.world"/>
+	<remap from="/fmKnowledge/pose" to="/odom" />
+
+
+	<group ns="fmDecisionMakers">
+		<node pkg="frobit_demo" name="mission" type="keyboard_mission_node.py" output="screen">
+			<param name="keyboard_sub" value="/fmHMI/keyboard" />
+			<param name="automode_pub" value="/fmPlan/automode" />
+    		<param name="deadman_pub" value="/fmSafe/deadman" />
+			<param name="cmd_vel_pub" value="/fmCommand/cmd_vel" />
+            <param name="max_linear_velocity" value="1.0"/>
+            <param name="max_angular_velocity" value="0.8"/>
+            <param name="linear_velocity_step" value="0.1"/>
+            <param name="angular_velocity_step" value="0.2"/>
+		</node>
+	</group>
+
+	<group ns="fmLib">
+		<node pkg="twist_stamped_to_twist" name="converter" type="cmd_vel_converter.py">	
+			<param name="cmd_vel_sub" value="/fmCommand/cmd_vel" />
+			<param name="cmd_vel_pub" value="/cmd_vel" />
+		</node>
+	</group>
+
+	<!-- Calculate odometry based on wheel encoders and IMU yaw axis orientation-->
+	<group ns="fmProcessors">
+		<node pkg="differential_odometry" name="differential_odometry" type="differential_odometry_node" output="screen" >
+			<param name="enc_left_sub" value="/fmInformation/encoder_left" />
+			<param name="enc_right_sub" value="/fmInformation/encoder_right" />
+			<param name="imu_sub" value="/fmInformation/imu" />
+			<param name="odom_reset_sub" value="/fmInformation/odom_reset" />
+			<param name="odom_pub" value="/fmKnowledge/pose" />
+			<param name="odom_estimate_frame" value="/odom_combined" />
+			<param name="vehicle_frame" value="base_footprint" />
+			<param name="encoder_output" value="absolute" />
+			<param name="max_ticks_per_update" value="200" />
+			<param name="yaw_angle_source" value="/imu_angular_velocity" />
+			<param name="imu_angular_velocity_yaw_axis" value="z" />
+		</node>
+	</group>
+
+	<!-- IMU SERIAL COMMUNICATION -->
+	<node pkg="serial_string" name="imu_serial" type="serial_string_node" respawn="true" output="screen">
+		<param name="publisher_topic" value="/fmData/imu_rx" />	 
+		<param name="subscriber_topic" value="/fmData/imu_tx" />
+		<param name="device" value="/dev/imu" />	
+		<param name="baudrate" value="115200" />
+		<param name="termination_character" value="10"/>
+	</node> 
+
+	<!-- OBSTACLE DETECTOR -->
+	<group ns="MR_ObstacleDetector">
+		<node pkg="mr_obstacle_detector" name="obstacle_detector" type="obstacle_detector.py">
+			<param name="threshold_slow" value="1.0" />
+			<param name="threshold_stop" value="0.3" />
+			<param name="threshold_ignore" value="0.05" />
+			<param name="laser_scan" value="/scan" />
+		</node>
+	</group>
+
+	<!-- LIDAR -->
+	<node name="sick_tim310s01" pkg="sick_tim" type="sick_tim310s01" respawn="false" output="screen">
+	    <param name="min_ang" type="double" value="-2.35619449019" />
+	    <param name="max_ang" type="double" value="2.35619449019" />
+	    <param name="intensity" type="bool" value="True" />
+	    <param name="skip" type="int" value="0" />
+	    <param name="frame_id" type="str" value="laser" />
+	    <param name="time_offset" type="double" value="-0.001" />
+	    <param name="publish_datagram" type="bool" value="False" />
+	</node>
+
+	<!-- MISSION PLANNER -->
+	<group ns="MR_MissionPlanner">
+		<node pkg="mr_mission_planner" name="MissionPlanner" type="mr_mission_planner">
+		</node>
+	</group>
+
+	<!-- NAVIGATION CONTROLLER -->
+	<group ns="MR_NavigationController">
+		<node pkg="mr_navigation_controller" name="NavigationController" type="mr_navigation_controller">
+		</node>
+	</group>
+
+	<!-- EXTENDED KALMAN FILTER -->
+	<group ns="MR_ExtendedKalmanFilter">
+		<node pkg="mr_extendedkalmanfilter" name="ExtendedKalmanFilter" type="mr_extendedkalmanfilter">
+		  <param name="output_frame" value="odom_combined"/>
+		  <param name="base_footprint_frame" value="base_footprint"/>
+		  <param name="freq" value="30.0"/>
+		  <param name="sensor_timeout" value="1.0"/>  
+		  <param name="odom_used" value="true"/>
+		  <param name="imu_used" value="true"/>
+		  <param name="vo_used" value="true"/>
+		  <param name="gps_used" value="false"/>
+		  <remap from="odom" to="/odom" />
+		  <remap from="imu_data" to="/imu_data" />
+		  <remap from="vo" to="/vo" />
+		  <remap from="gps" to="/gps" />
+		</node>
+	</group>
+
+</launch>
+

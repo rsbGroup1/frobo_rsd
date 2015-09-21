@@ -23,3 +23,5 @@
 /frobo_rsd/MR_MissionPlanner
 /frobo_rsd/MR_Camera
 /frobo_rsd/MR_MESServer
+/frobo_rsd/MR_ObstacleDetector
+/frobo_rsd/sick_tim

@@ -1,6 +1,6 @@
 <launch>
 
-<node pkg="MR_ExtendedKalmanFilter" type="MR_ExtendedKalmanFilter" name="MR_ExtendedKalmanFilter">
+<node pkg="mr_extendedkalmanfilter" type="MR_ExtendedKalmanFilter" name="MR_ExtendedKalmanFilter">
   <param name="output_frame" value="odom_combined"/>
   <param name="base_footprint_frame" value="base_footprint"/>
   <param name="freq" value="30.0"/>
@@ -10,10 +10,10 @@
   <param name="vo_used" value="true"/>
   <param name="gps_used" value="false"/>
 
-  <remap from="odom" to="robot/odom" />
-  <remap from="imu_data" to="robot/imu_data" />
-  <remap from="vo" to="robot/vo" />
-  <remap from="gps" to="robot/gps" />
+  <remap from="odom" to="/odom" />
+  <remap from="imu_data" to="/imu_data" />
+  <remap from="vo" to="/vo" />
+  <remap from="gps" to="/gps" />
 </node>
 
 </launch>

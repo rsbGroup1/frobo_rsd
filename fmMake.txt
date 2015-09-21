@@ -21,5 +21,4 @@
 /frobo_rsd/MR_PythonExample
 /frobo_rsd/MR_NavigationController
 /frobo_rsd/MR_MissionPlanner
-/frobo_rsd/MR_Camera
 /frobo_rsd/MR_MESServer

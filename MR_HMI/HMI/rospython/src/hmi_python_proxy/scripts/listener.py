@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import json
+import jsonlib
 import sys
 from autobahn.twisted.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
@@ -33,9 +34,13 @@ class MyServerProtocol(WebSocketServerProtocol):
         else:
             print("Text message received: {0}".format(payload.decode('utf8')))
 
-            messageIn = payload.decode('utf8')
+            messageInRaw = payload.decode('utf8')
 
-            if messageIn == LOCATION_REQUEST:
+            messageIn = jsonlib.read( messageInRaw )
+
+            # print("RETEK: " + messageIn["messageType"] )
+
+            if messageIn["messageType"] == LOCATION_REQUEST:
 
                 massageOutRaw = {
                     "messageType":"location_response",
@@ -46,8 +51,6 @@ class MyServerProtocol(WebSocketServerProtocol):
 
                 self.sendMessage( massageOut, isBinary )
 
-            # echo back message verbatim
-            # self.sendMessage(payload, isBinary)
 
     def onClose(self, wasClean, code, reason):
         print("WebSocket connection closed: {0}".format(reason))

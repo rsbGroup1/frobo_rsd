@@ -5,7 +5,7 @@ project(mr_bridgewalltracking)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS msgs roscpp rospy cv_bridge image_transport)
-find_package(OpenCV REQUIRED )
+find_package(OpenCV REQUIRED core imgproc highgui)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -59,8 +59,7 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-find_package(OpenCV REQUIRED core imgproc highgui)
-set(OpenCV_DIR "/usr/lib/opencv")
+#set(OpenCV_DIR "/usr/local/lib/opencv")
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)

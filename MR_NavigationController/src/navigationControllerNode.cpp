@@ -4,9 +4,12 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
 #include "std_msgs/String.h"
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 #include "geometry_msgs/TwistStamped.h"
+#include "msgs/BoolStamped.h"
 
 // Defines
 #define M_PI                    3.14159265358979323846
@@ -40,7 +43,9 @@ enum MODES
 bool _running = false;
 MODES _systemMode = STOP;
 double _speed = SPEED_STOP;
-ros::Publisher _motorCommandTopic;
+ros::Publisher _motorCommandTopic, _deadmanTopic;
+boost::mutex _motorCommandMutex;
+double _angleSpeed = 0.0;
 
 // Function prototype
 double calculateSpeed(double pidError = 0);
@@ -106,31 +111,39 @@ double calculateSpeed(double pidError)
     return returnSpeed;
 }
 
-void sendMotorCommand(double speed, double theta)
-{
-    // Create twist stamp
-    geometry_msgs::TwistStamped twistStamp;
-    twistStamp.twist.linear.x = speed;
-    twistStamp.twist.angular.x = theta;
-
-    // Send command
-    _motorCommandTopic.publish(twistStamp);
-}
-
 double calculateError(double deltaX, double deltaTheta)
 {
     // We transform the error for the translation into an rotational error
-    double deltaXTheta = 90 - deltaTheta;
+    double deltaXTheta = 0;
+
+    // 4 Cases
+    if(deltaX>=0 && deltaTheta>=0)
+        deltaXTheta = 90-fabs(deltaTheta);
+    else if(deltaX>=0 && deltaTheta<0)
+        deltaXTheta = 90+fabs(deltaTheta);
+    else if(deltaX<0 && deltaTheta<0)
+        deltaXTheta = fabs(deltaTheta) - 90;
+    else if(deltaX<0 && deltaTheta>=0)
+        deltaXTheta = -(90+fabs(deltaTheta));
 
     // Now we got an error in angle domain with respect to both translation and rotation
     // Weight these two based on the size of the translational error
 
     // Use this function
-    // y = 1/(40*x)
-    double weight = 1.0/(40.0 * deltaX);
+    // y = 1/(20*x)
+    double weight = 1.0/(20.0 * fabs(deltaX));
+
+    if(weight>1.0)
+        weight = 1;
 
     // Return weight
-    return weight*deltaTheta + (1.0-weight)*deltaXTheta;
+    deltaXTheta = (weight*(-deltaTheta) + (1.0-weight)*deltaXTheta);
+
+    // Use the shortest angle
+    if(fabs(deltaXTheta) > 180.0)
+        deltaXTheta = ((deltaX >= 0)?(-1):(1)) * 360.0 + deltaXTheta;
+
+    return deltaXTheta;
 }
 
 void kalmanCallback(geometry_msgs::PoseWithCovarianceStamped pose)
@@ -145,11 +158,14 @@ void kalmanCallback(geometry_msgs::PoseWithCovarianceStamped pose)
         // Calculate error
         double error = calculateError(deltaX, deltaTheta);
 
-        // PID
+        // Reset integral part when error changes sign
+        if(oldError*error < 0.0)
+            integral = 0.0;
 
-        // Calculate integral
+        // Sum integral part
         integral += error;
 
+        // Reset if above max value
         if(integral > MAX_I)
             integral = MAX_I;
         else if(integral < -MAX_I)
@@ -159,11 +175,10 @@ void kalmanCallback(geometry_msgs::PoseWithCovarianceStamped pose)
         double derivative = error - oldError;
 
         // Calculate speed and correction for theta
-        double correctionTheta = COEFF_P * error + COEFF_I * integral + COEEF_D * derivative;
-        double speed = calculateSpeed();
-
-        // Send command to motor
-        sendMotorCommand(speed, correctionTheta);
+        _motorCommandMutex.lock();
+        _angleSpeed = COEFF_P * error + COEFF_I * integral + COEEF_D * derivative;
+        _speed = calculateSpeed();
+        _motorCommandMutex.unlock();
 
         // Store new as old
         oldError = error;
@@ -171,6 +186,38 @@ void kalmanCallback(geometry_msgs::PoseWithCovarianceStamped pose)
     else
     {
         oldError = integral = 0.0;
+    }
+}
+
+void sendMotorCommand(double speed, double theta)
+{
+    // Create deadman stuff
+    msgs::BoolStamped boolStamp;
+    boolStamp.header.stamp = ros::Time::now();
+    boolStamp.data = true;
+
+    // Create motor stuff
+    geometry_msgs::TwistStamped twistStamp;
+    twistStamp.header.stamp = ros::Time::now();
+    twistStamp.twist.linear.x = speed;
+    twistStamp.twist.angular.z = theta;
+
+    // Send commands
+    _deadmanTopic.publish(boolStamp);
+    _motorCommandTopic.publish(twistStamp);
+}
+
+void motorUpdateThread()
+{
+    while(true)
+    {
+        // Send motor command
+        _motorCommandMutex.lock();
+        sendMotorCommand(_speed, _angleSpeed);
+        _motorCommandMutex.unlock();
+
+        // Sleep
+        usleep(50); // Sleep for 50 ms = 20Hz
     }
 }
 
@@ -184,12 +231,19 @@ int main()
     ros::init(argc, argv, "RSD_NavigationController_Node");
     ros::NodeHandle nh;
 
-    // Publisher
-    _motorCommandTopic = nh.advertise<geometry_msgs::TwistStamped>("motorCommandTopic", 1);
+    std::string deadmanParameter, motorParameter;
+    nh.param<std::string>("deadman_pub", deadmanParameter, "/fmSafe/deadman");
+    nh.param<std::string>("cmd_vel_pub", motorParameter, "/fmCommand/cmd_vel");
+
+    _motorCommandTopic = nh.advertise<geometry_msgs::TwistStamped>(motorParameter, 1);
+    _deadmanTopic = nh.advertise<msgs::BoolStamped>(deadmanParameter, 1);
 
     // Subscriber
     ros::Subscriber subMissionPlanner = nh.subscribe("missionPlannerTopic", 10, missionCallback);
     ros::Subscriber subKalman = nh.subscribe("kalmanTopic", 10, kalmanCallback);
+
+    // Start motor update thread
+    boost::thread motorPublishThread(motorUpdateThread);
 
     // ROS Spin: Handle callbacks
     ros::spin();

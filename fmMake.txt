@@ -28,3 +28,4 @@
 /frobo_rsd/MR_ObstacleDetector
 /frobo_rsd/sick_tim
 /frobo_rsd/MR_HMIPythonProxy
+/frobo_rsd/MR_TipController

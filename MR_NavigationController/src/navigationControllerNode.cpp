@@ -253,6 +253,9 @@ int main()
     // ROS Spin: Handle callbacks
     ros::spin();
 
+    // Close thread
+    motorPublishThread.interrupt();
+
     // Return
     return 0;
 }

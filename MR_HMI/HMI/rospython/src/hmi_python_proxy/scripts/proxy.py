@@ -9,16 +9,25 @@ from twisted.python import log
 from twisted.internet import reactor
 
 import rospy
-from std_msgs.msg import String
+from geometry_msgs.msg import Twist, TwistStamped
+from std_msgs.msg import String, Bool
 
 LOCATION_REQUEST = "location_request"
 REMOTE_UPDATE = "remote_update"
+
+MODE_UPDATE_PUB = "startStopTopic"
+CMD_VEL_UPDATE_PUB = "/fmCommand/cmd_vel"
+TIPPER_UPDATE_PUB = "mr_tipper_update"
 
 address = ""
 direction = 0
 button = 0
 location = 0
-pubStartStop = 0
+pubModeUpdate = 0
+pubTipperUpdate = 0
+pubCmdVelUpdate = 0
+
+tipperTilted = False
 
 class MyServerProtocol( WebSocketServerProtocol ):
 
@@ -31,6 +40,8 @@ class MyServerProtocol( WebSocketServerProtocol ):
         print("WebSocket connection open.")
 
     def onMessage( self, payload, isBinary ):
+        global pubModeUpdate
+
         if isBinary:
             print( "Binary message received: {0} bytes".format( len( payload ) ) )
         else:
@@ -58,42 +69,64 @@ class MyServerProtocol( WebSocketServerProtocol ):
                 leftButton = messageIn["data"]["left"]
                 rightButton = messageIn["data"]["right"]
 
-                publishCommand( leftButton, 0 )
-
-		if rightButton == u"x" or rightButton == u"y":
-                    publishCommand( rightButton, 1)
-                elif rightButton == u"a" or rightButton == u"b":
-                    publishCommand( rightButton, 2)
-
+                if leftButton == u"u":
+                    drive( 0.2, 0.0 )
+                elif leftButton == u"r":
+                    drive( 0.0, -0.3 )
+                elif leftButton == u"d":
+                    drive( -0.2, 0.0 )
+                elif leftButton == u"l":
+                    drive( 0.0, 0.3 )
+                elif rightButton == u"y":
+                    tip()
+                elif rightButton == u"x":
+                    publishCommand( pubModeUpdate, u"manual" )
+                elif rightButton == u"a":
+                    publishCommand( pubModeUpdate, u"start" )
+                elif rightButton == u"b":
+                    publishCommand( pubModeUpdate, u"stop" )
 
     def onClose( self, wasClean, code, reason ):
         print( "WebSocket connection closed: {0}".format( reason ) )
 
+def createdTwistedCommand( linearX, angularZ ):
 
-# msp = MyServerProtocol()
+    msg = TwistStamped()
+    msg.header.stamp = rospy.Time.now()
+    msg.twist.linear.x = linearX
+    msg.twist.angular.z = angularZ
+
+    return msg
+
+def drive( linearX, angularZ ):
+    global pubCmdVelUpdate
+
+    msg = createdTwistedCommand( linearX, angularZ )
+    publishCommand( pubCmdVelUpdate, msg )
+
+    print "driving..."
+
+def tip():
+    global pubTipperUpdate
+    global tipperTilted
+
+    tipperTilted = not tipperTilted
+
+    print "tipping"
 
 def callback( data ):
     global location
     location = data.data
     rospy.loginfo( rospy.get_caller_id() + "I heard %s", location )
-    # print address
-    # MyServerProtocol.send(msp, direction)
-    # temp = data.data
 
-def publishCommand( command, selector ):
-    global pubStartStop
-    if selector == 0:
-        pubStartStop.publish( command )
-    elif selector == 1:
-        pubStartStop.publish( command )
-    elif selector == 2:
-        pubStartStop.publish( command )
-
-
+def publishCommand( rosPublisher, command ):
+    rosPublisher.publish( command )
 
 def initProxy():
 
-    global pubStartStop
+    global pubModeUpdate
+    global pubTipperUpdate
+    global pubCmdVelUpdate
 
     # In ROS, nodes are uniquely named. If two nodes with the same
     # node are launched, the previous one is kicked off. The
@@ -103,7 +136,10 @@ def initProxy():
     rospy.init_node( 'proxy', anonymous = True )
 
     # register Publisers
-    pubStartStop = rospy.Publisher( 'startStopTopic', String, queue_size = 10 )
+    pubModeUpdate = rospy.Publisher( MODE_UPDATE_PUB, String, queue_size = 10 )
+    pubTipperUpdate = rospy.Publisher( TIPPER_UPDATE_PUB, Bool, queue_size = 10 )
+    pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 10 )
+
 
     # register Listeners
     rospy.Subscriber( "hmi_mobile", String, callback )
@@ -111,7 +147,7 @@ def initProxy():
     log.startLogging(sys.stdout)
 
     # Establish WebSocket connection
-    factory = WebSocketServerFactory(u"ws://localhost:8888", debug=False)
+    factory = WebSocketServerFactory( u"ws://localhost:8888", debug = False )
     factory.protocol = MyServerProtocol
     # factory.setProtocolOptions(maxConnections=2)
 

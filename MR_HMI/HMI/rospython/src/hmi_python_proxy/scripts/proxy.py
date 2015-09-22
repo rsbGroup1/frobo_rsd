@@ -60,7 +60,7 @@ class MyServerProtocol( WebSocketServerProtocol ):
 
                 publishCommand( leftButton, 0 )
 
-                if rightButton == u"x" or rightButton == u"y":
+		if rightButton == u"x" or rightButton == u"y":
                     publishCommand( rightButton, 1)
                 elif rightButton == u"a" or rightButton == u"b":
                     publishCommand( rightButton, 2)
@@ -83,9 +83,9 @@ def callback( data ):
 def publishCommand( command, selector ):
     global pubStartStop
     if selector == 0:
-        # pubStartStop.publish( command )
+        pubStartStop.publish( command )
     elif selector == 1:
-        # pubStartStop.publish( command )
+        pubStartStop.publish( command )
     elif selector == 2:
         pubStartStop.publish( command )
 

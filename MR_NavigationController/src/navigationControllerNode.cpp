@@ -186,6 +186,7 @@ int main()
 
     // Publisher
     _motorCommandTopic = nh.advertise<geometry_msgs::TwistStamped>("motorCommandTopic", 1);
+    //_motorCommandTopic = nh.advertise<geometry_msgs::TwistStamped>("/fmCommand/cmd_vel", 1);
 
     // Subscriber
     ros::Subscriber subMissionPlanner = nh.subscribe("missionPlannerTopic", 10, missionCallback);

@@ -12,7 +12,6 @@
 
 // Defines
 #define SSTR(x)                 dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
-#define PORT                    0
 #define DATA_LENGTH             10
 
 // System mode enum
@@ -21,14 +20,17 @@ enum MODES
     SLOW = 0,
     ERROR,
     STOP,
-    START
+    START,
+    MANUAL
 };
 
 // Global var
+int _baudRate, _port;
 serial::Serial *_serialConnection;
 ros::Publisher _missionPlannerPublisher;
 MODES _systemMode = STOP;
 boost::mutex _serialMutex, _publishMutex;
+bool _debugMsg;
 
 // Functions
 void changeMode(MODES mode)
@@ -38,18 +40,32 @@ void changeMode(MODES mode)
     {
         case SLOW:
             _serialConnection->write("slow\n");
+            if(_debugMsg)
+                ROS_INFO("Slow");
             break;
 
         case START:
             _serialConnection->write("start\n");
+            if(_debugMsg)
+                ROS_INFO("Start");
             break;
 
         case ERROR:
             _serialConnection->write("error\n");
+            if(_debugMsg)
+                ROS_INFO("Error");
             break;
 
         case STOP:
             _serialConnection->write("stop\n");
+            if(_debugMsg)
+                ROS_INFO("Stop");
+            break;
+
+        case MANUAL:
+            _serialConnection->write("manual\n");
+            if(_debugMsg)
+                ROS_INFO("Manual");
             break;
 
         default:
@@ -94,6 +110,8 @@ void startStopCallback(std_msgs::String msg)
         changeMode(START);
     else if(msg.data == "stop")
         changeMode(STOP);
+    else if(msg.data == "manual")
+        changeMode(MANUAL);
 }
 
 bool compareMsg(char* msg, char* command)
@@ -119,7 +137,6 @@ void readSerialThread()
     char msg[DATA_LENGTH+1];
     msg[DATA_LENGTH] = '\n';
     int i = 0;
-    //_serialConnection.setTimeout(serial::Timeout::max(), 250, 0, 250, 0);
 
     while(true)
     {
@@ -171,26 +188,6 @@ void readSerialThread()
 
 int main()
 {
-    // Port and baud
-    std::string port = "/dev/ttyACM" + SSTR(PORT);
-    int baud = 115200;
-
-    // Inform
-    std::cout << "Connecting to '" << port << "' with baud '" << baud << "'" << std::endl;
-
-    // Open connection
-    _serialConnection = new serial::Serial(port, baud, serial::Timeout::simpleTimeout(50));
-
-    // Check if connection is ok
-    if(!_serialConnection->isOpen())
-    {
-        std::cerr << "Error opening connection!" << std::endl;
-        _serialConnection->close();
-        return 0;
-    }
-    else
-        std::cout << "Successfully connected to '" << port << "'!" << std::endl;
-
     // Setup ROS Arguments
     char** argv = NULL;
     int argc = 0;
@@ -199,13 +196,44 @@ int main()
     ros::init(argc, argv, "RSD_MissionPlanner_Node");
     ros::NodeHandle nh;
 
+    // Topic names
+    std::string slowDownSub, errorStopSub, startStopSub, missionPlannerPub;
+    nh.param<std::string>("/MR_MissionPlanner/MissionPlanner/mr_collision_slowdown_sub", slowDownSub, "/mrCollisionDetector/slow_down");
+    nh.param<std::string>("/MR_MissionPlanner/MissionPlanner/mr_collision_stop_sub", errorStopSub, "/mrCollisionDetector/error_stop");
+    nh.param<std::string>("/MR_MissionPlanner/MissionPlanner/mr_hmi_sub", startStopSub, "/mrHMI/start_stop");
+    nh.param<std::string>("/MR_MissionPlanner/MissionPlanner/mr_missionplanner_pub", missionPlannerPub, "/mrMissionPlanner/status");
+
     // Publisher
-    _missionPlannerPublisher = nh.advertise<std_msgs::String>("missionPlannerTopic", 1);
+    _missionPlannerPublisher = nh.advertise<std_msgs::String>(missionPlannerPub, 1);
 
     // Subscriber
-    ros::Subscriber subSlowDown = nh.subscribe("slowDownTopic", 10, slowDownCallback);
-    ros::Subscriber subErrorStop = nh.subscribe("errorStopTopic", 10, errorStopCallback);
-    ros::Subscriber subStartStop = nh.subscribe("startStopTopic", 10, startStopCallback);
+    ros::Subscriber subSlowDown = nh.subscribe(slowDownSub, 10, slowDownCallback);
+    ros::Subscriber subErrorStop = nh.subscribe(errorStopSub, 10, errorStopCallback);
+    ros::Subscriber subStartStop = nh.subscribe(startStopSub, 10, startStopCallback);
+
+    // Get serial data parameters
+    nh.param<bool>("/MR_MissionPlanner/MissionPlanner/debug", _debugMsg, false);
+    nh.param<int>("/MR_MissionPlanner/MissionPlanner/baud_rate", _baudRate, 115200);
+    nh.param<int>("/MR_MissionPlanner/MissionPlanner/port", _port, 0);
+    std::string port = "/dev/ttyACM" + SSTR(_port);
+
+    // Inform user
+    std::string temp = "Connecting to '" + port + "' with baud '" + SSTR(_baudRate) + "'";
+    ROS_INFO(temp.c_str());
+
+    // Open connection
+    _serialConnection = new serial::Serial(port.c_str(), _baudRate, serial::Timeout::simpleTimeout(50));
+
+    // Check if connection is ok
+    if(!_serialConnection->isOpen())
+    {
+        ROS_ERROR("Error opening connection!");
+        _serialConnection->close();
+        return 0;
+    }
+    else
+        ROS_INFO("Successfully connected!");
+
 
     // Start serial read thread
     boost::thread serialThread(readSerialThread);

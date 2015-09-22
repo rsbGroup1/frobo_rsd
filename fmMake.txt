@@ -22,12 +22,9 @@
 /frobo_rsd/MR_NavigationController
 /frobo_rsd/MR_MissionPlanner
 /frobo_rsd/MR_MESServer
-<<<<<<< HEAD
-#/frobo_rsd/MR_ExtendedKalmanFilter
 /frobo_rsd/MR_ObstacleDetector
 #/frobo_rsd/MR_BridgeWallTracking
-=======
+#/frobo_rsd/MR_ExtendedKalmanFilter
 /frobo_rsd/MR_ObstacleDetector
->>>>>>> 1fa5a1be5c1928e1d4f366095d57da69d6127cdc
 /frobo_rsd/sick_tim
 /frobo_rsd/MR_HMIPythonProxy

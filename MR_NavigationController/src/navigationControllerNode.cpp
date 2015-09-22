@@ -16,20 +16,6 @@
 #define DEGREETORAD             (M_PI/180.0)
 #define SSTR(x)                 dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
 
-#define FUNC_B_TRANSROT         225 // y=225*x when mapping from translation to rotation
-#define INTERVAL_TRANS          0.4 // +- in meters
-#define INTERVAL_ROT            90  // +- in degrees
-#define SPEED_NORMAL            0.5 // m/s
-#define SPEED_SLOW              0.1
-#define SPEED_STOP              0.0
-
-// PID
-#define COEFF_P                 0.1
-#define COEFF_I                 0.00001
-#define COEEF_D                 0.001
-#define MAX_I                   1000
-
-
 // System mode enum
 enum MODES
 {
@@ -42,13 +28,16 @@ enum MODES
 // Global var
 bool _running = false;
 MODES _systemMode = STOP;
-double _speed = SPEED_STOP;
 ros::Publisher _motorCommandTopic, _deadmanTopic;
 boost::mutex _motorCommandMutex;
-double _angleSpeed = 0.0;
+double _angleSpeed = 0.0, _forwardSpeed = 0.0;
+double _coeffP, _coeffI, _coeffD, _maxI;
+double _maxAngleSpeed;
+double _speedNormal, _speedSlow, _speedError;
+int _motorUpdateRate;
 
 // Function prototype
-double calculateSpeed(double pidError = 0);
+void setSpeed(double pidError = 0);
 
 void missionCallback(std_msgs::String msg)
 {
@@ -73,42 +62,36 @@ void missionCallback(std_msgs::String msg)
     }
 }
 
-double calculateSpeed(double pidError)
+void setSpeed(double pidError)
 {
-    double returnSpeed = 0;
+    // TODO: Include PID error to speed here
+    //returnSpeed pidError blabla
 
     if(_running)
     {
         switch(_systemMode)
         {
             case START:
-                returnSpeed = SPEED_NORMAL;
+                _forwardSpeed = _speedNormal;
                 break;
 
-            case STOP:
-                returnSpeed = SPEED_STOP;
-                break;
 
             case ERROR:
-                returnSpeed = SPEED_STOP;
+                _forwardSpeed = _speedError;
                 break;
 
             case SLOW:
-                returnSpeed = SPEED_SLOW;
+                _forwardSpeed = _speedSlow;
                 break;
 
+            case STOP:
             default:
-                returnSpeed = SPEED_STOP;
+                _forwardSpeed = 0.0;
                 break;
         }
     }
     else
-        return SPEED_STOP;
-
-    // Include PID error
-    //returnSpeed pidError blabla
-
-    return returnSpeed;
+        _forwardSpeed = 0.0;
 }
 
 double calculateError(double deltaX, double deltaTheta)
@@ -143,7 +126,7 @@ double calculateError(double deltaX, double deltaTheta)
     if(fabs(deltaXTheta) > 180.0)
         deltaXTheta = ((deltaX >= 0)?(-1):(1)) * 360.0 + deltaXTheta;
 
-    return deltaXTheta;
+    return deltaXTheta * DEGREETORAD;
 }
 
 void kalmanCallback(geometry_msgs::PoseWithCovarianceStamped pose)
@@ -166,18 +149,25 @@ void kalmanCallback(geometry_msgs::PoseWithCovarianceStamped pose)
         integral += error;
 
         // Reset if above max value
-        if(integral > MAX_I)
-            integral = MAX_I;
-        else if(integral < -MAX_I)
-            integral = -MAX_I;
+        if(integral > _maxI)
+            integral = _maxI;
+        else if(integral < -_maxI)
+            integral = -_maxI;
 
         // Calculate derivative
         double derivative = error - oldError;
 
         // Calculate speed and correction for theta
         _motorCommandMutex.lock();
-        _angleSpeed = COEFF_P * error + COEFF_I * integral + COEEF_D * derivative;
-        _speed = calculateSpeed();
+        _angleSpeed = _coeffP * error + _coeffI * integral + _coeffD * derivative;
+
+        // Set limits
+        if(_angleSpeed > _maxAngleSpeed)
+            _angleSpeed = _maxAngleSpeed;
+        else if(_angleSpeed < -_maxAngleSpeed)
+            _angleSpeed = -_maxAngleSpeed;
+
+        setSpeed();
         _motorCommandMutex.unlock();
 
         // Store new as old
@@ -194,7 +184,7 @@ void sendMotorCommand(double speed, double theta)
     // Create deadman stuff
     msgs::BoolStamped boolStamp;
     boolStamp.header.stamp = ros::Time::now();
-    boolStamp.data = true;
+    boolStamp.data = _running;
 
     // Create motor stuff
     geometry_msgs::TwistStamped twistStamp;
@@ -213,11 +203,11 @@ void motorUpdateThread()
     {
         // Send motor command
         _motorCommandMutex.lock();
-        sendMotorCommand(_speed, _angleSpeed);
+        sendMotorCommand(_forwardSpeed, _angleSpeed);
         _motorCommandMutex.unlock();
 
         // Sleep
-        usleep(50); // Sleep for 50 ms = 20Hz
+        usleep(_motorUpdateRate); // Sleep for 50 ms = 20Hz
     }
 }
 
@@ -231,22 +221,31 @@ int main()
     ros::init(argc, argv, "RSD_NavigationController_Node");
     ros::NodeHandle nh;
 
-<<<<<<< HEAD
-    std::string deadmanParameter, motorParameter;
-    nh.param<std::string>("deadman_pub", deadmanParameter, "/fmSafe/deadman");
-    nh.param<std::string>("cmd_vel_pub", motorParameter, "/fmCommand/cmd_vel");
+    // Get parameters
+    nh.param<double>("/MR_NavigationController/NavigationController/speed_normal", _speedNormal, 0.6);
+    nh.param<double>("/MR_NavigationController/NavigationController/speed_slow", _speedSlow, 0.2);
+    nh.param<double>("/MR_NavigationController/NavigationController/speed_error", _speedError, 0.0);
+    nh.param<double>("/MR_NavigationController/NavigationController/max_angle_speed", _maxAngleSpeed, 0.8);
+    nh.param<double>("/MR_NavigationController/NavigationController/pid_coeff_p", _coeffP, 0.5);
+    nh.param<double>("/MR_NavigationController/NavigationController/pid_coeff_i", _coeffI, 0.0001);
+    nh.param<double>("/MR_NavigationController/NavigationController/pid_coeff_d", _coeffD, 0.01);
+    nh.param<double>("/MR_NavigationController/NavigationController/pid_max_i", _maxI, 1000);
+    nh.param<int>("/MR_NavigationController/NavigationController/motor_update_rate", _motorUpdateRate, 50); // Sleep for 50 ms = 20Hz
 
+    // Get topic names
+    std::string deadmanParameter, motorParameter, missionPlanParam, kalmanParam;
+    nh.param<std::string>("/MR_NavigationController/NavigationController/deadman_pub", deadmanParameter, "/fmSafe/deadman");
+    nh.param<std::string>("/MR_NavigationController/NavigationController/cmd_vel_pub", motorParameter, "/fmCommand/cmd_vel");
+    nh.param<std::string>("/MR_NavigationController/NavigationController/mr_missionplan_sub", missionPlanParam, "/mrMissionPlanner/Status");
+    nh.param<std::string>("/MR_NavigationController/NavigationController/mr_kalman_sub", kalmanParam, "/mrKalman/data");
+
+    // Publisher
     _motorCommandTopic = nh.advertise<geometry_msgs::TwistStamped>(motorParameter, 1);
     _deadmanTopic = nh.advertise<msgs::BoolStamped>(deadmanParameter, 1);
-=======
-    // Publisher
-    _motorCommandTopic = nh.advertise<geometry_msgs::TwistStamped>("motorCommandTopic", 1);
-    //_motorCommandTopic = nh.advertise<geometry_msgs::TwistStamped>("/fmCommand/cmd_vel", 1);
->>>>>>> 1fa5a1be5c1928e1d4f366095d57da69d6127cdc
 
     // Subscriber
-    ros::Subscriber subMissionPlanner = nh.subscribe("missionPlannerTopic", 10, missionCallback);
-    ros::Subscriber subKalman = nh.subscribe("kalmanTopic", 10, kalmanCallback);
+    ros::Subscriber subMissionPlanner = nh.subscribe(missionPlanParam, 10, missionCallback);
+    ros::Subscriber subKalman = nh.subscribe(kalmanParam, 10, kalmanCallback);
 
     // Start motor update thread
     boost::thread motorPublishThread(motorUpdateThread);

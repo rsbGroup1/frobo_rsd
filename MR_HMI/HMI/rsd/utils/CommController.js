@@ -2,7 +2,7 @@ window.rsdNamespace = window.rsdNamespace || { };
 
 rsdNamespace.connection;
 
-rsdNamespace.StartListening = function( port ) {
+rsdNamespace.StartListening = function( hostname, port ) {
 
     // $('#main_title').text( port );
 
@@ -18,7 +18,7 @@ rsdNamespace.StartListening = function( port ) {
     // ws.onmessage = function( evt ) { console.log( evt.data ); }; //on message event
     // ws.onerror = function( evt ) { console.log( evt.data ); }; //on error event
 
-    rsdNamespace.connection = new WebSocket( 'ws://localhost:' + port );
+    rsdNamespace.connection = new WebSocket( 'ws://' + hostname + ':' + port );
 
     // When the connection is open, send some data to the server
     rsdNamespace.connection.onopen = function () {
@@ -44,7 +44,8 @@ rsdNamespace.StartListening = function( port ) {
                 "messageType":"remote_update",
                 "data":{
                     "left": rsdNamespace.activeButtonLeft,
-                    "right": rsdNamespace.activeButtonRight
+                    "right": rsdNamespace.activeButtonRight,
+                    "ena": rsdNamespace.actuationEnable
                 }
             }
 

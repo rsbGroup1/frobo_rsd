@@ -231,12 +231,18 @@ int main()
     ros::init(argc, argv, "RSD_NavigationController_Node");
     ros::NodeHandle nh;
 
+<<<<<<< HEAD
     std::string deadmanParameter, motorParameter;
     nh.param<std::string>("deadman_pub", deadmanParameter, "/fmSafe/deadman");
     nh.param<std::string>("cmd_vel_pub", motorParameter, "/fmCommand/cmd_vel");
 
     _motorCommandTopic = nh.advertise<geometry_msgs::TwistStamped>(motorParameter, 1);
     _deadmanTopic = nh.advertise<msgs::BoolStamped>(deadmanParameter, 1);
+=======
+    // Publisher
+    _motorCommandTopic = nh.advertise<geometry_msgs::TwistStamped>("motorCommandTopic", 1);
+    //_motorCommandTopic = nh.advertise<geometry_msgs::TwistStamped>("/fmCommand/cmd_vel", 1);
+>>>>>>> 1fa5a1be5c1928e1d4f366095d57da69d6127cdc
 
     // Subscriber
     ros::Subscriber subMissionPlanner = nh.subscribe("missionPlannerTopic", 10, missionCallback);

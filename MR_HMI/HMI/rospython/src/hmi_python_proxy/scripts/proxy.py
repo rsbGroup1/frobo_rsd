@@ -3,6 +3,7 @@
 import json
 import jsonlib
 import sys
+import threading
 from autobahn.twisted.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
 from twisted.python import log
@@ -10,12 +11,14 @@ from twisted.internet import reactor
 
 import rospy
 from geometry_msgs.msg import Twist, TwistStamped
+from msgs.msg import BoolStamped
 from std_msgs.msg import String, Bool
 
 LOCATION_REQUEST = "location_request"
 REMOTE_UPDATE = "remote_update"
 
 MODE_UPDATE_PUB = "startStopTopic"
+ACTUATION_ENA_PUB = "/fmSafe/deadman" # a BoolStamped msg. deadman_msg.data = True enables actuation
 CMD_VEL_UPDATE_PUB = "/fmCommand/cmd_vel"
 TIPPER_UPDATE_PUB = "mr_tipper_update"
 
@@ -26,8 +29,12 @@ location = 0
 pubModeUpdate = 0
 pubTipperUpdate = 0
 pubCmdVelUpdate = 0
+pubActuationEna = 0
 
 tipperTilted = False
+actuationEna = False
+
+threadLock = threading.Lock()
 
 class MyServerProtocol( WebSocketServerProtocol ):
 
@@ -41,6 +48,7 @@ class MyServerProtocol( WebSocketServerProtocol ):
 
     def onMessage( self, payload, isBinary ):
         global pubModeUpdate
+        global actuationEna
 
         if isBinary:
             print( "Binary message received: {0} bytes".format( len( payload ) ) )
@@ -68,15 +76,25 @@ class MyServerProtocol( WebSocketServerProtocol ):
 
                 leftButton = messageIn["data"]["left"]
                 rightButton = messageIn["data"]["right"]
+                enaSignal = messageIn["data"]["ena"]
+
+                if enaSignal != actuationEna:
+                    actuationEna = enaSignal
+                    if actuationEna == True:
+                        print "Actuation enabled."
+                    else:
+                        print "Actuation disabled."
+                    
+                publishActuationEna()
 
                 if leftButton == u"u":
                     drive( 0.2, 0.0 )
                 elif leftButton == u"r":
-                    drive( 0.0, -0.3 )
+                    drive( 0.0, -0.8 )
                 elif leftButton == u"d":
                     drive( -0.2, 0.0 )
                 elif leftButton == u"l":
-                    drive( 0.0, 0.3 )
+                    drive( 0.0, 0.8 )
                 elif rightButton == u"y":
                     tip()
                 elif rightButton == u"x":
@@ -89,12 +107,39 @@ class MyServerProtocol( WebSocketServerProtocol ):
     def onClose( self, wasClean, code, reason ):
         print( "WebSocket connection closed: {0}".format( reason ) )
 
-def createdTwistedCommand( linearX, angularZ ):
 
+class actuationThread( threading.Thread ):
+    global threadLock
+
+    def __init__( self, threadID, name ):
+        threading.Thread.__init__( self )
+        self.threadID = threadID
+        self.name = name
+        self.counter = counter
+    def run(self):
+        print "Starting " + self.name
+	
+	
+        # Get lock to synchronize threads
+        threadLock.acquire()
+        
+        
+
+        # Free lock to release next thread
+        threadLock.release()
+
+def createdTwistedCommand( linearX, angularZ ):
     msg = TwistStamped()
     msg.header.stamp = rospy.Time.now()
     msg.twist.linear.x = linearX
     msg.twist.angular.z = angularZ
+
+    return msg
+
+def createBoolStampedMessage( data ):
+    msg = BoolStamped()
+    msg.header.stamp = rospy.get_rostime()
+    msg.data = data
 
     return msg
 
@@ -104,7 +149,11 @@ def drive( linearX, angularZ ):
     msg = createdTwistedCommand( linearX, angularZ )
     publishCommand( pubCmdVelUpdate, msg )
 
-    print "driving..."
+def publishActuationEna():
+    global actuationEna
+
+    msg = createBoolStampedMessage( actuationEna )
+    pubActuationEna.publish ( msg )
 
 def tip():
     global pubTipperUpdate
@@ -127,6 +176,7 @@ def initProxy():
     global pubModeUpdate
     global pubTipperUpdate
     global pubCmdVelUpdate
+    global pubActuationEna
 
     # In ROS, nodes are uniquely named. If two nodes with the same
     # node are launched, the previous one is kicked off. The
@@ -136,13 +186,16 @@ def initProxy():
     rospy.init_node( 'proxy', anonymous = True )
 
     # register Publisers
-    pubModeUpdate = rospy.Publisher( MODE_UPDATE_PUB, String, queue_size = 10 )
-    pubTipperUpdate = rospy.Publisher( TIPPER_UPDATE_PUB, Bool, queue_size = 10 )
-    pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 10 )
-
+    pubModeUpdate = rospy.Publisher( MODE_UPDATE_PUB, String, queue_size = 1 )
+    pubTipperUpdate = rospy.Publisher( TIPPER_UPDATE_PUB, Bool, queue_size = 1 )
+    pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 1 )
+    pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
 
     # register Listeners
     rospy.Subscriber( "hmi_mobile", String, callback )
+
+    # start publishing activationEna sygnal in a separate thread
+    
 
     log.startLogging(sys.stdout)
 
@@ -155,7 +208,7 @@ def initProxy():
     reactor.run()
 
     # spin() simply keeps python from exiting until this node is stopped
-    # rospy.spin()
+    rospy.spin()
 
 if __name__ == '__main__':
     initProxy()

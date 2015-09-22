@@ -44,13 +44,14 @@ rsdNamespace.StartListening = function( port ) {
                 "messageType":"remote_update",
                 "data":{
                     "left": rsdNamespace.activeButtonLeft,
-                    "right": rsdNamespace.activeButtonRight
+                    "right": rsdNamespace.activeButtonRight,
+                    "ena": rsdNamespace.actuationEnable
                 }
             }
 
             rsdNamespace.connection.send( JSON.stringify( messageOut ) );
 
-        }, 200);
+        }, 50);
 
     };
 

@@ -3546,19 +3546,20 @@
 
     $(document).ready(function(){
 
-      // Position adjustments
-      rsdNamespace.WindowResizeHandler();
-      $(window).resize( function( event ) {
+        // Position adjustments
+        rsdNamespace.WindowResizeHandler();
+        $(window).resize( function( event ) {
 
         rsdNamespace.WindowResizeHandler( event );
 
-      });
+        });
 
-      rsdNamespace.RegisterTouchSurfaces();
+        rsdNamespace.RegisterTouchSurfaces();
 
-      rsdNamespace.StartListening( 8888 );
+        //rsdNamespace.StartListening( "localhost", 8888 );
+        rsdNamespace.StartListening( "10.125.11.201", 8888 );
 
-      rsdNamespace.ToggleHighlighting( 0 );
+        rsdNamespace.ToggleHighlighting( 0 );
 
     });
   </script>

@@ -115,12 +115,12 @@ rsdNamespace.RegisterTouchSurfaces = function() {
 
     // Button Left
 
-    $('#button_l').on( "mousedown", function() {
+    $('#button_l').on( "mousedown touchstart", function() {
         $('#remoteLeftLayer1').attr('style', 'display:none');
         $('#remoteLeftLayerL').attr('style', 'display:inline');
         rsdNamespace.activeButtonLeft = 'l';
 
-    }).on( "mouseup mouseout", function() {
+    }).on( "mouseup mouseout touchend", function() {
 
         $('#remoteLeftLayer1').attr('style', 'display:inline');
         $('#remoteLeftLayerL').attr('style', 'display:none');
@@ -129,13 +129,13 @@ rsdNamespace.RegisterTouchSurfaces = function() {
     });
 
     // Button Right
-    $('#button_r').on( "mousedown", function() {
+    $('#button_r').on( "mousedown touchstart", function() {
 
         $('#remoteLeftLayer1').attr('style', 'display:none');
         $('#remoteLeftLayerR').attr('style', 'display:inline');
         rsdNamespace.activeButtonLeft = 'r';
 
-    }).on( "mouseup mouseout", function() {
+    }).on( "mouseup mouseout touchend", function() {
 
         $('#remoteLeftLayer1').attr('style', 'display:inline');
         $('#remoteLeftLayerR').attr('style', 'display:none');
@@ -144,13 +144,13 @@ rsdNamespace.RegisterTouchSurfaces = function() {
     });
 
     // Button Up
-    $('#button_u').on( "mousedown", function() {
+    $('#button_u').on( "mousedown touchstart", function() {
 
         $('#remoteLeftLayer1').attr('style', 'display:none');
         $('#remoteLeftLayerU').attr('style', 'display:inline');
       rsdNamespace.activeButtonLeft = 'u';
 
-    }).on( "mouseup mouseout", function() {
+    }).on( "mouseup mouseout touchend", function() {
 
         $('#remoteLeftLayer1').attr('style', 'display:inline');
         $('#remoteLeftLayerU').attr('style', 'display:none');
@@ -159,13 +159,13 @@ rsdNamespace.RegisterTouchSurfaces = function() {
     });
 
     // Button Down
-    $('#button_d').on( "mousedown", function() {
+    $('#button_d').on( "mousedown touchstart", function() {
 
         $('#remoteLeftLayer1').attr('style', 'display:none');
         $('#remoteLeftLayerD').attr('style', 'display:inline');
         rsdNamespace.activeButtonLeft = 'd';
 
-    }).on( "mouseup mouseout", function() {
+    }).on( "mouseup mouseout touchend", function() {
 
         $('#remoteLeftLayer1').attr('style', 'display:inline');
         $('#remoteLeftLayerD').attr('style', 'display:none');
@@ -177,13 +177,13 @@ rsdNamespace.RegisterTouchSurfaces = function() {
     // Right Controller
 
     // Button X
-    $('#button_x').on( "mousedown", function() {
+    $('#button_x').on( "mousedown touchstart", function() {
 
         $('#remoteRightLayer1').attr('style', 'display:none');
         $('#remoteRightLayerX').attr('style', 'display:inline');
         rsdNamespace.activeButtonRight = 'x';
 
-    }).on( "mouseup mouseout", function() {
+    }).on( "mouseup mouseout touchend", function() {
 
         $('#remoteRightLayer1').attr('style', 'display:inline');
         $('#remoteRightLayerX').attr('style', 'display:none');
@@ -192,13 +192,13 @@ rsdNamespace.RegisterTouchSurfaces = function() {
     });
 
     // Button Y
-    $('#button_y').on( "mousedown", function() {
+    $('#button_y').on( "mousedown touchstart", function() {
 
         $('#remoteRightLayer1').attr('style', 'display:none');
         $('#remoteRightLayerY').attr('style', 'display:inline');
         rsdNamespace.activeButtonRight = 'y';
 
-    }).on( "mouseup mouseout", function() {
+    }).on( "mouseup mouseout touchend", function() {
 
         $('#remoteRightLayer1').attr('style', 'display:inline');
         $('#remoteRightLayerY').attr('style', 'display:none');
@@ -206,13 +206,13 @@ rsdNamespace.RegisterTouchSurfaces = function() {
 
     });
     // Button A
-    $('#button_a').on( "mousedown", function() {
+    $('#button_a').on( "mousedown touchstart", function() {
 
         $('#remoteRightLayer1').attr('style', 'display:none');
         $('#remoteRightLayerA').attr('style', 'display:inline');
         rsdNamespace.activeButtonRight = 'a';
 
-    }).on( "mouseup mouseout", function() {
+    }).on( "mouseup mouseout touchend", function() {
 
         $('#remoteRightLayer1').attr('style', 'display:inline');
         $('#remoteRightLayerA').attr('style', 'display:none');
@@ -222,13 +222,13 @@ rsdNamespace.RegisterTouchSurfaces = function() {
 
     // Button B
 
-    $('#button_b').on( "mousedown", function() {
+    $('#button_b').on( "mousedown touchstart", function() {
 
         $('#remoteRightLayer1').attr('style', 'display:none');
         $('#remoteRightLayerB').attr('style', 'display:inline');
         rsdNamespace.activeButtonRight = 'b';
 
-    }).on( "mouseup mouseout", function() {
+    }).on( "mouseup mouseout touchend", function() {
 
         $('#remoteRightLayer1').attr('style', 'display:inline');
         $('#remoteRightLayerB').attr('style', 'display:none');
@@ -237,7 +237,7 @@ rsdNamespace.RegisterTouchSurfaces = function() {
     });
 
     // Home button
-    $('#button_home').on( "click", function() {
+    $('#button_home').on( "click touchstart", function() {
 
         rsdNamespace.actuationEnable = false;
 
@@ -250,7 +250,7 @@ rsdNamespace.RegisterTouchSurfaces = function() {
         $('#HomeButtonInactive').attr('style', 'display:none');
         $('#HomeButtonActive').attr('style', 'display:inline');
 
-    }).on( "mouseup mouseout", function() {
+    }).on( "mouseup mouseout touchend", function() {
 
         $('#HomeButtonInactive').attr('style', 'display:inline');
         $('#HomeButtonActive').attr('style', 'display:none');

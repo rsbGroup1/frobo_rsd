@@ -3,7 +3,7 @@
 import json
 import jsonlib
 import sys
-import threading
+import time, threading
 from autobahn.twisted.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
 from twisted.python import log
@@ -22,6 +22,10 @@ ACTUATION_ENA_PUB = "/fmSafe/deadman" # a BoolStamped msg. deadman_msg.data = Tr
 CMD_VEL_UPDATE_PUB = "/fmCommand/cmd_vel"
 TIPPER_UPDATE_PUB = "mr_tipper_update"
 
+#WEB_SOCKET_HOSTNAME = "localhost"
+WEB_SOCKET_HOSTNAME = "10.125.11.201"
+WEB_SOCKET_PORT = "8888"
+
 address = ""
 direction = 0
 button = 0
@@ -34,9 +38,9 @@ pubActuationEna = 0
 tipperTilted = False
 actuationEna = False
 
-threadLock = threading.Lock()
-
 class MyServerProtocol( WebSocketServerProtocol ):
+    def __init__( self ):
+        self.lock = threading.Lock()
 
     def onConnect( self, request ):
         global address
@@ -78,14 +82,7 @@ class MyServerProtocol( WebSocketServerProtocol ):
                 rightButton = messageIn["data"]["right"]
                 enaSignal = messageIn["data"]["ena"]
 
-                if enaSignal != actuationEna:
-                    actuationEna = enaSignal
-                    if actuationEna == True:
-                        print "Actuation enabled."
-                    else:
-                        print "Actuation disabled."
-                    
-                publishActuationEna()
+                self.updateActuation( enaSignal )
 
                 if leftButton == u"u":
                     drive( 0.2, 0.0 )
@@ -105,28 +102,52 @@ class MyServerProtocol( WebSocketServerProtocol ):
                     publishCommand( pubModeUpdate, u"stop" )
 
     def onClose( self, wasClean, code, reason ):
+        global actuationEna
+
+        actuationEna = False
+
         print( "WebSocket connection closed: {0}".format( reason ) )
 
+    def updateActuation( self, enaSignal ):
+        global actuationEna
+        posession = False        
+
+        posession = self.lock.acquire()
+        if actuationEna != enaSignal:
+            actuationEna = enaSignal
+        self.lock.release()
+
+        if posession == False:
+            self.updateActuation( enaSignal )
+
+        if enaSignal == True and posession == True:
+            print "Actuation enabled."
+        else:
+            print "Actuation disabled."
 
 class actuationThread( threading.Thread ):
-    global threadLock
 
     def __init__( self, threadID, name ):
         threading.Thread.__init__( self )
+        self.lock = threading.Lock()
         self.threadID = threadID
         self.name = name
-        self.counter = counter
-    def run(self):
-        print "Starting " + self.name
-	
-	
-        # Get lock to synchronize threads
-        threadLock.acquire()
-        
-        
 
-        # Free lock to release next thread
-        threadLock.release()
+    def run( self ):
+        print "Starting " + self.name
+        while True:
+            self.publishActuationEna()
+            time.sleep(0.05)
+
+    def publishActuationEna( self ):
+        global actuationEna
+
+        print "actuationEna: " + str(actuationEna)
+
+        self.lock.acquire()
+        msg = createBoolStampedMessage( actuationEna )
+        pubActuationEna.publish ( msg )
+        self.lock.release()
 
 def createdTwistedCommand( linearX, angularZ ):
     msg = TwistStamped()
@@ -148,12 +169,6 @@ def drive( linearX, angularZ ):
 
     msg = createdTwistedCommand( linearX, angularZ )
     publishCommand( pubCmdVelUpdate, msg )
-
-def publishActuationEna():
-    global actuationEna
-
-    msg = createBoolStampedMessage( actuationEna )
-    pubActuationEna.publish ( msg )
 
 def tip():
     global pubTipperUpdate
@@ -195,16 +210,17 @@ def initProxy():
     rospy.Subscriber( "hmi_mobile", String, callback )
 
     # start publishing activationEna sygnal in a separate thread
-    
+    aThread = actuationThread( 1, "actuation_thread" )
+    aThread.start()
 
     log.startLogging(sys.stdout)
 
     # Establish WebSocket connection
-    factory = WebSocketServerFactory( u"ws://localhost:8888", debug = False )
+    factory = WebSocketServerFactory( u"ws://" + WEB_SOCKET_HOSTNAME + ":" + WEB_SOCKET_PORT, debug = False )
     factory.protocol = MyServerProtocol
     # factory.setProtocolOptions(maxConnections=2)
 
-    reactor.listenTCP(8888, factory)
+    reactor.listenTCP( int(WEB_SOCKET_PORT), factory )
     reactor.run()
 
     # spin() simply keeps python from exiting until this node is stopped

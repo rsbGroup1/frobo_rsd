@@ -208,9 +208,12 @@ pair<Line, Line> getLines(const sensor_msgs::LaserScanPtr& scanMsg, double& qual
         //Publish the Odometry message
         nav_msgs::Odometry odoMsg;
         odoMsg.pose.pose.position.x = distaneToCenterLine;
-        odoMsg.pose.pose.orientation.z = angleOnWallValue;
+        odoMsg.pose.pose.orientation = tf::createQuaternionFromRPY(0,0,angleOnWallValue*180/PI);
+	
         for (int i=0; i<odoMsg.pose.covariance.size(); i++)
-            odoMsg.pose.covariance[i] = 1.0;
+            odoMsg.pose.covariance[i] = 0.8;
+
+	odoMsg.header.stamp = ros::Time::now();
         visualOdometry.publish(odoMsg);
     }
 

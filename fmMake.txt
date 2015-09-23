@@ -23,7 +23,10 @@
 /frobo_rsd/MR_MissionPlanner
 /frobo_rsd/MR_MESServer
 /frobo_rsd/MR_ObstacleDetector
+#/frobo_rsd/MR_BridgeWallTracking
+#/frobo_rsd/MR_ExtendedKalmanFilter
+/frobo_rsd/MR_ObstacleDetector
 /frobo_rsd/sick_tim
 /frobo_rsd/MR_HMIPythonProxy
 /frobo_rsd/MR_BridgeWallTracking
-
+/frobo_rsd/MR_TipController

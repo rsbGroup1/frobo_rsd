@@ -75,6 +75,7 @@ include_directories(
 
 ## Declare a cpp executable
  add_executable(BridgeWallTracking src/bridge_wall_tracking.cpp src/linreg.cpp)
+add_executable(OdomAddCov src/covariance_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -87,6 +88,9 @@ target_link_libraries(BridgeWallTracking
    ${OpenCV_LIBS}
 )
 
+target_link_libraries(OdomAddCov
+   ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##

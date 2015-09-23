@@ -1,0 +1,15 @@
+<!-- Mission Planner launch file -->
+
+<launch>
+	<group ns="MR_MissionPlanner">
+		<node pkg="mr_mission_planner" name="MissionPlanner" type="mr_mission_planner">
+			<param name="baud_rate" value="115200"/>
+			<param name="port" value="0"/>  	
+			<param name="debug" value="true"/>  	
+			<param name="mr_collision_slowdown_sub" value="/mrCollisionDetector/slow_down"/>  	
+			<param name="mr_collision_stop_sub" value="/mrCollisionDetector/error_stop"/>  		
+			<param name="mr_hmi_sub" value="/mrHMI/start_stop"/>  	
+			<param name="mr_missionplanner_pub" value="/mrMissionPlanner/status"/>    	
+		</node>
+	</group>
+</launch>

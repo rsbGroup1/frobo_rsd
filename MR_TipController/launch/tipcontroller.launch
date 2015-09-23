@@ -1,0 +1,11 @@
+<!-- Tip Controller launch file -->
+
+<launch>
+	<group ns="MR_TipController">
+		<node pkg="mr_tip_controller" name="TipController" type="mr_tip_controller">
+			<param name="baud_rate" value="115200"/>
+			<param name="port" value="0"/>  	
+			<param name="debug" value="true"/>  	   	
+		</node>
+	</group>
+</launch>

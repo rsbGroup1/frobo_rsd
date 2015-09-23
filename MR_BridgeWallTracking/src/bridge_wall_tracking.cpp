@@ -15,6 +15,8 @@
 #include <sensor_msgs/image_encodings.h>
 #include <nav_msgs/Odometry.h>
 #include "linreg.h"
+#include <tf/tf.h>
+#include <tf/transform_datatypes.h>
 
 using namespace std;
 using namespace cv;
@@ -153,8 +155,10 @@ pair<Line, Line> getLines(const sensor_msgs::LaserScanPtr& scanMsg, double& qual
         // Calculate x and y
         double x, y;
         if (scanMsg->ranges[i] < 3.5) {
-            x = 450 + (scanMsg->ranges[i] * 100) * cos(((225 + (3 * i)) % 360) * PI / 180);
-            y = 450 + (scanMsg->ranges[i] * 100) * sin(((225 + (3 * i)) % 360) * PI / 180);
+            //x = 450 + (scanMsg->ranges[i] * 100) * cos(((225 + (3 * i)) % 360) * PI / 180);
+           // y = 450 + (scanMsg->ranges[i] * 100) * sin(((225 + (3 * i)) % 360) * PI / 180);
+            x = 450 + (scanMsg->ranges[i] * 100) * cos(scanMsg->angle_min+i*scanMsg->angle_increment);
+            y = 450 + (scanMsg->ranges[i] * 100) * sin(scanMsg->angle_min+i*scanMsg->angle_increment);
             Point2d p(x, y);
             points.push_back(p);
         }
@@ -208,9 +212,12 @@ pair<Line, Line> getLines(const sensor_msgs::LaserScanPtr& scanMsg, double& qual
         //Publish the Odometry message
         nav_msgs::Odometry odoMsg;
         odoMsg.pose.pose.position.x = distaneToCenterLine;
-        odoMsg.pose.pose.orientation.z = angleOnWallValue;
+	tf::quaternionTFToMsg( tf::createQuaternionFromRPY(0,0,angleOnWallValue*180/PI),odoMsg.pose.pose.orientation );
+	
         for (int i=0; i<odoMsg.pose.covariance.size(); i++)
-            odoMsg.pose.covariance[i] = 1.0;
+            odoMsg.pose.covariance[i] = 0.8;
+
+	odoMsg.header.stamp = ros::Time::now();
         visualOdometry.publish(odoMsg);
     }
 
@@ -249,7 +256,7 @@ int main(int argc, char** argv)
     ros::NodeHandle n;
 
     //Subscribe to topic
-    ros::Subscriber sub = n.subscribe("base_scan", 1000, laserScanCallBack);
+    ros::Subscriber sub = n.subscribe("scan", 1000, laserScanCallBack);
 
     //Publish topics
     img_publisher = n.advertise<sensor_msgs::Image>("wall_finding_image", 1000);

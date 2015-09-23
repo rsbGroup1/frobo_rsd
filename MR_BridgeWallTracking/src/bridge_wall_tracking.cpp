@@ -15,6 +15,8 @@
 #include <sensor_msgs/image_encodings.h>
 #include <nav_msgs/Odometry.h>
 #include "linreg.h"
+#include <tf/tf.h>
+#include <tf/transform_datatypes.h>
 
 using namespace std;
 using namespace cv;
@@ -208,7 +210,7 @@ pair<Line, Line> getLines(const sensor_msgs::LaserScanPtr& scanMsg, double& qual
         //Publish the Odometry message
         nav_msgs::Odometry odoMsg;
         odoMsg.pose.pose.position.x = distaneToCenterLine;
-        odoMsg.pose.pose.orientation = tf::createQuaternionFromRPY(0,0,angleOnWallValue*180/PI);
+	tf::quaternionTFToMsg( tf::createQuaternionFromRPY(0,0,angleOnWallValue*180/PI),odoMsg.pose.pose.orientation );
 	
         for (int i=0; i<odoMsg.pose.covariance.size(); i++)
             odoMsg.pose.covariance[i] = 0.8;

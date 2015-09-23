@@ -18,16 +18,26 @@ rsdNamespace.cameraZone = 'cameraZone';
 rsdNamespace.box = 'box';
 rsdNamespace.zoneSelected = '0';
 
+// Connection parameters
+rsdNamespace.locationRequestScheduler;
+rsdNamespace.remoteUpdateScheduler;
+rsdNamespace.commAddr = 'localhost';
+rsdNamespace.commPort = 8888;
+rsdNamespace.commState = 3;
+
 // Control filters
 rsdNamespace.activeButtonLeft = 'n';
 rsdNamespace.activeButtonRight = 'n';
 rsdNamespace.actuationEnable = false;
 
+// Safety
+rsdNamespace.watchdog;
+
 rsdNamespace.ToggleHighlighting = function( selector ) {
 
     var id;
 
-    console.log( 'selector:' + selector );
+    //console.log( 'selector:' + selector );
 
     switch( selector ) {
 
@@ -58,7 +68,7 @@ rsdNamespace.ToggleHighlighting = function( selector ) {
 
     }
 
-    console.log( "id: " + id );
+    //console.log( "id: " + id );
 
     var style = $( '#' + id ).attr( 'style' );
     var textStyle = $( '#' + id + 'Label' ).attr( 'style' );
@@ -98,18 +108,28 @@ rsdNamespace.ToggleHighlighting = function( selector ) {
 
 rsdNamespace.WindowResizeHandler = function( event ) {
 
-    $('#remoteBottomContent').css( 'left', '50%' ).css( 'left', '-=43px' );
+    $('#remoteBottomContent').css( 'left', '50%' ).css( 'left', '-=200px' );
 
 };
 
 rsdNamespace.RegisterTouchSurfaces = function() {
 
-    // var messageOutRw = {
-    //     "messageType":"controller_update",
-    //     "data": "l"
-    // }
+    // Hostname handler
+    $('#hostname_data').on( "keypress", function( e ) {
 
+        if( e.which == 13 ) {
+            var tmp = $('#hostname_data').text().split( ':' );
+            rsdNamespace.commAddr = tmp[0]
+            rsdNamespace.commPort = tmp[1]
 
+            if( rsdNamespace.connection ) rsdNamespace.connection.close();
+            rsdNamespace.StartListening();
+
+            return false;
+
+        }
+
+    });
 
     // Left Controller
 
@@ -294,3 +314,43 @@ rsdNamespace.ReleaseDashboard = function( event ) {
     event.stopPropagation();
 
 };
+
+rsdNamespace.SetWatchdog = function( event ) {
+
+    rsdNamespace.watchdog = setInterval( function () {
+
+        if( rsdNamespace.connection && ( rsdNamespace.commState != rsdNamespace.connection.readyState ) ) {
+
+            rsdNamespace.commState = rsdNamespace.connection.readyState;
+
+            console.log( rsdNamespace.commState );
+
+            if( rsdNamespace.commState == 2 || rsdNamespace.commState == 3 ) {
+
+                var tmp1 = $('#upperGlobe').attr( 'style' );
+                var tmp2 = $('#lowerGlobe').attr( 'style' );
+                tmp1 = tmp1.replace( 'green', 'red' );
+                tmp2 = tmp2.replace( 'green', 'red' );
+                $('#upperGlobe').attr( 'style', tmp1 );
+                $('#lowerGlobe').attr( 'style', tmp2 );
+
+                $('#availability').css( 'background-color', 'red' );
+
+            } else {
+
+                var tmp1 = $('#upperGlobe').attr( 'style' );
+                var tmp2 = $('#lowerGlobe').attr( 'style' );
+                tmp1 = tmp1.replace( 'red', 'green' );
+                tmp2 = tmp2.replace( 'red', 'green' );
+                $('#upperGlobe').attr( 'style', tmp1 );
+                $('#lowerGlobe').attr( 'style', tmp2 );
+
+                $('#availability').css( 'background-color', 'green' );
+
+            }
+
+        }
+
+    }, 500);
+
+}

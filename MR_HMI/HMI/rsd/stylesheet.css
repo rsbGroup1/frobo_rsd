@@ -42,7 +42,7 @@
 #availability{
   top: 40px;
 
-  background-color: green !important;
+  background-color: red;
 }
 
 #controls{
@@ -130,17 +130,58 @@
 
 #remoteBottomContent{
   position: absolute;
-  bottom: 80px;
+  bottom: 0px;
   left: 50%;
 
-  width: 85px;
-  height: 200px;
+  width: 400px;
+  height: 800px;
+}
+
+#remoteLabels{
+    position: absolute;
+    width: 400px;
+    height: 500px;
+    bottom: 160px;
+    left: 0px;
+    margin: 0 auto;
+}
+
+#hostname_lable{
+    display: inline-block;
+    width: 280px;
+    margin: 50px 0px 0px 120px;
+    font-family: "Courier New";
+}
+
+#hostname_data{
+    display: inline-block;
+    text-align: center;
+    width: 180px;
+    box-shadow: 0px 0px 5px black;
+}
+
+#svgGlobe{
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    top: 10px;
+    left: 10px;
 }
 
 #button_home{
-  position: relative;
-  top: 65px;
-  left: 18px;
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  bottom: 60px;
+  left: 150px;
+}
+
+#svgHomeButton{
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  bottom: 60px;
+  left: 150px;
 
   /*background-color: orange;*/
 }

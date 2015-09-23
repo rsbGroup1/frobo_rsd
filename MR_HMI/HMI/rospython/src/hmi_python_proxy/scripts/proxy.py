@@ -22,14 +22,15 @@ ACTUATION_ENA_PUB = "/fmSafe/deadman" # a BoolStamped msg. deadman_msg.data = Tr
 CMD_VEL_UPDATE_PUB = "/fmCommand/cmd_vel"
 TIPPER_UPDATE_PUB = "mr_tipper_update"
 
-#WEB_SOCKET_HOSTNAME = "localhost"
-WEB_SOCKET_HOSTNAME = "10.125.11.201"
+WEB_SOCKET_HOSTNAME = "localhost"
+#WEB_SOCKET_HOSTNAME = "10.125.11.201"
 WEB_SOCKET_PORT = "8888"
-
 address = ""
+
 direction = 0
 button = 0
 location = 0
+
 pubModeUpdate = 0
 pubTipperUpdate = 0
 pubCmdVelUpdate = 0
@@ -110,7 +111,7 @@ class MyServerProtocol( WebSocketServerProtocol ):
 
     def updateActuation( self, enaSignal ):
         global actuationEna
-        posession = False        
+        posession = False
 
         posession = self.lock.acquire()
         if actuationEna != enaSignal:

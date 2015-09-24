@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <string>
 #include <iostream>
+#include <queue>
 #include <sstream>
 #include "serial/serial.h"
 #include <boost/thread/mutex.hpp>
@@ -13,6 +14,55 @@
 // Defines
 #define SSTR(x)                 dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
 #define DATA_LENGTH             10
+
+template <typename T>
+class SynchronisedQueue
+{
+    private:
+        std::queue<T> m_queue;              // Use STL queue to store data
+        boost::mutex m_mutex;               // The mutex to synchronise on
+        boost::condition_variable m_cond;   // The condition to wait for
+
+    public:
+        // Add data to the queue and notify others
+        void enqueue(const T& data)
+        {
+            // Acquire lock on the queue
+            boost::unique_lock<boost::mutex> lock(m_mutex);
+
+            // Add the data to the queue
+            m_queue.push(data);
+
+            // Notify others that data is ready
+            m_cond.notify_one();
+        }
+
+        // Get data from the queue. Wait for data if not available
+        T dequeue()
+        {
+            // Acquire lock on the queue
+            boost::unique_lock<boost::mutex> lock(m_mutex);
+
+            // When there is no data, wait till someone fills it.
+            // Lock is automatically released in the wait and obtained
+            // again after the wait
+            while(m_queue.size()==0)
+                m_cond.wait(lock);
+
+            // Retrieve the data from the queue
+            T result = m_queue.front();
+            m_queue.pop();
+
+            return result;
+        }
+
+        int size()
+        {
+            // Acquire lock on the queue
+            boost::unique_lock<boost::mutex> lock(m_mutex);
+            return m_queue.size();
+        }
+};
 
 // System mode enum
 enum MODES
@@ -30,83 +80,88 @@ serial::Serial *_serialConnection;
 ros::Publisher _missionPlannerPublisher;
 MODES _systemMode = STOP;
 boost::mutex _serialMutex;
-bool _debugMsg;
+bool _debug;
+SynchronisedQueue<std::string> _queue;
 
 // Functions
 void changeMode(MODES mode)
 {
-    _serialMutex.lock();
-    std_msgs::String topicMsg;
-
-    switch(mode)
+    if(mode != _systemMode)
     {
-        case SLOW:
-            //_serialConnection->write("slow\n");
+        std_msgs::String temp;
 
-	    topicMsg.data = "slowDown";
+        switch(mode)
+        {
+            case SLOW:
+                _queue.enqueue("slow\n");
+                temp.data = "slow";
+                break;
 
-            if(_debugMsg)
-                ROS_INFO("Slow");
-            break;
+            case START:
+                _running = true;
+                _queue.enqueue("start\n");
+                temp.data = "start";
+                break;
 
-        case START:
-            _serialConnection->write("start\n");
+            case ERROR:
+                _queue.enqueue("error\n");
+                temp.data = "error";
+                break;
 
-	    topicMsg.data = "start";
+            case STOP:
+                _running = false;
+                _queue.enqueue("stop\n");
+                temp.data = "stop";
+             break;
 
-            if(_debugMsg)
-                ROS_INFO("Start");
-	    _running = true;
-            break;
+            case MANUAL:
+                _running = false;
+                _queue.enqueue("manual\n");
+                temp.data = "manual";
+                break;
 
-        case ERROR:
-            //_serialConnection->write("error\n");
+            default:
+                break;
+        }
 
-	    topicMsg.data = "errorStop";
-
-            if(_debugMsg)
-                ROS_INFO("Error");
-            break;
-
-        case STOP:
-            _serialConnection->write("stop\n");
-
-	    topicMsg.data = "stop";
-
-            if(_debugMsg)
-                ROS_INFO("Stop");
-	    _running = false;
-            break;
-
-        case MANUAL:
-            _serialConnection->write("manual\n");
-
-	    topicMsg.data = "manual";
-
-            if(_debugMsg)
-                ROS_INFO("Manual");
-	    _running = false;
-            break;
-
-        default:
-            break;
+        _missionPlannerPublisher.publish(temp);
+        _systemMode = mode;
     }
-
-    _serialMutex.unlock();
-    _missionPlannerPublisher.publish(topicMsg);
-    _systemMode = mode;	
 }
 
 void collisionCallback(std_msgs::String msg)
 {
-    if(_running)
+    static MODES oldMode = STOP;
+
+    if(msg.data == "stop")
     {
-	    if(msg.data == "stop")
-		changeMode(ERROR);
-	    else if(msg.data == "slow")
-		changeMode(SLOW);
-	    else if(msg.data == "normal")
-		changeMode(START);  
+        if(_running)
+            changeMode(ERROR);
+        else if(oldMode != ERROR && _debug)
+        {
+             _queue.enqueue("error\n");
+             oldMode = ERROR;
+        }
+    }
+    else if(msg.data == "slow")
+    {
+        if(_running)
+            changeMode(SLOW);
+        else if(oldMode != SLOW && _debug)
+        {
+             _queue.enqueue("slow\n");
+             oldMode = SLOW;
+        }
+    }
+    else if(msg.data == "normal")
+    {
+        if(_running)
+            changeMode(START);
+        else if(oldMode != STOP && _debug)
+        {
+             _queue.enqueue("stop\n");
+             oldMode = STOP;
+        }
     }
 }
 
@@ -134,6 +189,14 @@ bool compareMsg(char* msg, char* command)
         return false;
 
     return true;
+}
+
+void writeSerialThread()
+{
+    while(true)
+    {
+        _serialConnection->write(_queue.dequeue());
+    }
 }
 
 void readSerialThread()
@@ -209,13 +272,13 @@ int main()
     // Get serial data parameters
     int baudRate;
     std::string port;
-    nh.param<bool>("/MR_MissionPlanner/MissionPlanner/debug", _debugMsg, false);
+    nh.param<bool>("/MR_MissionPlanner/MissionPlanner/debug", _debug, false);
     nh.param<int>("/MR_MissionPlanner/MissionPlanner/baud_rate", baudRate, 115200);
     nh.param<std::string>("/MR_MissionPlanner/MissionPlanner/port", port, "/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00");
 
     // Inform user
-    std::string temp = "Connecting to '" + port + "' with baud '" + SSTR(baudRate) + "'";
-    ROS_INFO(temp.c_str());
+    //std::string temp = "Connecting to '" + port + "' with baud '" + SSTR(baudRate) + "'";
+    //ROS_INFO(temp.c_str());
 
     // Open connection
     _serialConnection = new serial::Serial(port.c_str(), baudRate, serial::Timeout::simpleTimeout(50));
@@ -232,13 +295,15 @@ int main()
 
 
     // Start serial read thread
-    boost::thread serialThread(readSerialThread);
+    boost::thread serialReadThread(readSerialThread);
+    boost::thread serialWriteThread(writeSerialThread);
 
     // ROS Spin: Handle callbacks
     ros::spin();
 
     // Close connection
-    serialThread.interrupt();
+    serialReadThread.interrupt();
+    serialWriteThread.interrupt();
     _serialConnection->close();
 
     // Return

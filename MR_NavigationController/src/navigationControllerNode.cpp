@@ -32,7 +32,7 @@ enum MODES
 bool _running = false;
 MODES _systemMode = STOP;
 ros::Publisher _motorCommandTopic, _deadmanTopic;
-boost::mutex _motorCommandMutex, _runningMutex;
+boost::mutex _runningMutex;
 double _angleSpeed = 0.0, _forwardSpeed = 0.0;
 double _coeffP, _coeffI, _coeffD, _maxI;
 double _maxAngleSpeed;
@@ -56,19 +56,19 @@ void missionCallback(std_msgs::String msg)
         _systemMode = STOP;
         _running = false;
     }
-    else if(msg.data == "slowDown")
+    else if(msg.data == "slow")
     {
         _systemMode = SLOW;
 
     }
-    else if(msg.data == "errorStop")
+    else if(msg.data == "error")
     {
         _systemMode = ERROR;
     }    
     else if(msg.data == "manual")
     {
         _systemMode = MANUAL;
-	_running = false;
+        _running = false;
     }
 
     _runningMutex.unlock();
@@ -82,7 +82,7 @@ void setSpeed(double pidError)
     _runningMutex.lock();
     if(_running)
     {
-	_runningMutex.unlock();
+        _runningMutex.unlock();
 
         switch(_systemMode)
         {
@@ -90,16 +90,16 @@ void setSpeed(double pidError)
                 _forwardSpeed = _speedNormal;
                 break;
 
-
             case ERROR:
                 _forwardSpeed = _speedError;
+                _angleSpeed = 0.0;
                 break;
 
             case SLOW:
                 _forwardSpeed = _speedSlow;
                 break;
 
-	    case MANUAL:
+            case MANUAL:
             case STOP:
             default:
                 _forwardSpeed = 0.0;
@@ -108,7 +108,7 @@ void setSpeed(double pidError)
     }
     else
     {
-	_runningMutex.unlock();
+        _runningMutex.unlock();
         _forwardSpeed = 0.0;
     }	
 }
@@ -155,13 +155,13 @@ void kalmanCallback(geometry_msgs::PoseWithCovarianceStamped msg)
     _runningMutex.lock();
     if(_running)
     {
-	_runningMutex.unlock();
-	// Get deltaX
+        _runningMutex.unlock();
+        // Get deltaX
         double deltaX = msg.pose.pose.position.y;
 
-	// Get theta
-	tf::Quaternion quat;
-	tf::quaternionMsgToTF(msg.pose.pose.orientation, quat);
+        // Get theta
+        tf::Quaternion quat;
+        tf::quaternionMsgToTF(msg.pose.pose.orientation, quat);
         double deltaTheta = tf::getYaw(quat);
 
         // Calculate error
@@ -184,7 +184,6 @@ void kalmanCallback(geometry_msgs::PoseWithCovarianceStamped msg)
         double derivative = error - oldError;
 
         // Calculate speed and correction for theta
-        _motorCommandMutex.lock();
         _angleSpeed = _coeffP * error + _coeffI * integral + _coeffD * derivative;
 
         // Set limits
@@ -193,15 +192,12 @@ void kalmanCallback(geometry_msgs::PoseWithCovarianceStamped msg)
         else if(_angleSpeed < -_maxAngleSpeed)
             _angleSpeed = -_maxAngleSpeed;
 
-        setSpeed();
-        _motorCommandMutex.unlock();
-
         // Store new as old
         oldError = error;
     }
     else
     {
-	_runningMutex.unlock();
+        _runningMutex.unlock();
         oldError = integral = 0.0;
     }
 }
@@ -232,15 +228,16 @@ void motorUpdateThread()
     while(true)
     {
         _runningMutex.lock();
-	if(_running)
-	{
-		_runningMutex.unlock();
-		// Send motor command
-		_motorCommandMutex.lock();
-		sendMotorCommand(_forwardSpeed, _angleSpeed);
-		_motorCommandMutex.unlock();
-	}
-	_runningMutex.unlock();
+        if(_running)
+        {
+            _runningMutex.unlock();
+
+            // Send motor command
+            setSpeed();
+            sendMotorCommand(_forwardSpeed, _angleSpeed);
+        }
+        else
+            _runningMutex.unlock();
 
         // Sleep
         usleep(_motorUpdateRate); // Sleep for 50 ms = 20Hz

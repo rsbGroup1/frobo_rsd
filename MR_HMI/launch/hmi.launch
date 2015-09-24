@@ -1,0 +1,74 @@
+<launch>
+	<!-- frobit parameters --> 
+	<param name="diff_steer_wheel_distance" value="0.375"/>
+	<param name="ticks_per_meter_left" value="677" />
+	<param name="ticks_per_meter_right" value="677" />
+
+	<group ns="fmControllers">
+		<!-- Frobit interface node -->
+		<node pkg="sdu_frobit_v2" name="frobit" type="frobit_interface_node.py" output="screen" >
+			<param name="actuation_enable_sub" value="/fmSafe/actuation_enable" />
+			<param name="cmd_vel_sub" value="/fmCommand/cmd_vel" />
+			<param name="enc_left_pub" value="/fmInformation/encoder_left" />
+			<param name="enc_right_pub" value="/fmInformation/encoder_right" />
+			<param name="wheel_status_left_pub" value="/fmInformation/wheel_status_left" />
+			<param name="wheel_status_right_pub" value="/fmInformation/wheel_status_right" />
+			<param name="wheel_feedback_left_pub" value="/fmInformation/wheel_feedback_left" />
+			<param name="wheel_feedback_right_pub" value="/fmInformation/wheel_feedback_right" />
+			<param name="wheel_pid_left_pub" value="/fmInformation/wheel_pid_left" />
+			<param name="wheel_pid_right_pub" value="/fmInformation/wheel_pid_right" />
+			<param name="nmea_from_frobit_sub" value="/fmSignal/nmea_from_frobit" />	 
+			<param name="nmea_to_frobit_pub" value="/fmSignal/nmea_to_frobit" />	 
+			<param name="publish_wheel_status_rate" value="10" />
+			<param name="publish_wheel_feedback_rate" value="10" />
+			<param name="publish_wheel_pid_rate" value="10" />
+			<param name="castor_front" value="true"/>
+		        <param name="max_linear_acceleration" value="16.2"/>
+         		<param name="max_angular_acceleration" value="16.0"/>
+			<param name="wheel_drive_feed_forward" value="85" /> 
+			<param name="wheel_drive_kp" value="5" /> 
+			<param name="wheel_drive_ki" value="10" /> 
+			<param name="wheel_drive_kd" value="5" /> 
+			<param name="wheel_drive_max_integral_output" value="300" /> 
+			<param name="wheel_turn_feed_forward" value="110" /> 
+			<param name="wheel_turn_kp" value="10" /> 
+			<param name="wheel_turn_ki" value="20" /> 
+			<param name="wheel_turn_kd" value="3" /> 
+			<param name="wheel_turn_max_integral_output" value="300" /> 
+			<param name="supply_voltage_scale_factor" value="0.03747" /> 
+			<param name="min_supply_voltage" value="12.1" /> 
+			<param name="show_voltage_interval" value="300" /> 
+		</node>
+	</group>
+
+	<group ns="fmSafety">
+		<node pkg="basic_incident_handler" name="incident_handler" type="basic_incident_handler_node.py" output="screen">
+    		<param name="deadman_enable" value="True" />
+    		<param name="deadman_timeout" value="0.100" />
+    		<param name="deadman_sub" value="/fmSafe/deadman" />
+    		<param name="critical_fault_enable" value="False" />
+    		<param name="critical_fault_timeout" value="0.100" />
+    		<param name="critical_fault_sub" value="/fmSafe/critical_fault" />
+			<param name="actuation_enable_pub" value="/fmSafe/actuation_enable" />
+		</node>
+	</group>
+
+	<!-- frobit serial device and protocol interface -->
+	<node pkg="serial_nmea" name="frobit_nmea" type="serial_nmea_node" respawn="true" output="screen">
+		<param name="nmea_from_device_pub" value="/fmSignal/nmea_from_frobit"/>
+		<param name="nmea_to_device_sub" value="/fmSignal/nmea_to_frobit"/>
+		<param name="serial_device" value="/dev/frobit"/>
+		<param name="serial_baudrate" value="57600"/>
+		<param name="use_nmea_checksum" value="true"/>
+        </node>
+
+	<group ns="MR_HMI">
+		<node pkg="mr_hmi" name="proxy" type="proxy.py">
+			<param name="missionplanner_pub" value="/mrHMI/start_stop"/>
+			<param name="deadman_pub" value="/fmSafe/deadman"/>
+			<param name="cmd_pub" value="/fmCommand/cmd_vel"/>
+			<param name="tipper_pub" value="/mrMainController/tipper"/>
+		</node>			
+	</group>
+</launch>
+

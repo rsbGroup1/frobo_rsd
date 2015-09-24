@@ -146,7 +146,7 @@
 		  <param name="base_footprint_frame" value="base_footprint"/>
 		  <param name="freq" value="30.0"/>
 		  <param name="sensor_timeout" value="1.0"/>  
-		  <param name="odom_used" value="true"/>
+		  <param name="odom_used" value="false"/>
 		  <param name="imu_used" value="false"/>
 		  <param name="vo_used" value="true"/>
 		  <param name="gps_used" value="false"/>
@@ -173,8 +173,8 @@
 	<!-- NAVIGATION CONTROLLER -->
 	<group ns="MR_NavigationController">
 		<node pkg="mr_navigation_controller" name="NavigationController" type="mr_navigation_controller">
-			  <param name="speed_normal" value="0.5"/>
-			  <param name="speed_slow" value="0.2"/>
+			  <param name="speed_normal" value="0.1"/>
+			  <param name="speed_slow" value="0.05"/>
 			  <param name="speed_error" value="0.0"/>
 			  <param name="max_angle_speed" value="0.2"/>
 			  <param name="pid_coeff_p" value="0.5"/>
@@ -212,7 +212,7 @@
 	<!-- OBSTACLE DETECTOR -->
 	<group ns="obstacle_detector">
 		<node pkg="mr_obstacle_detector" name="obstacle_detector" type="obstacle_detector.py">
-			<param name="threshold_slow" value="0.4" />
+			<param name="threshold_slow" value="4.4" />
 			<param name="threshold_stop" value="0.25" />
 			<param name="threshold_ignore" value="0.05" />
 			<param name="laser_scan" value="/scan" />

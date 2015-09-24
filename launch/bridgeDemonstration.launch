@@ -152,10 +152,10 @@
 	<!-- NAVIGATION CONTROLLER -->
 	<group ns="MR_NavigationController">
 		<node pkg="mr_navigation_controller" name="NavigationController" type="mr_navigation_controller">
-			  <param name="speed_normal" value="0.6"/>
+			  <param name="speed_normal" value="0.5"/>
 			  <param name="speed_slow" value="0.2"/>
 			  <param name="speed_error" value="0.0"/>
-			  <param name="max_angle_speed" value="0.8"/>
+			  <param name="max_angle_speed" value="0.2"/>
 			  <param name="pid_coeff_p" value="0.5"/>
 			  <param name="pid_coeff_i" value="0.001"/>
 			  <param name="pid_coeff_d" value="0.01"/>

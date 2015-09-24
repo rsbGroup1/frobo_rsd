@@ -7,9 +7,11 @@
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include "std_msgs/String.h"
-#include "geometry_msgs/PoseWithCovarianceStamped.h"
 #include "geometry_msgs/TwistStamped.h"
+#include "geometry_msgs/PoseWithCovarianceStamped.h"
 #include "msgs/BoolStamped.h"
+#include <tf/tf.h>
+#include <tf/transform_datatypes.h>
 
 // Defines
 #define M_PI                    3.14159265358979323846
@@ -22,14 +24,15 @@ enum MODES
     SLOW = 0,
     ERROR,
     STOP,
-    START
+    START,
+    MANUAL
 };
 
 // Global var
 bool _running = false;
 MODES _systemMode = STOP;
 ros::Publisher _motorCommandTopic, _deadmanTopic;
-boost::mutex _motorCommandMutex;
+boost::mutex _motorCommandMutex, _runningMutex;
 double _angleSpeed = 0.0, _forwardSpeed = 0.0;
 double _coeffP, _coeffI, _coeffD, _maxI;
 double _maxAngleSpeed;
@@ -41,6 +44,8 @@ void setSpeed(double pidError = 0);
 
 void missionCallback(std_msgs::String msg)
 {
+    _runningMutex.lock();
+
     if(msg.data == "start")
     {
         _systemMode = START;
@@ -59,7 +64,14 @@ void missionCallback(std_msgs::String msg)
     else if(msg.data == "errorStop")
     {
         _systemMode = ERROR;
+    }    
+    else if(msg.data == "manual")
+    {
+        _systemMode = MANUAL;
+	_running = false;
     }
+
+    _runningMutex.unlock();
 }
 
 void setSpeed(double pidError)
@@ -67,8 +79,11 @@ void setSpeed(double pidError)
     // TODO: Include PID error to speed here
     //returnSpeed pidError blabla
 
+    _runningMutex.lock();
     if(_running)
     {
+	_runningMutex.unlock();
+
         switch(_systemMode)
         {
             case START:
@@ -84,6 +99,7 @@ void setSpeed(double pidError)
                 _forwardSpeed = _speedSlow;
                 break;
 
+	    case MANUAL:
             case STOP:
             default:
                 _forwardSpeed = 0.0;
@@ -91,7 +107,10 @@ void setSpeed(double pidError)
         }
     }
     else
+    {
+	_runningMutex.unlock();
         _forwardSpeed = 0.0;
+    }	
 }
 
 double calculateError(double deltaX, double deltaTheta)
@@ -129,14 +148,21 @@ double calculateError(double deltaX, double deltaTheta)
     return deltaXTheta * DEGREETORAD;
 }
 
-void kalmanCallback(geometry_msgs::PoseWithCovarianceStamped pose)
+void kalmanCallback(geometry_msgs::PoseWithCovarianceStamped msg)
 {
     static double oldError = 0.0, integral = 0.0;
 
+    _runningMutex.lock();
     if(_running)
     {
-        double deltaX = pose.pose.pose.position.x;
-        double deltaTheta = pose.pose.pose.orientation.x;
+	_runningMutex.unlock();
+	// Get deltaX
+        double deltaX = msg.pose.pose.position.y;
+
+	// Get theta
+	tf::Quaternion quat;
+	tf::quaternionMsgToTF(msg.pose.pose.orientation, quat);
+        double deltaTheta = tf::getYaw(quat);
 
         // Calculate error
         double error = calculateError(deltaX, deltaTheta);
@@ -175,6 +201,7 @@ void kalmanCallback(geometry_msgs::PoseWithCovarianceStamped pose)
     }
     else
     {
+	_runningMutex.unlock();
         oldError = integral = 0.0;
     }
 }
@@ -184,7 +211,10 @@ void sendMotorCommand(double speed, double theta)
     // Create deadman stuff
     msgs::BoolStamped boolStamp;
     boolStamp.header.stamp = ros::Time::now();
+
+    _runningMutex.lock();
     boolStamp.data = _running;
+    _runningMutex.unlock();
 
     // Create motor stuff
     geometry_msgs::TwistStamped twistStamp;
@@ -236,7 +266,7 @@ int main()
     std::string deadmanParameter, motorParameter, missionPlanParam, kalmanParam;
     nh.param<std::string>("/MR_NavigationController/NavigationController/deadman_pub", deadmanParameter, "/fmSafe/deadman");
     nh.param<std::string>("/MR_NavigationController/NavigationController/cmd_vel_pub", motorParameter, "/fmCommand/cmd_vel");
-    nh.param<std::string>("/MR_NavigationController/NavigationController/mr_missionplan_sub", missionPlanParam, "/mrMissionPlanner/Status");
+    nh.param<std::string>("/MR_NavigationController/NavigationController/mr_missionplan_sub", missionPlanParam, "/mrMissionPlanner/status");
     nh.param<std::string>("/MR_NavigationController/NavigationController/mr_kalman_sub", kalmanParam, "/mrKalman/data");
 
     // Publisher

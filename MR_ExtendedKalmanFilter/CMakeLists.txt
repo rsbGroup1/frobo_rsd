@@ -17,6 +17,7 @@ find_package(catkin REQUIRED
             geometry_msgs
             sensor_msgs
             message_generation
+	    genmsg
         )
 
 find_package(Boost REQUIRED COMPONENTS thread)
@@ -32,6 +33,7 @@ generate_messages(
     DEPENDENCIES
         std_msgs
 )
+
 
 catkin_package(
     CATKIN_DEPENDS

@@ -42,7 +42,7 @@
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
 #include "odom_estimation.h"
-#include <MR_ExtendedKalmanFilter/GetStatus.h>
+#include <mr_extendedkalmanfilter/GetStatus.h>
 
 // messages
 #include "nav_msgs/Odometry.h"
@@ -101,7 +101,7 @@ private:
 
 
   /// get the status of the filter
-  bool getStatus(MR_ExtendedKalmanFilter::GetStatus::Request& req, MR_ExtendedKalmanFilter::GetStatus::Response& resp);
+  bool getStatus(mr_extendedkalmanfilter::GetStatus::Request& req, mr_extendedkalmanfilter::GetStatus::Response& resp);
 
   ros::NodeHandle node_;
   ros::Timer timer_;

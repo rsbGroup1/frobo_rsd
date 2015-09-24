@@ -2,7 +2,7 @@ window.rsdNamespace = window.rsdNamespace || { };
 
 rsdNamespace.connection;
 
-rsdNamespace.StartListening = function( hostname, port ) {
+rsdNamespace.StartListening = function() {
 
     // $('#main_title').text( port );
 
@@ -18,15 +18,13 @@ rsdNamespace.StartListening = function( hostname, port ) {
     // ws.onmessage = function( evt ) { console.log( evt.data ); }; //on message event
     // ws.onerror = function( evt ) { console.log( evt.data ); }; //on error event
 
-    rsdNamespace.connection = new WebSocket( 'ws://' + hostname + ':' + port );
+    rsdNamespace.connection = new WebSocket( 'ws://' + rsdNamespace.commAddr + ':' + rsdNamespace.commPort );
 
     // When the connection is open, send some data to the server
     rsdNamespace.connection.onopen = function () {
 
-        // rsdNamespace.connection.send( 'Ping' ); // Send the message 'Ping' to the server
-
         // Request information on the Mobile Platform's location in every second
-        setInterval( function () {
+        rsdNamespace.locationRequestScheduler = setInterval( function () {
 
             messageOut = {
                 "messageType":"location_request",
@@ -38,7 +36,7 @@ rsdNamespace.StartListening = function( hostname, port ) {
         }, 1000);
 
         // Send information on the remote's status
-        setInterval( function () {
+        rsdNamespace.remoteUpdateScheduler = setInterval( function () {
 
             messageOut = {
                 "messageType":"remote_update",
@@ -52,14 +50,6 @@ rsdNamespace.StartListening = function( hostname, port ) {
             rsdNamespace.connection.send( JSON.stringify( messageOut ) );
 
         }, 200);
-
-    };
-
-    // Log errors
-    rsdNamespace.connection.onerror = function ( error ) {
-
-        $('#availability').css( 'background-color', 'red' );
-        console.log('WebSocket Error ' + error );
 
     };
 
@@ -81,5 +71,31 @@ rsdNamespace.StartListening = function( hostname, port ) {
         }
 
     };
+
+    // Log errors
+    rsdNamespace.connection.onerror = function ( error ) {
+
+        $('#availability').css( 'background-color', 'red' );
+        console.log('WebSocket Error ' + error );
+
+    };
+
+    // Terminate schedulers upon exiting
+    rsdNamespace.connection.onclose = function() {
+
+        if( rsdNamespace.locationRequestScheduler ) {
+
+            clearInterval( rsdNamespace.locationRequestScheduler );
+            clearInterval( rsdNamespace.remoteUpdateScheduler );
+
+        }
+
+    };
+
+};
+
+rsdNamespace.stopListening = function() {
+
+    if( rsdNamespace.connection ) rsdNamespace.connection.close();
 
 };

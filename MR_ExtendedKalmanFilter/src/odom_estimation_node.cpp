@@ -98,9 +98,10 @@ OdomEstimationNode::OdomEstimationNode()
     timer_ = nh_private.createTimer(ros::Duration(1.0 / max(freq, 1.0)),
         &OdomEstimationNode::spin, this);
 
-    // advertise our estimation
-    pose_pub_ = nh_private.advertise<geometry_msgs::PoseWithCovarianceStamped>(
-        "odom_combined", 10);
+    // advertise our estimation  
+    std::string pubName;
+    nh_private.param<std::string>("publishTopic", pubName, "/mrKalman/pose");
+    pose_pub_ = nh_private.advertise<geometry_msgs::PoseWithCovarianceStamped>(pubName, 10);
 
     // initialize
     filter_stamp_ = Time::now();
@@ -496,8 +497,8 @@ void OdomEstimationNode::spin(const ros::TimerEvent& e)
 };
 
 bool OdomEstimationNode::getStatus(
-    MR_ExtendedKalmanFilter::GetStatus::Request& req,
-    MR_ExtendedKalmanFilter::GetStatus::Response& resp)
+    mr_extendedkalmanfilter::GetStatus::Request& req,
+    mr_extendedkalmanfilter::GetStatus::Response& resp)
 {
     stringstream ss;
     ss << "Input:" << endl;

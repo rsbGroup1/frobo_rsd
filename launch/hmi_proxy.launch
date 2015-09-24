@@ -1,0 +1,7 @@
+<!-- HMI Proxy launch file -->
+
+<launch>
+	<!-- serial communication with the IMU -->
+	<node pkg="hmi_python_proxy" name="proxy" type="proxy.py"/>
+</launch>
+

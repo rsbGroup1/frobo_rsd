@@ -1,0 +1,11 @@
+To connect to ROS CORE on the mobile platform add the following to the specified files.
+Make sure your ip is 192.168.1.XXX (and not 100)
+
+For the .bashrc:
+#export ROS_MASTER_URI=http://192.168.1.100:11311
+#export ROS_IP=192.168.1.100
+#export ROS_HOSTNAME=192.168.1.100
+
+
+for /etc/hosts:
+192.168.1.100	ROS_CORE

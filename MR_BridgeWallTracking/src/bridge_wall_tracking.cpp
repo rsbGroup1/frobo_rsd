@@ -22,7 +22,7 @@ using namespace std;
 using namespace cv;
 
 #define PI 3.14159265
-#define ROW_WIDTH 75
+#define ROW_WIDTH 120
 
 struct LinePolar {
     double distance;
@@ -84,6 +84,7 @@ struct Line {
 bool newImage = false;
 ros::Publisher img_publisher, angleOnWalls, distanceOfCenter, visualOdometry;
 bool runOnce = false;
+double minScoreForPublish, covX, covYaw;
 
 void FindBestLineRemoveInliers(vector<Point2d>& points, vector<Line>& lines, double inlierTreshold, int iterations = 30, bool removeInliers = true)
 {
@@ -209,16 +210,25 @@ pair<Line, Line> getLines(const sensor_msgs::LaserScanPtr& scanMsg, double& qual
         angleMsg.data = angleOnWallValue * 180 / PI;
         angleOnWalls.publish(angleMsg);
 
-        //Publish the Odometry message
-        nav_msgs::Odometry odoMsg;
-        odoMsg.pose.pose.position.x = distaneToCenterLine;
-	tf::quaternionTFToMsg( tf::createQuaternionFromRPY(0,0,angleOnWallValue*180/PI),odoMsg.pose.pose.orientation );
-	
-        for (int i=0; i<odoMsg.pose.covariance.size(); i++)
-            odoMsg.pose.covariance[i] = 0.8;
+        if(score >= minScoreForPublish)
+        {
+            //Publish the Odometry message
+            nav_msgs::Odometry odoMsg;
+            odoMsg.pose.pose.position.x = distaneToCenterLine;
+            tf::quaternionTFToMsg( tf::createQuaternionFromRPY(0,0,angleOnWallValue*180/PI),odoMsg.pose.pose.orientation );
 
-	odoMsg.header.stamp = ros::Time::now();
-        visualOdometry.publish(odoMsg);
+            for (int i=0; i<odoMsg.pose.covariance.size(); i++)
+                odoMsg.pose.covariance[i] = 0.01;
+
+            odoMsg.pose.covariance[0] = (float)covX;
+            odoMsg.pose.covariance[35] = (float) covYaw;
+
+            odoMsg.header.stamp = ros::Time::now();
+            visualOdometry.publish(odoMsg);
+
+
+
+        }
     }
 
     //Draw lines
@@ -254,6 +264,11 @@ int main(int argc, char** argv)
 
     ros::init(argc, argv, "bridge_wall_tracking");
     ros::NodeHandle n;
+
+    // Set parameters
+    n.param<double>("minScoreForPublishing",minScoreForPublish,0.5);
+    n.param<double>("covX",covX,0.8);
+    n.param<double>("covYaw",covYaw,0.8);
 
     //Subscribe to topic
     ros::Subscriber sub = n.subscribe("scan", 1000, laserScanCallBack);

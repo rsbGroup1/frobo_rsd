@@ -14,7 +14,6 @@
 #define DATA_LENGTH             10
 
 // Global var
-int _baudRate, _port;
 serial::Serial *_serialConnection;
 bool _isDown = true;
 bool _debugMsg;
@@ -130,17 +129,18 @@ int main()
     ros::Subscriber subTipControl = nh.subscribe(tipControlSub, 10, tipControlCallback);
 
     // Get serial data parameters
+    int baudRate;    
+    std::string port;
     nh.param<bool>("/MR_TipController/TipController/debug", _debugMsg, false);
-    nh.param<int>("/MR_TipController/TipController/baud_rate", _baudRate, 115200);
-    nh.param<int>("/MR_TipController/TipController/port", _port, 1);
-    std::string port = "/dev/ttyACM" + SSTR(_port);
+    nh.param<int>("/MR_TipController/TipController/baud_rate", baudRate, 115200);
+    nh.param<std::string>("/MR_TipController/TipController/port", port, "/dev/serial/by-id/usb-Arduino_Srl_Arduino_Uno_7543932393535120F172-if00");
 
     // Inform user
-    std::string temp = "Connecting to '" + port + "' with baud '" + SSTR(_baudRate) + "'";
+    std::string temp = "Connecting to '" + port + "' with baud '" + SSTR(baudRate) + "'";
     ROS_INFO(temp.c_str());
 
     // Open connection
-    _serialConnection = new serial::Serial(port.c_str(), _baudRate, serial::Timeout::simpleTimeout(50));
+    _serialConnection = new serial::Serial(port.c_str(), baudRate, serial::Timeout::simpleTimeout(50));
 
     // Check if connection is ok
     if(!_serialConnection->isOpen())

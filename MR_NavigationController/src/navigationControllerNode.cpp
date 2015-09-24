@@ -7,9 +7,11 @@
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include "std_msgs/String.h"
-#include "geometry_msgs/PoseWithCovarianceStamped.h"
 #include "geometry_msgs/TwistStamped.h"
+#include "nav_msgs/Odometry.h"
 #include "msgs/BoolStamped.h"
+#include <tf/tf.h>
+#include <tf/transform_datatypes.h>
 
 // Defines
 #define M_PI                    3.14159265358979323846
@@ -129,14 +131,19 @@ double calculateError(double deltaX, double deltaTheta)
     return deltaXTheta * DEGREETORAD;
 }
 
-void kalmanCallback(geometry_msgs::PoseWithCovarianceStamped pose)
+void kalmanCallback(nav_msgs::Odometry msg)
 {
     static double oldError = 0.0, integral = 0.0;
 
     if(_running)
     {
-        double deltaX = pose.pose.pose.position.x;
-        double deltaTheta = pose.pose.pose.orientation.x;
+	// Get deltaX
+        double deltaX = msg.pose.pose.position.x;
+
+	// Get theta
+	tf::Quaternion quat;
+	tf::quaternionMsgToTF(msg.pose.pose.orientation, quat);
+        double deltaTheta = tf::getYaw(quat);
 
         // Calculate error
         double error = calculateError(deltaX, deltaTheta);

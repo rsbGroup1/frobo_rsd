@@ -6,11 +6,8 @@
 	<param name="ticks_per_meter_left" value="677" />
 	<param name="ticks_per_meter_right" value="677" />
 
- 	<!--<node pkg="stage_ros" type="stageros" name="simulator" args="$(find frobit_demo)/stage/frobit_row_navigation.world"/>-->
-	<!--remap from="/fmKnowledge/pose" to="/odom" /-->
 
-
-	<group ns="fmDecisionMakers">
+	<!--<group ns="fmDecisionMakers">
 		<node pkg="frobit_demo" name="mission" type="keyboard_mission_node.py" output="screen">
 			<param name="keyboard_sub" value="/fmHMI/keyboard" />
 			<param name="automode_pub" value="/fmPlan/automode" />
@@ -21,8 +18,9 @@
             <param name="linear_velocity_step" value="0.1"/>
             <param name="angular_velocity_step" value="0.2"/>
 		</node>
-	</group>
+	</group>-->
 
+	<!-- TWIST CONVERTER -->
 	<group ns="fmLib">
 		<node pkg="twist_stamped_to_twist" name="converter" type="cmd_vel_converter.py">	
 			<param name="cmd_vel_sub" value="/fmCommand/cmd_vel" />
@@ -56,7 +54,7 @@
 		<param name="termination_character" value="10"/>
 	</node> 
 
-	<!-- extract data from messages transmitted by the VectorNav VN-100 IMU -->
+	<!-- Extract data from messages transmitted by the VectorNav VN-100 IMU -->
 	<node pkg="vectornav_vn100" name="imu_node"  type="vectornav_vn100_node" output="screen"  respawn="true">
 		<param name="vectornav_vn100_sub" value="/fmData/imu_rx"/>
 		<param name="imu_pub" value="/fmInformation/imu"/>
@@ -89,7 +87,7 @@
 	    <param name="port" type="str" value="/dev/lidar" />
 	</node>
 
-	<!-- frobit serial device and protocol interface -->
+	<!-- FROBOT SERIAL DEVICE AND PROTOCOL INTERFACE -->
 	<node pkg="serial_nmea" name="frobit_nmea" type="serial_nmea_node" respawn="true" output="screen">
 		<param name="nmea_from_device_pub" value="/fmSignal/nmea_from_frobit"/>
 		<param name="nmea_to_device_sub" value="/fmSignal/nmea_to_frobit"/>
@@ -98,17 +96,24 @@
 		<param name="use_nmea_checksum" value="true"/>
         </node>
 
-	<!-- Wall Tracking -->
+	<!-- WALL TRACKING -->
 	<node pkg="mr_bridgewalltracking" name="BridgeWallTracking" type="BridgeWallTracking"></node>
 
 	<!-- MISSION PLANNER -->
-	<!--<group ns="MR_MissionPlanner">
+	<group ns="MR_MissionPlanner">
 		<node pkg="mr_mission_planner" name="MissionPlanner" type="mr_mission_planner">
+			<param name="baud_rate" value="115200"/>
+			<param name="port" value="/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00"/>  	
+			<param name="debug" value="true"/>  	
+			<param name="mr_collision_slowdown_sub" value="/mrCollisionDetector/slow_down"/>  	
+			<param name="mr_collision_stop_sub" value="/mrCollisionDetector/error_stop"/>  		
+			<param name="mr_hmi_sub" value="/mrHMI/start_stop"/>  	
+			<param name="mr_missionplanner_pub" value="/mrMissionPlanner/status"/>    	
 		</node>
-	</group>-->
+	</group>
 
+	<!-- FROBOT INTERFACE -->
 	<group ns="fmControllers">
-		<!-- Frobit interface node -->
 		<node pkg="sdu_frobit_v2" name="frobit" type="frobit_interface_node.py" output="screen" >
 			<param name="actuation_enable_sub" value="/fmSafe/actuation_enable" />
 			<param name="cmd_vel_sub" value="/fmCommand/cmd_vel" />
@@ -147,6 +152,19 @@
 	<!-- NAVIGATION CONTROLLER -->
 	<group ns="MR_NavigationController">
 		<node pkg="mr_navigation_controller" name="NavigationController" type="mr_navigation_controller">
+			  <param name="speed_normal" value="0.6"/>
+			  <param name="speed_slow" value="0.2"/>
+			  <param name="speed_error" value="0.0"/>
+			  <param name="max_angle_speed" value="0.8"/>
+			  <param name="pid_coeff_p" value="0.5"/>
+			  <param name="pid_coeff_i" value="0.001"/>
+			  <param name="pid_coeff_d" value="0.01"/>
+			  <param name="pid_max_i" value="1000"/>
+			  <param name="motor_update_rate" value="50"/>
+			  <param name="deadman_pub" value="/fmSafe/deadman"/>
+			  <param name="cmd_vel_pub" value="/fmCommand/cmd_vel"/>
+			  <param name="mr_missionplan_sub" value="/mrMissionPlanner/status"/>
+			  <param name="mr_kalman_sub" value="/fmKnowledge/pose_withCov"/>
 		</node>
 	</group>
 
@@ -178,21 +196,16 @@
 		  <remap from="vo" to="/visualOdometry" />
 		  <remap from="gps" to="/gps" />
 		</node>
-<!--
-		<node pkg="mr_extendedkalmanfilter" name="ExtendedKalmanFilter" type="mr_extendedkalmanfilter">
-		  <param name="output_frame" value="odom_combined"/>
-		  <param name="base_footprint_frame" value="base_footprint"/>
-		  <param name="freq" value="30.0"/>
-		  <param name="sensor_timeout" value="1.0"/>  
-		  <param name="odom_used" value="true"/>
-		  <param name="imu_used" value="true"/>
-		  <param name="vo_used" value="true"/>
-		  <param name="gps_used" value="false"/>
-		  <remap from="odom" to="/odom" />
-		  <remap from="imu_data" to="/imu_data" />
-		  <remap from="vo" to="/vo" />
-		  <remap from="gps" to="/gps" />
-		</node>-->
+	</group>
+
+	<!-- TIP CONTROLLER -->
+	<group ns="MR_TipController">
+		<node pkg="mr_tip_controller" name="TipController" type="mr_tip_controller">
+			<param name="baud_rate" value="115200"/>
+			<param name="port" value="/dev/serial/by-id/usb-Arduino_Srl_Arduino_Uno_7543932393535120F172-if00"/>  	
+			<param name="debug" value="true"/>  
+			<param name="mr_maincontroller_tipper_pub" value="/mrMainController/tipper"/>	   	
+		</node>
 	</group>
 
 </launch>

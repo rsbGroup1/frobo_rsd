@@ -25,7 +25,6 @@ enum MODES
 };
 
 // Global var
-int _baudRate, _port;
 serial::Serial *_serialConnection;
 ros::Publisher _missionPlannerPublisher;
 MODES _systemMode = STOP;
@@ -212,17 +211,18 @@ int main()
     ros::Subscriber subStartStop = nh.subscribe(startStopSub, 10, startStopCallback);
 
     // Get serial data parameters
+    int baudRate;
+    std::string port;
     nh.param<bool>("/MR_MissionPlanner/MissionPlanner/debug", _debugMsg, false);
-    nh.param<int>("/MR_MissionPlanner/MissionPlanner/baud_rate", _baudRate, 115200);
-    nh.param<int>("/MR_MissionPlanner/MissionPlanner/port", _port, 0);
-    std::string port = "/dev/ttyACM" + SSTR(_port);
+    nh.param<int>("/MR_MissionPlanner/MissionPlanner/baud_rate", baudRate, 115200);
+    nh.param<std::string>("/MR_MissionPlanner/MissionPlanner/port", port, "/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00");
 
     // Inform user
-    std::string temp = "Connecting to '" + port + "' with baud '" + SSTR(_baudRate) + "'";
+    std::string temp = "Connecting to '" + port + "' with baud '" + SSTR(baudRate) + "'";
     ROS_INFO(temp.c_str());
 
     // Open connection
-    _serialConnection = new serial::Serial(port.c_str(), _baudRate, serial::Timeout::simpleTimeout(50));
+    _serialConnection = new serial::Serial(port.c_str(), baudRate, serial::Timeout::simpleTimeout(50));
 
     // Check if connection is ok
     if(!_serialConnection->isOpen())

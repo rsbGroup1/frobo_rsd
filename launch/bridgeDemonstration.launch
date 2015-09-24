@@ -208,8 +208,8 @@
 	<!-- OBSTACLE DETECTOR -->
 	<group ns="obstacle_detector">
 		<node pkg="mr_obstacle_detector" name="obstacle_detector" type="obstacle_detector.py">
-			<param name="threshold_slow" value="0.2" />
-			<param name="threshold_stop" value="0.4" />
+			<param name="threshold_slow" value="0.4" />
+			<param name="threshold_stop" value="0.25" />
 			<param name="threshold_ignore" value="0.05" />
 			<param name="laser_scan" value="/scan" />
 			<param name="publishTopic" value="/mrObstacleDetector/status" />

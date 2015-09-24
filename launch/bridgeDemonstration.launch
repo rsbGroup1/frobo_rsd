@@ -50,7 +50,7 @@
     		<param name="critical_fault_enable" value="False" />
     		<param name="critical_fault_timeout" value="0.100" />
     		<param name="critical_fault_sub" value="/fmSafe/critical_fault" />
-			<param name="actuation_enable_pub" value="/fmSafe/actuation_enable" />
+		<param name="actuation_enable_pub" value="/fmSafe/actuation_enable" />
 		</node>
 	</group>
 
@@ -152,7 +152,7 @@
 		  <param name="gps_used" value="false"/>
 		  <param name="publishTopic" value="/mrKalman/pose"/>
 		  <remap from="odom" to="/fmKnowledge/pose_withCov" />
-		  <remap from="imu_data" to="/imu_data" />
+		  <remap from="imu_data" to="/fmInformation/imu" />
 		  <remap from="vo" to="/visualOdometry" />
 		  <remap from="gps" to="/gps" />
 		</node>
@@ -173,13 +173,13 @@
 	<!-- NAVIGATION CONTROLLER -->
 	<group ns="MR_NavigationController">
 		<node pkg="mr_navigation_controller" name="NavigationController" type="mr_navigation_controller">
-			  <param name="speed_normal" value="0.4"/>
+			  <param name="speed_normal" value="0.2"/>
 			  <param name="speed_slow" value="0.2"/>
 			  <param name="speed_error" value="0.0"/>
-			  <param name="max_angle_speed" value="0.2"/>
-			  <param name="pid_coeff_p" value="0.5"/>
-			  <param name="pid_coeff_i" value="0.001"/>
-			  <param name="pid_coeff_d" value="0.01"/>
+			  <param name="max_angle_speed" value="0.3"/>
+			  <param name="pid_coeff_p" value="1.2"/>
+			  <param name="pid_coeff_i" value="0.0"/>
+			  <param name="pid_coeff_d" value="0"/>
 			  <param name="pid_max_i" value="1000"/>
 			  <param name="motor_update_rate" value="50"/>
 			  <param name="deadman_pub" value="/fmSafe/deadman"/>
@@ -200,20 +200,20 @@
 	</group>
 
 	<!-- HMI -->
-	<group ns="MR_HMI">
+	<!--group ns="MR_HMI">
 		<node pkg="mr_hmi" name="proxy" type="proxy.py">
 			<param name="missionplanner_pub" value="/mrHMI/start_stop"/>
 			<param name="deadman_pub" value="/fmSafe/deadman"/>
 			<param name="cmd_pub" value="/fmCommand/cmd_vel"/>
 			<param name="tipper_pub" value="/mrMainController/tipper"/>
 		</node>			
-	</group>
+	</group-->
 
 	<!-- OBSTACLE DETECTOR -->
 	<group ns="obstacle_detector">
 		<node pkg="mr_obstacle_detector" name="obstacle_detector" type="obstacle_detector.py">
-			<param name="threshold_slow" value="0.3" />
-			<param name="threshold_stop" value="0.15" />
+			<param name="threshold_slow" value="0.4" />
+			<param name="threshold_stop" value="0.3" />
 			<param name="threshold_ignore" value="0.05" />
 			<param name="laser_scan" value="/scan" />
 			<param name="publishTopic" value="/mrObstacleDetector/status" />

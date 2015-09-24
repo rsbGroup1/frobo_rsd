@@ -28,41 +28,59 @@ enum MODES
 serial::Serial *_serialConnection;
 ros::Publisher _missionPlannerPublisher;
 MODES _systemMode = STOP;
-boost::mutex _serialMutex, _publishMutex;
+boost::mutex _serialMutex;
 bool _debugMsg;
 
 // Functions
 void changeMode(MODES mode)
 {
     _serialMutex.lock();
+    std_msgs::String topicMsg;
+
     switch(mode)
     {
         case SLOW:
             _serialConnection->write("slow\n");
+
+	    topicMsg.data = "slowDown";
+
             if(_debugMsg)
                 ROS_INFO("Slow");
             break;
 
         case START:
             _serialConnection->write("start\n");
+
+
+	    topicMsg.data = "start";
+
             if(_debugMsg)
                 ROS_INFO("Start");
             break;
 
         case ERROR:
             _serialConnection->write("error\n");
+
+	    topicMsg.data = "errorStop";
+
             if(_debugMsg)
                 ROS_INFO("Error");
             break;
 
         case STOP:
             _serialConnection->write("stop\n");
+
+	    topicMsg.data = "stop";
+
             if(_debugMsg)
                 ROS_INFO("Stop");
             break;
 
         case MANUAL:
             _serialConnection->write("manual\n");
+
+	    topicMsg.data = "manual";
+
             if(_debugMsg)
                 ROS_INFO("Manual");
             break;
@@ -70,37 +88,22 @@ void changeMode(MODES mode)
         default:
             break;
     }
-    _serialMutex.unlock();
 
+    _serialMutex.unlock();
+    _missionPlannerPublisher.publish(topicMsg);
     _systemMode = mode;
 }
 
 void slowDownCallback(std_msgs::Bool value)
 {
     if(value.data)
-    {
         changeMode(SLOW);
-
-        std_msgs::String topicMsg;
-        topicMsg.data = "slowDown";
-        _publishMutex.lock();
-        _missionPlannerPublisher.publish(topicMsg);
-        _publishMutex.unlock();
-    }
 }
 
 void errorStopCallback(std_msgs::Bool value)
 {
     if(value.data)
-    {
         changeMode(ERROR);
-
-        std_msgs::String topicMsg;
-        topicMsg.data = "errorStop";
-        _publishMutex.lock();
-        _missionPlannerPublisher.publish(topicMsg);
-        _publishMutex.unlock();
-    }
 }
 
 void startStopCallback(std_msgs::String msg)
@@ -120,7 +123,6 @@ bool compareMsg(char* msg, char* command)
     {
         if(tolower(msg[i]) != tolower(command[i]))
             return false;
-
         i++;
     }
 
@@ -149,18 +151,10 @@ void readSerialThread()
 
             if(msg[i] == '\n')
             {
-                if(compareMsg(msg, "start\n") || compareMsg(msg, "stop\n"))
-                {
-                    std::string stringMsg(msg);
-                    stringMsg = stringMsg.substr(0, stringMsg.size()-1);
-                    std_msgs::String topicMsg;
-                    topicMsg.data = stringMsg;
-                    _publishMutex.lock();
-                    _missionPlannerPublisher.publish(topicMsg);
-                    _publishMutex.unlock();
-
-                    std::cout << "Publishing: " << stringMsg << std::endl;
-                }
+                if(compareMsg(msg, "start\n"))
+                    changeMode(START);
+		else if(compareMsg(msg, "stop\n"))
+                    changeMode(STOP);
 
                 // Clear data
                 i = 0;

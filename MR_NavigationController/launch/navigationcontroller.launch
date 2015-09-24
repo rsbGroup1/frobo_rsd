@@ -15,7 +15,7 @@
 			  <param name="deadman_pub" value="/fmSafe/deadman"/>
 			  <param name="cmd_vel_pub" value="/fmCommand/cmd_vel"/>
 			  <param name="mr_missionplan_sub" value="/mrMissionPlanner/status"/>
-			  <param name="mr_kalman_sub" value="/mrKalman/data"/>
+			  <param name="mr_kalman_sub" value="/fmKnowledge/pose_withCov"/>
 		</node>
 	</group>
 

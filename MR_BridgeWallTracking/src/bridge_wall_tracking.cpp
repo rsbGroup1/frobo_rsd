@@ -214,7 +214,7 @@ pair<Line, Line> getLines(const sensor_msgs::LaserScanPtr& scanMsg, double& qual
         {
             //Publish the Odometry message
             nav_msgs::Odometry odoMsg;
-            odoMsg.pose.pose.position.x = distaneToCenterLine;
+            odoMsg.pose.pose.position.y = distaneToCenterLine;
             tf::quaternionTFToMsg( tf::createQuaternionFromRPY(0,0,angleOnWallValue*180/PI),odoMsg.pose.pose.orientation );
 
             for (int i=0; i<odoMsg.pose.covariance.size(); i++)

@@ -164,7 +164,7 @@
 			  <param name="deadman_pub" value="/fmSafe/deadman"/>
 			  <param name="cmd_vel_pub" value="/fmCommand/cmd_vel"/>
 			  <param name="mr_missionplan_sub" value="/mrMissionPlanner/status"/>
-			  <param name="mr_kalman_sub" value="/fmKnowledge/pose_withCov"/>
+			  <param name="mr_kalman_sub" value="/mrKalman/pose"/>
 		</node>
 	</group>
 
@@ -182,7 +182,7 @@
 
 	<!-- EXTENDED KALMAN FILTER -->
 	<group ns="MR_ExtendedKalmanFilter">
-		<node pkg="robot_pose_ekf" name="ExtendedKalmanFilter" type="robot_pose_ekf">
+		<node pkg="mr_extendedkalmanfilter" name="ExtendedKalmanFilter" type="MR_ExtendedKalmanFilter">
 		  <param name="output_frame" value="kalman_pose"/>
 		  <param name="base_footprint_frame" value="base_footprint"/>
 		  <param name="freq" value="30.0"/>
@@ -191,6 +191,7 @@
 		  <param name="imu_used" value="false"/>
 		  <param name="vo_used" value="true"/>
 		  <param name="gps_used" value="false"/>
+		  <param name="publishTopic" value="/mrKalman/pose"/>
 		  <remap from="odom" to="/fmKnowledge/pose_withCov" />
 		  <remap from="imu_data" to="/imu_data" />
 		  <remap from="vo" to="/visualOdometry" />

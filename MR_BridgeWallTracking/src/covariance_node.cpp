@@ -45,7 +45,7 @@ int main(int argc, char** argv)
 	nh.param<string>("publishTopic", publishTopic,"odom_with_cov");
 	nh.param<string>("subscribeTopic", subscribeTopic,"odom");
 
-	ros::Subscriber sub = nh.subscribe<nav_msgs::Odometry>(publishTopic.c_str(), 1000, odomCallBack);
+	ros::Subscriber sub = nh.subscribe<nav_msgs::Odometry>(subscribeTopic.c_str(), 1000, odomCallBack);
 	odomWithCov = nh.advertise<nav_msgs::Odometry>(publishTopic.c_str(), 1000);
 
     ros::Rate r(50);

@@ -121,7 +121,11 @@
 	</node>
 
 	<!-- WALL TRACKING -->
-	<node pkg="mr_bridgewalltracking" name="BridgeWallTracking" type="BridgeWallTracking"></node>
+	<node pkg="mr_bridgewalltracking" name="BridgeWallTracking" type="BridgeWallTracking">
+		<param name="minScoreForPublishing" value="0.4"/>
+		<param name="covX" value="0.8"/>
+		<param name="covYaw" value="0.8"/>
+	</node>
 
 	<!-- Add covariance to frobo odometry -->
 	<node pkg="mr_bridgewalltracking" name="OdomAddCov" type="OdomAddCov">

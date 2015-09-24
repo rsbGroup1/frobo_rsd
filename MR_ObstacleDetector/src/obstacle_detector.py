@@ -45,12 +45,14 @@ class obs_detector():
 	def __init__(self):
 		# initialize stuff
 		rospy.init_node('obstacle_detector')
-		self.pub_slow = rospy.Publisher('slow', Bool, queue_size=10)
-		self.pub_stop = rospy.Publisher('stop', Bool, queue_size=10)
+				
+		publishTopic = rospy.get_param("~publishTopic", "/mrObstacleDetector/status")
+		self.obstaclePub = rospy.Publisher(publishTopic, String, queue_size=1)
 		self.slow = False
 		self.stop = False
 		self.update_rate = 20 # [Hz]
 		self.r = rospy.Rate(self.update_rate)
+		self.oldValue = -1 # 0 = nothing, 1 = slow, 2 = stop
 
 		# get parameters
 		self.threshold_slow = rospy.get_param("~threshold_slow", 1.2)
@@ -71,21 +73,30 @@ class obs_detector():
 		self.stop = False
 		for x in range(len(msg.ranges)):
 			if msg.ranges[x] > self.threshold_ignore:
-				if msg.ranges[x] < self.threshold_slow:
-					self.slow = True
 				if msg.ranges[x] < self.threshold_stop:
 					self.stop = True
+					break
+				elif msg.ranges[x] < self.threshold_slow:
+					self.slow = True
 
+		self.value = 0
+		if self.stop:
+			self.value = 2
+		elif self.slow:
+			self.value = 1
+		
+		#if self.value != self.oldValue:
+		if self.value == 0:
+			self.obstaclePub.publish("normal")
+		elif self.value == 1:
+			self.obstaclePub.publish("slow")
+		elif self.value == 2:
+			self.obstaclePub.publish("stop")
+		self.oldValue = self.value
 
-
-	def publish(self):
-		#publish three topics		
-		self.pub_slow.publish(self.slow)
-		self.pub_stop.publish(self.stop)
 
 	def updater(self):
 		while not rospy.is_shutdown():
-			self.publish()
 			self.r.sleep()
 
 

@@ -4,8 +4,6 @@ project(mr_mission_planner)
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs serial genmsg)
 
-#generate_messages(DEPENDENCIES sensor_msgs)
-
 catkin_package()
 
 include_directories(${catkin_INCLUDE_DIRS})

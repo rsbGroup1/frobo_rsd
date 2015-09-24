@@ -25,6 +25,7 @@ enum MODES
 };
 
 // Global var
+bool _running = false;
 serial::Serial *_serialConnection;
 ros::Publisher _missionPlannerPublisher;
 MODES _systemMode = STOP;
@@ -40,7 +41,7 @@ void changeMode(MODES mode)
     switch(mode)
     {
         case SLOW:
-            _serialConnection->write("slow\n");
+            //_serialConnection->write("slow\n");
 
 	    topicMsg.data = "slowDown";
 
@@ -51,15 +52,15 @@ void changeMode(MODES mode)
         case START:
             _serialConnection->write("start\n");
 
-
 	    topicMsg.data = "start";
 
             if(_debugMsg)
                 ROS_INFO("Start");
+	    _running = true;
             break;
 
         case ERROR:
-            _serialConnection->write("error\n");
+            //_serialConnection->write("error\n");
 
 	    topicMsg.data = "errorStop";
 
@@ -74,6 +75,7 @@ void changeMode(MODES mode)
 
             if(_debugMsg)
                 ROS_INFO("Stop");
+	    _running = false;
             break;
 
         case MANUAL:
@@ -83,6 +85,7 @@ void changeMode(MODES mode)
 
             if(_debugMsg)
                 ROS_INFO("Manual");
+	    _running = false;
             break;
 
         default:
@@ -91,19 +94,20 @@ void changeMode(MODES mode)
 
     _serialMutex.unlock();
     _missionPlannerPublisher.publish(topicMsg);
-    _systemMode = mode;
+    _systemMode = mode;	
 }
 
-void slowDownCallback(std_msgs::Bool value)
+void collisionCallback(std_msgs::String msg)
 {
-    if(value.data)
-        changeMode(SLOW);
-}
-
-void errorStopCallback(std_msgs::Bool value)
-{
-    if(value.data)
-        changeMode(ERROR);
+    if(_running)
+    {
+	    if(msg.data == "stop")
+		changeMode(ERROR);
+	    else if(msg.data == "slow")
+		changeMode(SLOW);
+	    else if(msg.data == "normal")
+		changeMode(START);  
+    }
 }
 
 void startStopCallback(std_msgs::String msg)
@@ -190,9 +194,8 @@ int main()
     ros::NodeHandle nh;
 
     // Topic names
-    std::string slowDownSub, errorStopSub, startStopSub, missionPlannerPub;
-    nh.param<std::string>("/MR_MissionPlanner/MissionPlanner/mr_collision_slowdown_sub", slowDownSub, "/mrCollisionDetector/slow_down");
-    nh.param<std::string>("/MR_MissionPlanner/MissionPlanner/mr_collision_stop_sub", errorStopSub, "/mrCollisionDetector/error_stop");
+    std::string obstaclePub, startStopSub, missionPlannerPub;
+    nh.param<std::string>("/MR_MissionPlanner/MissionPlanner/mr_collision_status_sub", obstaclePub, "/mrObstacleDetector/status");
     nh.param<std::string>("/MR_MissionPlanner/MissionPlanner/mr_hmi_sub", startStopSub, "/mrHMI/start_stop");
     nh.param<std::string>("/MR_MissionPlanner/MissionPlanner/mr_missionplanner_pub", missionPlannerPub, "/mrMissionPlanner/status");
 
@@ -200,9 +203,8 @@ int main()
     _missionPlannerPublisher = nh.advertise<std_msgs::String>(missionPlannerPub, 1);
 
     // Subscriber
-    ros::Subscriber subSlowDown = nh.subscribe(slowDownSub, 10, slowDownCallback);
-    ros::Subscriber subErrorStop = nh.subscribe(errorStopSub, 10, errorStopCallback);
-    ros::Subscriber subStartStop = nh.subscribe(startStopSub, 10, startStopCallback);
+    ros::Subscriber subCollision = nh.subscribe(obstaclePub, 1, collisionCallback);
+    ros::Subscriber subStartStop = nh.subscribe(startStopSub, 1, startStopCallback);
 
     // Get serial data parameters
     int baudRate;

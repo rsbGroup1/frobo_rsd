@@ -1,24 +1,67 @@
-<!-- FroboScout launch file -->
-
 <launch>
-	<!-- FROBIT Parameters --> 
+	<!-- FROBIT PARAMETERS --> 
 	<param name="diff_steer_wheel_distance" value="0.375"/>
 	<param name="ticks_per_meter_left" value="677" />
 	<param name="ticks_per_meter_right" value="677" />
 
-
-	<!--<group ns="fmDecisionMakers">
-		<node pkg="frobit_demo" name="mission" type="keyboard_mission_node.py" output="screen">
-			<param name="keyboard_sub" value="/fmHMI/keyboard" />
-			<param name="automode_pub" value="/fmPlan/automode" />
-    		<param name="deadman_pub" value="/fmSafe/deadman" />
-			<param name="cmd_vel_pub" value="/fmCommand/cmd_vel" />
-            <param name="max_linear_velocity" value="1.0"/>
-            <param name="max_angular_velocity" value="0.8"/>
-            <param name="linear_velocity_step" value="0.1"/>
-            <param name="angular_velocity_step" value="0.2"/>
+	<!-- FROBIT INTERFACE -->
+	<group ns="fmControllers">
+		<node pkg="sdu_frobit_v2" name="frobit" type="frobit_interface_node.py" output="screen" >
+			<param name="actuation_enable_sub" value="/fmSafe/actuation_enable" />
+			<param name="cmd_vel_sub" value="/fmCommand/cmd_vel" />
+			<param name="enc_left_pub" value="/fmInformation/encoder_left" />
+			<param name="enc_right_pub" value="/fmInformation/encoder_right" />
+			<param name="wheel_status_left_pub" value="/fmInformation/wheel_status_left" />
+			<param name="wheel_status_right_pub" value="/fmInformation/wheel_status_right" />
+			<param name="wheel_feedback_left_pub" value="/fmInformation/wheel_feedback_left" />
+			<param name="wheel_feedback_right_pub" value="/fmInformation/wheel_feedback_right" />
+			<param name="wheel_pid_left_pub" value="/fmInformation/wheel_pid_left" />
+			<param name="wheel_pid_right_pub" value="/fmInformation/wheel_pid_right" />
+			<param name="nmea_from_frobit_sub" value="/fmSignal/nmea_from_frobit" />	 
+			<param name="nmea_to_frobit_pub" value="/fmSignal/nmea_to_frobit" />	 
+			<param name="publish_wheel_status_rate" value="10" />
+			<param name="publish_wheel_feedback_rate" value="10" />
+			<param name="publish_wheel_pid_rate" value="10" />
+			<param name="castor_front" value="true"/>
+		        <param name="max_linear_acceleration" value="16.2"/>
+         		<param name="max_angular_acceleration" value="16.0"/>
+			<param name="wheel_drive_feed_forward" value="85" /> 
+			<param name="wheel_drive_kp" value="5" /> 
+			<param name="wheel_drive_ki" value="10" /> 
+			<param name="wheel_drive_kd" value="5" /> 
+			<param name="wheel_drive_max_integral_output" value="300" /> 
+			<param name="wheel_turn_feed_forward" value="110" /> 
+			<param name="wheel_turn_kp" value="10" /> 
+			<param name="wheel_turn_ki" value="20" /> 
+			<param name="wheel_turn_kd" value="3" /> 
+			<param name="wheel_turn_max_integral_output" value="300" /> 
+			<param name="supply_voltage_scale_factor" value="0.03747" /> 
+			<param name="min_supply_voltage" value="12.1" /> 
+			<param name="show_voltage_interval" value="300" /> 
 		</node>
-	</group>-->
+	</group>
+
+	<!-- SAFETY MODULE -->
+	<group ns="fmSafety">
+		<node pkg="basic_incident_handler" name="incident_handler" type="basic_incident_handler_node.py" output="screen">
+    		<param name="deadman_enable" value="True" />
+    		<param name="deadman_timeout" value="0.100" />
+    		<param name="deadman_sub" value="/fmSafe/deadman" />
+    		<param name="critical_fault_enable" value="False" />
+    		<param name="critical_fault_timeout" value="0.100" />
+    		<param name="critical_fault_sub" value="/fmSafe/critical_fault" />
+			<param name="actuation_enable_pub" value="/fmSafe/actuation_enable" />
+		</node>
+	</group>
+
+	<!-- FROBIT SERIAL DEVICE AND PROTOCOL -->
+	<node pkg="serial_nmea" name="frobit_nmea" type="serial_nmea_node" respawn="true" output="screen">
+		<param name="nmea_from_device_pub" value="/fmSignal/nmea_from_frobit"/>
+		<param name="nmea_to_device_sub" value="/fmSignal/nmea_to_frobit"/>
+		<param name="serial_device" value="/dev/frobit"/>
+		<param name="serial_baudrate" value="57600"/>
+		<param name="use_nmea_checksum" value="true"/>
+        </node>
 
 	<!-- TWIST CONVERTER -->
 	<group ns="fmLib">
@@ -28,7 +71,7 @@
 		</node>
 	</group>
 
-	<!-- Calculate odometry based on wheel encoders and IMU yaw axis orientation-->
+	<!-- CALCULATE ODOMETRY (Based on wheel encoders and IMU yaw axis orientation) -->
 	<group ns="fmProcessors">
 		<node pkg="differential_odometry" name="differential_odometry" type="differential_odometry_node" output="screen" >
 			<param name="enc_left_sub" value="/fmInformation/encoder_left" />
@@ -65,16 +108,6 @@
 		<param name="covariance_z" value="0.001"/>
 	 </node>
 
-	<!-- OBSTACLE DETECTOR -->
-	<group ns="MR_ObstacleDetector">
-		<node pkg="mr_obstacle_detector" name="obstacle_detector" type="obstacle_detector.py">
-			<param name="threshold_slow" value="1.0" />
-			<param name="threshold_stop" value="0.3" />
-			<param name="threshold_ignore" value="0.05" />
-			<param name="laser_scan" value="/scan" />
-		</node>
-	</group>
-
 	<!-- LIDAR -->
 	<node name="sick_tim310s01" pkg="sick_tim" type="sick_tim310s01" respawn="false" output="screen">
 	    <param name="min_ang" type="double" value="-2.35619449019" />
@@ -87,86 +120,8 @@
 	    <param name="port" type="str" value="/dev/lidar" />
 	</node>
 
-	<!-- FROBOT SERIAL DEVICE AND PROTOCOL INTERFACE -->
-	<node pkg="serial_nmea" name="frobit_nmea" type="serial_nmea_node" respawn="true" output="screen">
-		<param name="nmea_from_device_pub" value="/fmSignal/nmea_from_frobit"/>
-		<param name="nmea_to_device_sub" value="/fmSignal/nmea_to_frobit"/>
-		<param name="serial_device" value="/dev/frobit"/>
-		<param name="serial_baudrate" value="57600"/>
-		<param name="use_nmea_checksum" value="true"/>
-        </node>
-
 	<!-- WALL TRACKING -->
 	<node pkg="mr_bridgewalltracking" name="BridgeWallTracking" type="BridgeWallTracking"></node>
-
-	<!-- MISSION PLANNER -->
-	<group ns="MR_MissionPlanner">
-		<node pkg="mr_mission_planner" name="MissionPlanner" type="mr_mission_planner">
-			<param name="baud_rate" value="115200"/>
-			<param name="port" value="/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00"/>  	
-			<param name="debug" value="true"/>  	
-			<param name="mr_collision_slowdown_sub" value="/mrCollisionDetector/slow_down"/>  	
-			<param name="mr_collision_stop_sub" value="/mrCollisionDetector/error_stop"/>  		
-			<param name="mr_hmi_sub" value="/mrHMI/start_stop"/>  	
-			<param name="mr_missionplanner_pub" value="/mrMissionPlanner/status"/>    	
-		</node>
-	</group>
-
-	<!-- FROBOT INTERFACE -->
-	<group ns="fmControllers">
-		<node pkg="sdu_frobit_v2" name="frobit" type="frobit_interface_node.py" output="screen" >
-			<param name="actuation_enable_sub" value="/fmSafe/actuation_enable" />
-			<param name="cmd_vel_sub" value="/fmCommand/cmd_vel" />
-			<param name="enc_left_pub" value="/fmInformation/encoder_left" />
-			<param name="enc_right_pub" value="/fmInformation/encoder_right" />
-			<param name="wheel_status_left_pub" value="/fmInformation/wheel_status_left" />
-			<param name="wheel_status_right_pub" value="/fmInformation/wheel_status_right" />
-			<param name="wheel_feedback_left_pub" value="/fmInformation/wheel_feedback_left" />
-			<param name="wheel_feedback_right_pub" value="/fmInformation/wheel_feedback_right" />
-			<param name="wheel_pid_left_pub" value="/fmInformation/wheel_pid_left" />
-			<param name="wheel_pid_right_pub" value="/fmInformation/wheel_pid_right" />
-			<param name="nmea_from_frobit_sub" value="/fmSignal/nmea_from_frobit" />	 
-			<param name="nmea_to_frobit_pub" value="/fmSignal/nmea_to_frobit" />	 
-			<param name="publish_wheel_status_rate" value="10" />
-			<param name="publish_wheel_feedback_rate" value="10" />
-			<param name="publish_wheel_pid_rate" value="10" />
-			<param name="castor_front" value="true"/>
-            <param name="max_linear_acceleration" value="16.2"/>
-            <param name="max_angular_acceleration" value="16.0"/>
-			<param name="wheel_drive_feed_forward" value="85" /> 
-			<param name="wheel_drive_kp" value="5" /> 
-			<param name="wheel_drive_ki" value="10" /> 
-			<param name="wheel_drive_kd" value="5" /> 
-			<param name="wheel_drive_max_integral_output" value="300" /> 
-			<param name="wheel_turn_feed_forward" value="110" /> 
-			<param name="wheel_turn_kp" value="10" /> 
-			<param name="wheel_turn_ki" value="20" /> 
-			<param name="wheel_turn_kd" value="3" /> 
-			<param name="wheel_turn_max_integral_output" value="300" /> 
-			<param name="supply_voltage_scale_factor" value="0.03747" /> 
-			<param name="min_supply_voltage" value="12.1" /> 
-			<param name="show_voltage_interval" value="300" /> 
-		</node>
-	</group>
-
-	<!-- NAVIGATION CONTROLLER -->
-	<group ns="MR_NavigationController">
-		<node pkg="mr_navigation_controller" name="NavigationController" type="mr_navigation_controller">
-			  <param name="speed_normal" value="0.5"/>
-			  <param name="speed_slow" value="0.2"/>
-			  <param name="speed_error" value="0.0"/>
-			  <param name="max_angle_speed" value="0.2"/>
-			  <param name="pid_coeff_p" value="0.5"/>
-			  <param name="pid_coeff_i" value="0.001"/>
-			  <param name="pid_coeff_d" value="0.01"/>
-			  <param name="pid_max_i" value="1000"/>
-			  <param name="motor_update_rate" value="50"/>
-			  <param name="deadman_pub" value="/fmSafe/deadman"/>
-			  <param name="cmd_vel_pub" value="/fmCommand/cmd_vel"/>
-			  <param name="mr_missionplan_sub" value="/mrMissionPlanner/status"/>
-			  <param name="mr_kalman_sub" value="/mrKalman/pose"/>
-		</node>
-	</group>
 
 	<!-- Add covariance to frobo odometry -->
 	<node pkg="mr_bridgewalltracking" name="OdomAddCov" type="OdomAddCov">
@@ -199,6 +154,37 @@
 		</node>
 	</group>
 
+	<!-- MISSION PLANNER -->
+	<group ns="MR_MissionPlanner">
+		<node pkg="mr_mission_planner" name="MissionPlanner" type="mr_mission_planner">
+			<param name="baud_rate" value="115200"/>
+			<param name="port" value="/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00"/>  	
+			<param name="debug" value="true"/>  	
+			<param name="mr_collision_status_sub" value="/mrObstacleDetector/status"/>
+			<param name="mr_hmi_sub" value="/mrHMI/start_stop"/>  	
+			<param name="mr_missionplanner_pub" value="/mrMissionPlanner/status"/>    	
+		</node>
+	</group>
+
+	<!-- NAVIGATION CONTROLLER -->
+	<group ns="MR_NavigationController">
+		<node pkg="mr_navigation_controller" name="NavigationController" type="mr_navigation_controller">
+			  <param name="speed_normal" value="0.5"/>
+			  <param name="speed_slow" value="0.2"/>
+			  <param name="speed_error" value="0.0"/>
+			  <param name="max_angle_speed" value="0.2"/>
+			  <param name="pid_coeff_p" value="0.5"/>
+			  <param name="pid_coeff_i" value="0.001"/>
+			  <param name="pid_coeff_d" value="0.01"/>
+			  <param name="pid_max_i" value="1000"/>
+			  <param name="motor_update_rate" value="50"/>
+			  <param name="deadman_pub" value="/fmSafe/deadman"/>
+			  <param name="cmd_vel_pub" value="/fmCommand/cmd_vel"/>
+			  <param name="mr_missionplan_sub" value="/mrMissionPlanner/status"/>
+			  <param name="mr_kalman_sub" value="/mrKalman/pose"/>
+		</node>
+	</group>
+
 	<!-- TIP CONTROLLER -->
 	<group ns="MR_TipController">
 		<node pkg="mr_tip_controller" name="TipController" type="mr_tip_controller">
@@ -209,5 +195,25 @@
 		</node>
 	</group>
 
+	<!-- HMI -->
+	<group ns="MR_HMI">
+		<node pkg="mr_hmi" name="proxy" type="proxy.py">
+			<param name="missionplanner_pub" value="/mrHMI/start_stop"/>
+			<param name="deadman_pub" value="/fmSafe/deadman"/>
+			<param name="cmd_pub" value="/fmCommand/cmd_vel"/>
+			<param name="tipper_pub" value="/mrMainController/tipper"/>
+		</node>			
+	</group>
+
+	<!-- OBSTACLE DETECTOR -->
+	<group ns="obstacle_detector">
+		<node pkg="mr_obstacle_detector" name="obstacle_detector" type="obstacle_detector.py">
+			<param name="threshold_slow" value="0.2" />
+			<param name="threshold_stop" value="0.4" />
+			<param name="threshold_ignore" value="0.05" />
+			<param name="laser_scan" value="/scan" />
+			<param name="publishTopic" value="/mrObstacleDetector/status" />
+		</node>
+	</group>
 </launch>
 

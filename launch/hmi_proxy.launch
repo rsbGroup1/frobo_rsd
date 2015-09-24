@@ -1,7 +1,13 @@
 <!-- HMI Proxy launch file -->
 
 <launch>
-	<!-- serial communication with the IMU -->
-	<node pkg="hmi_python_proxy" name="proxy" type="proxy.py"/>
+	<group ns="MR_HMI">
+		<node pkg="mr_hmi" name="proxy" type="proxy.py">
+			<param name="missionplanner_pub" value="/mrHMI/start_stop"/>
+			<param name="deadman_pub" value="/fmSafe/deadman"/>
+			<param name="cmd_pub" value="/fmCommand/cmd_vel"/>
+			<param name="tipper_pub" value="/mrMainController/tipper"/>
+		</node>			
+	</group>
 </launch>
 

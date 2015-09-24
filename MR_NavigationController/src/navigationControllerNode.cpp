@@ -231,10 +231,16 @@ void motorUpdateThread()
 {
     while(true)
     {
-        // Send motor command
-        _motorCommandMutex.lock();
-        sendMotorCommand(_forwardSpeed, _angleSpeed);
-        _motorCommandMutex.unlock();
+        _runningMutex.lock();
+	if(_running)
+	{
+		_runningMutex.unlock();
+		// Send motor command
+		_motorCommandMutex.lock();
+		sendMotorCommand(_forwardSpeed, _angleSpeed);
+		_motorCommandMutex.unlock();
+	}
+	_runningMutex.unlock();
 
         // Sleep
         usleep(_motorUpdateRate); // Sleep for 50 ms = 20Hz
@@ -274,8 +280,8 @@ int main()
     _deadmanTopic = nh.advertise<msgs::BoolStamped>(deadmanParameter, 1);
 
     // Subscriber
-    ros::Subscriber subMissionPlanner = nh.subscribe(missionPlanParam, 10, missionCallback);
-    ros::Subscriber subKalman = nh.subscribe(kalmanParam, 10, kalmanCallback);
+    ros::Subscriber subMissionPlanner = nh.subscribe(missionPlanParam, 1, missionCallback);
+    ros::Subscriber subKalman = nh.subscribe(kalmanParam, 1, kalmanCallback);
 
     // Start motor update thread
     boost::thread motorPublishThread(motorUpdateThread);

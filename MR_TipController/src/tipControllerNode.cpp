@@ -27,7 +27,7 @@ void tipControlCallback(std_msgs::String msg)
         if(_debugMsg)
             ROS_INFO("Tipper goes UP");
 
-        _serialConnection->write("up");
+        _serialConnection->write("1111");
         _isDown = false;
     }
     else if(msg.data == "down" && _isDown == false)
@@ -35,7 +35,7 @@ void tipControlCallback(std_msgs::String msg)
         if(_debugMsg)
             ROS_INFO("Tipper goes DOWN");
 
-        _serialConnection->write("down");
+        _serialConnection->write("d");
         _isDown = true;
     }
 }

@@ -125,8 +125,8 @@
 		<param name="minScoreForPublishing" value="0.8"/>
 		<param name="covX" value="0.9"/>
 		<param name="covYaw" value="0.9"/>
-		<param name="laserMaxDistance" value="1.5"/>
-		<param name="ransacThreshold" value="1	"/>
+		<param name="laserMaxDistance" value="1.3"/>
+		<param name="ransacThreshold" value="1"/>
 	</node>
 
 	<!-- Add covariance to frobo odometry -->

@@ -291,10 +291,10 @@ int main(int argc, char** argv)
     ros::Subscriber sub = n.subscribe("scan", 1000, laserScanCallBack);
 
     //Publish topics
-    img_publisher = n.advertise<sensor_msgs::Image>("wall_finding_image_new", 1000);
-    angleOnWalls = n.advertise<std_msgs::Float32>("angle_on_wall_new", 1);
-    distanceOfCenter = n.advertise<std_msgs::Float32>("distanceOfCenter_new", 1);
-    visualOdometry = n.advertise<nav_msgs::Odometry>("visualOdometry_new", 1);
+    img_publisher = n.advertise<sensor_msgs::Image>("wall_finding_image", 1000);
+    angleOnWalls = n.advertise<std_msgs::Float32>("angle_on_wall", 1);
+    distanceOfCenter = n.advertise<std_msgs::Float32>("distanceOfCenter", 1);
+    visualOdometry = n.advertise<nav_msgs::Odometry>("visualOdometry", 1);
 
 
 

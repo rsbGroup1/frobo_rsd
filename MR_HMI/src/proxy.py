@@ -54,7 +54,7 @@ class MyServerProtocol( WebSocketServerProtocol ):
         if isBinary:
             print( "Binary message received: {0} bytes".format( len( payload ) ) )
         else:
-            # print( "Text message received: {0}".format( payload.decode( 'utf8' ) ) )
+            print( "Text message received: {0}".format( payload.decode( 'utf8' ) ) )
 
             messageInRaw = payload.decode('utf8')
 
@@ -90,9 +90,9 @@ class MyServerProtocol( WebSocketServerProtocol ):
                 elif leftButton == u"l":
                     drive( 0.0, 0.8 )
                 elif rightButton == u"y":
-                    tip( u"up" );
+                    tip( u"up" )
                 elif rightButton == u"x":
-                    tip( u"down" );
+                    tip( u"down" )
                     #publishCommand( pubModeUpdate, u"manual" )
                 elif rightButton == u"a":
                     publishCommand( pubModeUpdate, u"start" )
@@ -169,7 +169,9 @@ def drive( linearX, angularZ ):
 
     msg = createdTwistedCommand( linearX, angularZ )
     setManualMode( True )
+    print( "Msg to be published: " + msg )
     publishCommand( pubCmdVelUpdate, msg )
+    print( "Msg published OK")
 
 def tip( direction ):
     global pubTipperUpdate
@@ -179,14 +181,16 @@ def tip( direction ):
 
 def setManualMode( newState ):
     if( isManual != newState ):
+        print( "Manual mode CHANGED" )
         isManual = newState
         if( isManual ):
             publishCommand( pubModeUpdate, u"manual" )
+            print( "Manual mode is ON" )
 
-def callback( data ):
-    global location
-    location = data.data
-    rospy.loginfo( rospy.get_caller_id() + "I heard %s", location )
+#def callback( data ):
+    #global location
+    #location = data.data
+    #rospy.loginfo( rospy.get_caller_id() + "I heard %s", location )
 
 def publishCommand( rosPublisher, command ):
     rosPublisher.publish( command )
@@ -219,7 +223,7 @@ def initProxy():
     pubActuationEna = rospy.Publisher( deadmanTopic, BoolStamped, queue_size = 1 )
 
     # register Listeners
-    rospy.Subscriber( "hmi_mobile", String, callback )
+    #rospy.Subscriber( "hmi_mobile", String, callback )
 
     # start publishing activationEna sygnal in a separate thread
     aThread = actuationThread( 1, "actuation_thread" )

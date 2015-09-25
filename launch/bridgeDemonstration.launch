@@ -189,7 +189,7 @@
 			  <param name="mr_missionplan_sub" value="/mrMissionPlanner/status"/>
 			  <param name="mr_kalman_sub" value="/mrKalman/pose"/>
 			  <param name="deltaX_pub" value="/mrNavigationController/deltaX"/>
-			  <param name="deltaTheta_pub" value="mrNavigationController/deltaTheta"/>
+			  <param name="deltaTheta_pub" value="/mrNavigationController/deltaTheta"/>
 		</node>
 	</group>
 
@@ -204,14 +204,14 @@
 	</group>
 
 	<!-- HMI -->
-	<!--group ns="MR_HMI">
+	<group ns="MR_HMI">
 		<node pkg="mr_hmi" name="proxy" type="proxy.py">
 			<param name="missionplanner_pub" value="/mrHMI/start_stop"/>
 			<param name="deadman_pub" value="/fmSafe/deadman"/>
 			<param name="cmd_pub" value="/fmCommand/cmd_vel"/>
 			<param name="tipper_pub" value="/mrMainController/tipper"/>
 		</node>			
-	</group-->
+	</group>
 
 	<!-- OBSTACLE DETECTOR -->
 	<group ns="obstacle_detector">

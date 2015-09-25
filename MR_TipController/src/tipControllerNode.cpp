@@ -4,29 +4,83 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <queue>
 #include "serial/serial.h"
-//#include <boost/thread/mutex.hpp>
-//#include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread.hpp>
 #include "std_msgs/String.h"
 
 // Defines
 #define SSTR(x)                 dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
 #define DATA_LENGTH             10
 
+// Queue class
+template <typename T>
+class SynchronisedQueue
+{
+    private:
+        std::queue<T> m_queue;              // Use STL queue to store data
+        boost::mutex m_mutex;               // The mutex to synchronise on
+        boost::condition_variable m_cond;   // The condition to wait for
+
+    public:
+        // Add data to the queue and notify others
+        void enqueue(const T& data)
+        {
+            // Acquire lock on the queue
+            boost::unique_lock<boost::mutex> lock(m_mutex);
+
+            // Add the data to the queue
+            m_queue.push(data);
+
+            // Notify others that data is ready
+            m_cond.notify_one();
+        }
+
+        // Get data from the queue. Wait for data if not available
+        T dequeue()
+        {
+            // Acquire lock on the queue
+            boost::unique_lock<boost::mutex> lock(m_mutex);
+
+            // When there is no data, wait till someone fills it.
+            // Lock is automatically released in the wait and obtained
+            // again after the wait
+            while(m_queue.size()==0)
+                m_cond.wait(lock);
+
+            // Retrieve the data from the queue
+            T result = m_queue.front();
+            m_queue.pop();
+
+            return result;
+        }
+
+        int size()
+        {
+            // Acquire lock on the queue
+            boost::unique_lock<boost::mutex> lock(m_mutex);
+            return m_queue.size();
+        }
+};
+
 // Global var
 serial::Serial *_serialConnection;
 bool _isDown = true;
 bool _debugMsg;
+SynchronisedQueue<std::string> _queue;
 
 // Functions
 void tipControlCallback(std_msgs::String msg)
 {
+    ROS_INFO(msg.data.c_str());
+
     if(msg.data == "up" && _isDown == true)
     {
         if(_debugMsg)
             ROS_INFO("Tipper goes UP");
 
-        _serialConnection->write("1111");
+        _queue.enqueue("u");
         _isDown = false;
     }
     else if(msg.data == "down" && _isDown == false)
@@ -34,8 +88,16 @@ void tipControlCallback(std_msgs::String msg)
         if(_debugMsg)
             ROS_INFO("Tipper goes DOWN");
 
-        _serialConnection->write("d");
+        _queue.enqueue("d");
         _isDown = true;
+    }
+}
+
+void writeSerialThread()
+{
+    while(true)
+    {
+        _serialConnection->write(_queue.dequeue());
     }
 }
 
@@ -136,8 +198,8 @@ int main()
     nh.param<std::string>("/MR_TipController/TipController/port", port, "/dev/serial/by-id/usb-Arduino_Srl_Arduino_Uno_7543932393535120F172-if00");
 
     // Inform user
-    std::string temp = "Connecting to '" + port + "' with baud '" + SSTR(baudRate) + "'";
-    ROS_INFO(temp.c_str());
+    //std::string temp = "Connecting to '" + port + "' with baud '" + SSTR(baudRate) + "'";
+    //ROS_INFO(temp.c_str());
 
     // Open connection
     _serialConnection = new serial::Serial(port.c_str(), baudRate, serial::Timeout::simpleTimeout(50));
@@ -153,13 +215,13 @@ int main()
         ROS_INFO("Successfully connected!");
 
     // Start serial read thread
-    //boost::thread serialThread(readSerialThread);
+    boost::thread serialWriteThread(writeSerialThread);
 
     // ROS Spin: Handle callbacks
     ros::spin();
 
     // Close connection
-    //serialThread.interrupt();
+    serialWriteThread.interrupt();
     _serialConnection->close();
 
     // Return

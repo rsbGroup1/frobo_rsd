@@ -17,10 +17,10 @@ from std_msgs.msg import String, Bool
 LOCATION_REQUEST = "location_request"
 REMOTE_UPDATE = "remote_update"
 
-MODE_UPDATE_PUB = "startStopTopic"
+MODE_UPDATE_PUB = "/mrHMI/start_stop"
 ACTUATION_ENA_PUB = "/fmSafe/deadman" # a BoolStamped msg. deadman_msg.data = True enables actuation
 CMD_VEL_UPDATE_PUB = "/fmCommand/cmd_vel"
-TIPPER_UPDATE_PUB = "mr_tipper_update"
+TIPPER_UPDATE_PUB = "/mrMainController/tipper"
 
 WEB_SOCKET_HOSTNAME = "localhost"
 #WEB_SOCKET_HOSTNAME = "10.125.11.201"
@@ -36,7 +36,8 @@ pubTipperUpdate = 0
 pubCmdVelUpdate = 0
 pubActuationEna = 0
 
-tipperTilted = False
+#tipperTilted = False
+isManual = False
 actuationEna = False
 
 class MyServerProtocol( WebSocketServerProtocol ):
@@ -63,8 +64,6 @@ class MyServerProtocol( WebSocketServerProtocol ):
             messageInRaw = payload.decode('utf8')
 
             messageIn = jsonlib.read( messageInRaw )
-
-            # print("RETEK: " + messageIn["messageType"] )
 
             if messageIn["messageType"] == LOCATION_REQUEST:
 
@@ -93,11 +92,12 @@ class MyServerProtocol( WebSocketServerProtocol ):
                     drive( -0.2, 0.0 )
                 elif leftButton == u"l":
                     drive( 0.0, 0.8 )
-                elif rightButton == u"y":
-                    tip()
                 elif rightButton == u"x":
-                    publishCommand( pubModeUpdate, u"manual" )
+                    tip( True )
+                elif rightButton == u"y":
+                    tip( False )
                 elif rightButton == u"a":
+                    setManualMode( False )
                     publishCommand( pubModeUpdate, u"start" )
                 elif rightButton == u"b":
                     publishCommand( pubModeUpdate, u"stop" )
@@ -105,6 +105,7 @@ class MyServerProtocol( WebSocketServerProtocol ):
     def onClose( self, wasClean, code, reason ):
         global actuationEna
 
+        setManualMode( False )
         actuationEna = False
 
         print( "WebSocket connection closed: {0}".format( reason ) )
@@ -165,19 +166,32 @@ def createBoolStampedMessage( data ):
 
     return msg
 
+def setManualMode( newState ):
+    global isManual
+
+    if( isManual != newState ):
+        print( "Manual mode CHANGED" )
+        isManual = newState
+        if( isManual ):
+            publishCommand( pubModeUpdate, u"manual" )
+            print( "Manual mode is ON" )
+        else:
+            print( "Manual mode is OFF" )
+
 def drive( linearX, angularZ ):
     global pubCmdVelUpdate
 
     msg = createdTwistedCommand( linearX, angularZ )
+    setManualMode( True )
+    # print( "Msg to be published: " + str(msg.twist.linear.x) )
     publishCommand( pubCmdVelUpdate, msg )
+    # print( "Msg published OK")
 
-def tip():
+def tip( direction ):
     global pubTipperUpdate
     global tipperTilted
 
-    tipperTilted = not tipperTilted
-
-    print "tipping"
+    publishCommand( pubTipperUpdate, direction )
 
 def callback( data ):
     global location
@@ -188,6 +202,11 @@ def publishCommand( rosPublisher, command ):
     rosPublisher.publish( command )
 
 def initProxy():
+
+    global MODE_UPDATE_PUB
+    global TIPPER_UPDATE_PUB
+    global CMD_VEL_UPDATE_PUB
+    global ACTUATION_ENA_PUB
 
     global pubModeUpdate
     global pubTipperUpdate
@@ -201,16 +220,23 @@ def initProxy():
     # run simultaneously.
     rospy.init_node( 'proxy', anonymous = True )
 
-    # register Publisers
+    # Read parameters
+
+    MODE_UPDATE_PUB = rospy.get_param( "~missionplanner_pub", MODE_UPDATE_PUB )
+    TIPPER_UPDATE_PUB = rospy.get_param( "~deadman_pub", TIPPER_UPDATE_PUB )
+    CMD_VEL_UPDATE_PUB = rospy.get_param( "~cmd_pub", CMD_VEL_UPDATE_PUB )
+    ACTUATION_ENA_PUB = rospy.get_param( "~tipper_pub", ACTUATION_ENA_PUB )
+
+    # Register Publisers
     pubModeUpdate = rospy.Publisher( MODE_UPDATE_PUB, String, queue_size = 1 )
     pubTipperUpdate = rospy.Publisher( TIPPER_UPDATE_PUB, Bool, queue_size = 1 )
     pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 1 )
     pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
 
-    # register Listeners
+    # Register Listeners
     rospy.Subscriber( "hmi_mobile", String, callback )
 
-    # start publishing activationEna sygnal in a separate thread
+    # Start publishing the activationEna sygnal in a separate thread
     aThread = actuationThread( 1, "actuation_thread" )
     aThread.start()
 

@@ -117,13 +117,18 @@ rsdNamespace.RegisterTouchSurfaces = function() {
     // Hostname handler
     $('#hostname_data').on( "keypress", function( e ) {
 
-        if( e.which == 13 ) {
-            var tmp = $('#hostname_data').text().split( ':' );
-            rsdNamespace.commAddr = tmp[0]
-            rsdNamespace.commPort = tmp[1]
+        if( e.which == 13 || e.which == 32 ) {
 
-            if( rsdNamespace.connection ) rsdNamespace.connection.close();
-            rsdNamespace.StartListening();
+            var tmp = $('#hostname_data').text().split( ':' );
+            if( tmp.length == 2 ) {
+
+                rsdNamespace.commAddr = tmp[0]
+                rsdNamespace.commPort = tmp[1]
+
+                if( rsdNamespace.connection ) rsdNamespace.connection.close();
+                rsdNamespace.StartListening();
+
+            }
 
             return false;
 

@@ -17,6 +17,11 @@ from std_msgs.msg import String, Bool
 LOCATION_REQUEST = "location_request"
 REMOTE_UPDATE = "remote_update"
 
+MODE_UPDATE_PUB = "/mrHMI/start_stop"
+ACTUATION_ENA_PUB = "/fmSafe/deadman" # a BoolStamped msg. deadman_msg.data = True enables actuation
+CMD_VEL_UPDATE_PUB = "/fmCommand/cmd_vel"
+TIPPER_UPDATE_PUB = "/mrMainController/tipper"
+
 WEB_SOCKET_HOSTNAME = "localhost"
 #WEB_SOCKET_HOSTNAME = "10.125.11.201"
 WEB_SOCKET_PORT = "8888"
@@ -54,13 +59,11 @@ class MyServerProtocol( WebSocketServerProtocol ):
         if isBinary:
             print( "Binary message received: {0} bytes".format( len( payload ) ) )
         else:
-            print( "Text message received: {0}".format( payload.decode( 'utf8' ) ) )
+            # print( "Text message received: {0}".format( payload.decode( 'utf8' ) ) )
 
             messageInRaw = payload.decode('utf8')
 
             messageIn = jsonlib.read( messageInRaw )
-
-            # print("RETEK: " + messageIn["messageType"] )
 
             if messageIn["messageType"] == LOCATION_REQUEST:
 
@@ -89,12 +92,12 @@ class MyServerProtocol( WebSocketServerProtocol ):
                     drive( -0.2, 0.0 )
                 elif leftButton == u"l":
                     drive( 0.0, 0.8 )
-                elif rightButton == u"y":
-                    tip( u"up" )
                 elif rightButton == u"x":
-                    tip( u"down" )
-                    #publishCommand( pubModeUpdate, u"manual" )
+                    tip( True )
+                elif rightButton == u"y":
+                    tip( False )
                 elif rightButton == u"a":
+                    setManualMode( False )
                     publishCommand( pubModeUpdate, u"start" )
                 elif rightButton == u"b":
                     publishCommand( pubModeUpdate, u"stop" )
@@ -102,9 +105,8 @@ class MyServerProtocol( WebSocketServerProtocol ):
     def onClose( self, wasClean, code, reason ):
         global actuationEna
 
+        setManualMode( False )
         actuationEna = False
-        isManual = False
-        publishCommand( pubModeUpdate, u"start" )
 
         print( "WebSocket connection closed: {0}".format( reason ) )
 
@@ -146,7 +148,7 @@ class actuationThread( threading.Thread ):
 
         self.lock.acquire()
         msg = createBoolStampedMessage( actuationEna )
-        pubActuationEna.publish( msg )
+        pubActuationEna.publish ( msg )
         self.lock.release()
 
 def createdTwistedCommand( linearX, angularZ ):
@@ -164,14 +166,26 @@ def createBoolStampedMessage( data ):
 
     return msg
 
+def setManualMode( newState ):
+    global isManual
+
+    if( isManual != newState ):
+        print( "Manual mode CHANGED" )
+        isManual = newState
+        if( isManual ):
+            publishCommand( pubModeUpdate, u"manual" )
+            print( "Manual mode is ON" )
+        else:
+            print( "Manual mode is OFF" )
+
 def drive( linearX, angularZ ):
     global pubCmdVelUpdate
 
     msg = createdTwistedCommand( linearX, angularZ )
     setManualMode( True )
-    print( "Msg to be published: " + msg )
+    # print( "Msg to be published: " + str(msg.twist.linear.x) )
     publishCommand( pubCmdVelUpdate, msg )
-    print( "Msg published OK")
+    # print( "Msg published OK")
 
 def tip( direction ):
     global pubTipperUpdate
@@ -179,23 +193,20 @@ def tip( direction ):
 
     publishCommand( pubTipperUpdate, direction )
 
-def setManualMode( newState ):
-    if( isManual != newState ):
-        print( "Manual mode CHANGED" )
-        isManual = newState
-        if( isManual ):
-            publishCommand( pubModeUpdate, u"manual" )
-            print( "Manual mode is ON" )
-
-#def callback( data ):
-    #global location
-    #location = data.data
-    #rospy.loginfo( rospy.get_caller_id() + "I heard %s", location )
+def callback( data ):
+    global location
+    location = data.data
+    rospy.loginfo( rospy.get_caller_id() + "I heard %s", location )
 
 def publishCommand( rosPublisher, command ):
     rosPublisher.publish( command )
 
 def initProxy():
+
+    global MODE_UPDATE_PUB
+    global TIPPER_UPDATE_PUB
+    global CMD_VEL_UPDATE_PUB
+    global ACTUATION_ENA_PUB
 
     global pubModeUpdate
     global pubTipperUpdate
@@ -209,23 +220,22 @@ def initProxy():
     # run simultaneously.
     rospy.init_node( 'proxy', anonymous = True )
 
-    # register Publisers
-    missionPlanTopic = rospy.get_param("~missionplanner_pub", "/mrHMI/start_stop")
-    deadmanTopic = rospy.get_param("~deadman_pub", "/fmSafe/deadman")
-    cmdTopic = rospy.get_param("~cmd_pub", "/fmCommand/cmd_vel")
-    tipperTopic = rospy.get_param("~tipper_pub", "/mrMainController/tipper")
+    # Read parameters
+    MODE_UPDATE_PUB = rospy.get_param( "~missionplanner_pub", MODE_UPDATE_PUB )
+    TIPPER_UPDATE_PUB = rospy.get_param( "~deadman_pub", TIPPER_UPDATE_PUB )
+    CMD_VEL_UPDATE_PUB = rospy.get_param( "~cmd_pub", CMD_VEL_UPDATE_PUB )
+    ACTUATION_ENA_PUB = rospy.get_param( "~tipper_pub", ACTUATION_ENA_PUB )
 
-    print(missionPlanTopic + " " + deadmanTopic)
+    # Register Publisers
+    pubModeUpdate = rospy.Publisher( MODE_UPDATE_PUB, String, queue_size = 1 )
+    pubTipperUpdate = rospy.Publisher( TIPPER_UPDATE_PUB, Bool, queue_size = 1 )
+    pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 1 )
+    pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
 
-    pubModeUpdate = rospy.Publisher( missionPlanTopic, String, queue_size = 1 )
-    pubTipperUpdate = rospy.Publisher( tipperTopic, String, queue_size = 1 )
-    pubCmdVelUpdate = rospy.Publisher( cmdTopic, TwistStamped, queue_size = 1 )
-    pubActuationEna = rospy.Publisher( deadmanTopic, BoolStamped, queue_size = 1 )
+    # Register Listeners
+    rospy.Subscriber( "hmi_mobile", String, callback )
 
-    # register Listeners
-    #rospy.Subscriber( "hmi_mobile", String, callback )
-
-    # start publishing activationEna sygnal in a separate thread
+    # Start publishing the activationEna sygnal in a separate thread
     aThread = actuationThread( 1, "actuation_thread" )
     aThread.start()
 

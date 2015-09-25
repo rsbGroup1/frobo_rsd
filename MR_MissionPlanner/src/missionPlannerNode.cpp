@@ -298,6 +298,8 @@ int main()
     boost::thread serialReadThread(readSerialThread);
     boost::thread serialWriteThread(writeSerialThread);
 
+    _queue.enqueue("stop\n");
+
     // ROS Spin: Handle callbacks
     ros::spin();
 

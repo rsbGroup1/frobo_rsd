@@ -15,6 +15,7 @@
 #include "linreg.h"
 #include <tf/tf.h>
 #include <tf/transform_datatypes.h>
+#include <time.h>
 
 using namespace std;
 using namespace cv;
@@ -151,19 +152,22 @@ pair<Line, Line> getLines(const sensor_msgs::LaserScanPtr& scanMsg, double& qual
     // Method 1
     cv::Mat img(900, 900, CV_8U, cv::Scalar(0, 0, 0));
     // insert points
-    vector<Point2d> points;
+    vector<Point2d> points, pointsRight;
     for (int i = 0; i < scanMsg->ranges.size(); i++)
     {
         // Calculate x and y
         double x, y;
-        if (scanMsg->ranges[i] < laserMaxDistance)
+        if (scanMsg->ranges[i] < laserMaxDistance && scanMsg->ranges[i] > 0.05)
         {
             //x = 450 + (scanMsg->ranges[i] * 100) * cos(((225 + (3 * i)) % 360) * PI / 180);
            // y = 450 + (scanMsg->ranges[i] * 100) * sin(((225 + (3 * i)) % 360) * PI / 180);
             x = 450 + (scanMsg->ranges[i] * 100) * cos(scanMsg->angle_min+i*scanMsg->angle_increment);
             y = 450 + (scanMsg->ranges[i] * 100) * sin(scanMsg->angle_min+i*scanMsg->angle_increment);
             Point2d p(x, y);
-            points.push_back(p);
+            if(y > 450)
+                pointsRight.push_back(p);
+            else
+                points.push_back(p);
         }
     }
 
@@ -172,13 +176,18 @@ pair<Line, Line> getLines(const sensor_msgs::LaserScanPtr& scanMsg, double& qual
     for (int i = 0; i < points.size(); i++)
         cv::circle(img, points[i], 3, cv::Scalar(200, 200, 255), 2);
 
-    cv::circle(img, Point2f(450, 450), 3, cv::Scalar(255, 255, 255), 2);
+    for (int i = 0; i < pointsRight.size(); i++)
+        cv::circle(img, pointsRight[i], 3, cv::Scalar(200, 200, 255), 2);
 
+    cv::circle(img, Point2f(450, 450), 3, cv::Scalar(255, 255, 255), 2);
+    float prePoints = points.size() + pointsRight.size();
+    FindBestLineRemoveInliers(pointsRight, lines, ransacThreshold, 50);
     FindBestLineRemoveInliers(points, lines, ransacThreshold, 50);
-    FindBestLineRemoveInliers(points, lines, ransacThreshold, 50);
+
+    cout << "percent inliers: " << (prePoints-(points.size()+pointsRight.size()))/prePoints << endl;
 
     // Determine quality (parrallel, distance)
-    if(lines.size() == 2)
+    if(lines.size() == 2 && (prePoints-(points.size()+pointsRight.size()))/prePoints > 0.75)
     {
         // Parallelity - dotproduct 1=parrallel 0=perpendicular
         double dotProduct = (1 * 1 + lines[0].a * lines[1].a) / (sqrt(1 + lines[0].a * lines[0].a) * sqrt(1 + lines[1].a * lines[1].a));
@@ -186,7 +195,7 @@ pair<Line, Line> getLines(const sensor_msgs::LaserScanPtr& scanMsg, double& qual
         double distanceBetweenLinesAtRobot = lines[1].distanceToPoint(robotPos) + lines[0].distanceToPoint(robotPos);
         double distanceFromOptimal = abs(distanceBetweenLinesAtRobot - ROW_WIDTH);
         distanceFromOptimal = distanceFromOptimal / (ROW_WIDTH / 3);
-        double score = (1 - distanceFromOptimal) * dotProduct;
+        double score = dotProduct;
 
         // Determine left and right line
         int left, right;
@@ -209,7 +218,7 @@ pair<Line, Line> getLines(const sensor_msgs::LaserScanPtr& scanMsg, double& qual
         distanceOfCenter.publish(distanceMsg);
         // cout << "right: " << lines[right].distanceToPoint(robotPos) << "\tleft: " << lines[left].distanceToPoint(robotPos) << "    Off-center: " << distaneToCenterLine << endl;
 
-        // cout << "Distance bestween: " << distanceBetweenLinesAtRobot << "    Dot: " << dotProduct << "\tScore: " << score << "    Off-center: " << distaneToCenterLine << endl;
+         cout << "Distance bestween: " << distanceBetweenLinesAtRobot << "    Dot: " << dotProduct << "\tScore: " << score << "    Off-center: " << distaneToCenterLine << endl;
 
         float angleOnWallValue = atan2((lines[0].a + lines[1].a) / 2, 1);
         std_msgs::Float32 angleMsg;
@@ -265,25 +274,29 @@ void laserScanCallBack(const sensor_msgs::LaserScanPtr& scanMsg)
 
 int main(int argc, char** argv)
 {
+    srand(time(NULL));
+
 
     ros::init(argc, argv, "bridge_wall_tracking");
     ros::NodeHandle n;
 
     // Set parameters
-    n.param<double>("/BridgeWallTracking/minScoreForPublishing",minScoreForPublish,0.5);
+    n.param<double>("/BridgeWallTracking/minScoreForPublishing",minScoreForPublish,0.6);
     n.param<double>("/BridgeWallTracking/covX",covX,0.8);
     n.param<double>("/BridgeWallTracking/covYaw",covYaw,0.8);
     n.param<double>("/BridgeWallTracking/ransacThreshold",ransacThreshold,3);
-    n.param<double>("/BridgeWallTracking/laserMaxDistance",laserMaxDistance,3);
+    n.param<double>("/BridgeWallTracking/laserMaxDistance",laserMaxDistance,2);
 
     //Subscribe to topic
     ros::Subscriber sub = n.subscribe("scan", 1000, laserScanCallBack);
 
     //Publish topics
-    img_publisher = n.advertise<sensor_msgs::Image>("wall_finding_image", 1000);
-    angleOnWalls = n.advertise<std_msgs::Float32>("angle_on_wall", 1);
-    distanceOfCenter = n.advertise<std_msgs::Float32>("distanceOfCenter", 1);
-    visualOdometry = n.advertise<nav_msgs::Odometry>("visualOdometry", 1);
+    img_publisher = n.advertise<sensor_msgs::Image>("wall_finding_image_new", 1000);
+    angleOnWalls = n.advertise<std_msgs::Float32>("angle_on_wall_new", 1);
+    distanceOfCenter = n.advertise<std_msgs::Float32>("distanceOfCenter_new", 1);
+    visualOdometry = n.advertise<nav_msgs::Odometry>("visualOdometry_new", 1);
+
+
 
     // Spin
     ros::Rate r(10);

@@ -31,7 +31,8 @@ pubTipperUpdate = 0
 pubCmdVelUpdate = 0
 pubActuationEna = 0
 
-tipperTilted = False
+#tipperTilted = False
+isManual = False
 actuationEna = False
 
 class MyServerProtocol( WebSocketServerProtocol ):
@@ -89,9 +90,10 @@ class MyServerProtocol( WebSocketServerProtocol ):
                 elif leftButton == u"l":
                     drive( 0.0, 0.8 )
                 elif rightButton == u"y":
-                    tip()
+                    tip( u"up" );
                 elif rightButton == u"x":
-                    publishCommand( pubModeUpdate, u"manual" )
+                    tip( u"down" );
+                    #publishCommand( pubModeUpdate, u"manual" )
                 elif rightButton == u"a":
                     publishCommand( pubModeUpdate, u"start" )
                 elif rightButton == u"b":
@@ -101,6 +103,8 @@ class MyServerProtocol( WebSocketServerProtocol ):
         global actuationEna
 
         actuationEna = False
+        isManual = False
+        publishCommand( pubModeUpdate, u"start" )
 
         print( "WebSocket connection closed: {0}".format( reason ) )
 
@@ -164,16 +168,20 @@ def drive( linearX, angularZ ):
     global pubCmdVelUpdate
 
     msg = createdTwistedCommand( linearX, angularZ )
+    setManualMode( True )
     publishCommand( pubCmdVelUpdate, msg )
 
-def tip():
+def tip( direction ):
     global pubTipperUpdate
     global tipperTilted
 
-    tipperTilted = not tipperTilted
-    publishCommand( pubTipperUpdate, "up" )
+    publishCommand( pubTipperUpdate, direction )
 
-    print "tipping"
+def setManualMode( newState ):
+    if( isManual != newState ):
+        isManual = newState
+        if( isManual ):
+            publishCommand( pubModeUpdate, u"manual" )
 
 def callback( data ):
     global location

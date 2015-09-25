@@ -1,5 +1,3 @@
-
-
 #include "sensor_msgs/LaserScan.h"
 #include "sensor_msgs/Image.h"
 #include "std_msgs/Float32.h"
@@ -24,7 +22,8 @@ using namespace cv;
 #define PI 3.14159265
 #define ROW_WIDTH 120
 
-struct LinePolar {
+struct LinePolar
+{
     double distance;
     double normalVectorAngle;
 
@@ -35,7 +34,8 @@ struct LinePolar {
     }
 };
 
-struct Line {
+struct Line
+{
     double a;
     double b;
 
@@ -44,6 +44,7 @@ struct Line {
         a = A;
         b = B;
     }
+
     Line(Point2d p1, Point2d p2)
     {
         double denom = (p2.x - p1.x);
@@ -147,15 +148,16 @@ void FindBestLineRemoveInliers(vector<Point2d>& points, vector<Line>& lines, dou
 
 pair<Line, Line> getLines(const sensor_msgs::LaserScanPtr& scanMsg, double& qualityMeasure)
 {
-
     // Method 1
     cv::Mat img(900, 900, CV_8U, cv::Scalar(0, 0, 0));
     // insert points
     vector<Point2d> points;
-    for (int i = 0; i < scanMsg->ranges.size(); i++) {
+    for (int i = 0; i < scanMsg->ranges.size(); i++)
+    {
         // Calculate x and y
         double x, y;
-        if (scanMsg->ranges[i] < 3.5) {
+        if (scanMsg->ranges[i] < 3.5)
+        {
             //x = 450 + (scanMsg->ranges[i] * 100) * cos(((225 + (3 * i)) % 360) * PI / 180);
            // y = 450 + (scanMsg->ranges[i] * 100) * sin(((225 + (3 * i)) % 360) * PI / 180);
             x = 450 + (scanMsg->ranges[i] * 100) * cos(scanMsg->angle_min+i*scanMsg->angle_increment);
@@ -167,16 +169,17 @@ pair<Line, Line> getLines(const sensor_msgs::LaserScanPtr& scanMsg, double& qual
 
     // Find best line (RANSAC)
     vector<Line> lines;
-    for (int i = 0; i < points.size(); i++) {
+    for (int i = 0; i < points.size(); i++)
         cv::circle(img, points[i], 3, cv::Scalar(200, 200, 255), 2);
-    }
+
     cv::circle(img, Point2f(450, 450), 3, cv::Scalar(255, 255, 255), 2);
 
     FindBestLineRemoveInliers(points, lines, 2, 50);
     FindBestLineRemoveInliers(points, lines, 2, 50);
 
     // Determine quality (parrallel, distance)
-    if (lines.size() == 2) {
+    if(lines.size() == 2)
+    {
         // Parallelity - dotproduct 1=parrallel 0=perpendicular
         double dotProduct = (1 * 1 + lines[0].a * lines[1].a) / (sqrt(1 + lines[0].a * lines[0].a) * sqrt(1 + lines[1].a * lines[1].a));
         Point2d robotPos(450, 450);
@@ -187,16 +190,19 @@ pair<Line, Line> getLines(const sensor_msgs::LaserScanPtr& scanMsg, double& qual
 
         // Determine left and right line
         int left, right;
-        if (lines[0].getY(450) > 450) {
+        if (lines[0].getY(450) > 450)
+        {
             // 1 = right    0 = left
             right = 1;
             left = 0;
         }
-        else {
+        else
+        {
             // 0 = right    1 = left
             right = 0;
             left = 1;
         }
+
         float distaneToCenterLine = (float)lines[right].distanceToPoint(robotPos) - (float)lines[left].distanceToPoint(robotPos);
         std_msgs::Float32 distanceMsg;
         distanceMsg.data = distaneToCenterLine;
@@ -212,10 +218,10 @@ pair<Line, Line> getLines(const sensor_msgs::LaserScanPtr& scanMsg, double& qual
 
         if(score >= minScoreForPublish)
         {
-            //Publish the Odometry message
+            // Publish the Odometry message
             nav_msgs::Odometry odoMsg;
-            odoMsg.pose.pose.position.y = distaneToCenterLine;
-            tf::quaternionTFToMsg( tf::createQuaternionFromRPY(0,0,angleOnWallValue*180/PI),odoMsg.pose.pose.orientation );
+            odoMsg.pose.pose.position.y = distaneToCenterLine/100.0;
+            tf::quaternionTFToMsg( tf::createQuaternionFromRPY(0,0,angleOnWallValue*180.0/PI),odoMsg.pose.pose.orientation );
 
             for (int i=0; i<odoMsg.pose.covariance.size(); i++)
                 odoMsg.pose.covariance[i] = 0.01;
@@ -225,14 +231,12 @@ pair<Line, Line> getLines(const sensor_msgs::LaserScanPtr& scanMsg, double& qual
 
             odoMsg.header.stamp = ros::Time::now();
             visualOdometry.publish(odoMsg);
-
-
-
         }
     }
 
-    //Draw lines
-    for (int i = 0; i < lines.size(); i++) {
+    // Draw lines
+    for (int i = 0; i < lines.size(); i++)
+    {
         //lines[i].print();
         Point pt1, pt2;
         pt1.x = 1;
@@ -243,7 +247,8 @@ pair<Line, Line> getLines(const sensor_msgs::LaserScanPtr& scanMsg, double& qual
     }
 
     newImage = true;
-    if (newImage) {
+    if (newImage)
+    {
         sensor_msgs::ImagePtr ptr = cv_bridge::CvImage(std_msgs::Header(), sensor_msgs::image_encodings::MONO8, img).toImageMsg();
         img_publisher.publish(ptr);
         newImage = false;
@@ -254,9 +259,8 @@ pair<Line, Line> getLines(const sensor_msgs::LaserScanPtr& scanMsg, double& qual
 void laserScanCallBack(const sensor_msgs::LaserScanPtr& scanMsg)
 {
     double temp = 0;
-    if (!runOnce) {
+    if (!runOnce)
         getLines(scanMsg, temp);
-    }
 }
 
 int main(int argc, char** argv)

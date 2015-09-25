@@ -7,6 +7,7 @@
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include "std_msgs/String.h"
+#include "std_msgs/Float64.h"
 #include "geometry_msgs/TwistStamped.h"
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 #include "msgs/BoolStamped.h"
@@ -31,13 +32,14 @@ enum MODES
 // Global var
 bool _running = false;
 MODES _systemMode = STOP;
-ros::Publisher _motorCommandTopic, _deadmanTopic;
+ros::Publisher _motorCommandTopic, _deadmanTopic, _deltaXTopic, _deltaThetaTopic;
 boost::mutex _runningMutex;
 double _angleSpeed = 0.0, _forwardSpeed = 0.0;
 double _coeffP, _coeffI, _coeffD, _maxI;
 double _maxAngleSpeed;
 double _speedNormal, _speedSlow, _speedError;
 int _motorUpdateRate;
+double _funcDen, _funcNom;
 
 // Function prototype
 void setSpeed(double pidError = 0);
@@ -131,9 +133,8 @@ double calculateError(double deltaX, double deltaTheta)
     // Now we got an error in angle domain with respect to both translation and rotation
     // Weight these two based on the size of the translational error
 
-    // Use this function
-    // y = 1/(20*x)
-    double weight = 1.0/(20.0 * fabs(deltaX));
+    // Use a weighting function
+    double weight = _funcNom/(_funcDen * fabs(deltaX));
 
     if(weight>1.0)
         weight = 1;
@@ -163,6 +164,13 @@ void kalmanCallback(geometry_msgs::PoseWithCovarianceStamped msg)
         tf::Quaternion quat;
         tf::quaternionMsgToTF(msg.pose.pose.orientation, quat);
         double deltaTheta = tf::getYaw(quat);
+
+        // Publish received values
+        std_msgs::Float64 msg;
+        msg.data = deltaX;
+        _deltaXTopic.publish(msg);
+        msg.data = deltaTheta;
+        _deltaThetaTopic.publish(msg);
 
         // Calculate error
         double error = calculateError(deltaX, deltaTheta);
@@ -264,17 +272,23 @@ int main()
     nh.param<double>("/MR_NavigationController/NavigationController/pid_coeff_d", _coeffD, 0.01);
     nh.param<double>("/MR_NavigationController/NavigationController/pid_max_i", _maxI, 1000);
     nh.param<int>("/MR_NavigationController/NavigationController/motor_update_rate", _motorUpdateRate, 50); // Sleep for 50 ms = 20Hz
+    nh.param<double>("/MR_NavigationController/NavigationController/func_nominator", _funcNom, 1.0);
+    nh.param<double>("/MR_NavigationController/NavigationController/func_denominator", _funcDen, 40.0);
 
     // Get topic names
-    std::string deadmanParameter, motorParameter, missionPlanParam, kalmanParam;
+    std::string deadmanParameter, motorParameter, missionPlanParam, kalmanParam, deltaXParam, deltaThetaParam;
     nh.param<std::string>("/MR_NavigationController/NavigationController/deadman_pub", deadmanParameter, "/fmSafe/deadman");
     nh.param<std::string>("/MR_NavigationController/NavigationController/cmd_vel_pub", motorParameter, "/fmCommand/cmd_vel");
     nh.param<std::string>("/MR_NavigationController/NavigationController/mr_missionplan_sub", missionPlanParam, "/mrMissionPlanner/status");
     nh.param<std::string>("/MR_NavigationController/NavigationController/mr_kalman_sub", kalmanParam, "/mrKalman/data");
+    nh.param<std::string>("/MR_NavigationController/NavigationController/deltaX_pub", deltaXParam, "/mrNavigationController/deltaX");
+    nh.param<std::string>("/MR_NavigationController/NavigationController/deltaTheta_pub", deltaThetaParam, "mrNavigationController/deltaTheta");
 
     // Publisher
     _motorCommandTopic = nh.advertise<geometry_msgs::TwistStamped>(motorParameter, 1);
     _deadmanTopic = nh.advertise<msgs::BoolStamped>(deadmanParameter, 1);
+    _deltaXTopic = nh.advertise<std_msgs::Float64>(deltaXParam, 1);
+    _deltaThetaTopic = nh.advertise<std_msgs::Float64>(deltaThetaParam, 1);
 
     // Subscriber
     ros::Subscriber subMissionPlanner = nh.subscribe(missionPlanParam, 1, missionCallback);

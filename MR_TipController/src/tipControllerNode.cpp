@@ -73,8 +73,6 @@ SynchronisedQueue<std::string> _queue;
 // Functions
 void tipControlCallback(std_msgs::String msg)
 {
-    ROS_INFO(msg.data.c_str());
-
     if(msg.data == "up" && _isDown == true)
     {
         if(_debugMsg)
@@ -90,6 +88,13 @@ void tipControlCallback(std_msgs::String msg)
 
         _queue.enqueue("d");
         _isDown = true;
+    }
+    else if(_debugMsg)
+    {
+        if(_isDown)
+            ROS_INFO("Tipper is DOWN!");
+        else
+            ROS_INFO("Tipper is UP!");
     }
 }
 

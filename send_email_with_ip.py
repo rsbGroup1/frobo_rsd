@@ -30,6 +30,6 @@ def send_email(user, pwd, recipient, subject, body):
 
 if __name__ == "__main__":
 	#eth0 or wlan0?
-	ip = ni.ifaddresses('wlan0')[AF_INET][0]['addr']
+	ip = ni.ifaddresses('wlan1')[AF_INET][0]['addr']
 	print ip
 	send_email("grouprsd1@gmail.com", "group_rsd_1", "veimox@gmail.com", "IP", ip)

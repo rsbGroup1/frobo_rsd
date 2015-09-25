@@ -122,9 +122,11 @@
 
 	<!-- WALL TRACKING -->
 	<node pkg="mr_bridgewalltracking" name="BridgeWallTracking" type="BridgeWallTracking">
-		<param name="minScoreForPublishing" value="0.4"/>
-		<param name="covX" value="0.8"/>
-		<param name="covYaw" value="0.8"/>
+		<param name="minScoreForPublishing" value="0.8"/>
+		<param name="covX" value="0.9"/>
+		<param name="covYaw" value="0.9"/>
+		<param name="laserMaxDistance" value="1.5"/>
+		<param name="ransacThreshold" value="1	"/>
 	</node>
 
 	<!-- Add covariance to frobo odometry -->
@@ -170,19 +172,30 @@
 		</node>
 	</group>
 
+	<!-- OBSTACLE DETECTOR -->
+	<group ns="obstacle_detector">
+		<node pkg="mr_obstacle_detector" name="obstacle_detector" type="obstacle_detector.py">
+			<param name="threshold_slow" value="0.4" />
+			<param name="threshold_stop" value="0.2" />
+			<param name="threshold_ignore" value="0.05" />
+			<param name="laser_scan" value="/scan" />
+			<param name="publishTopic" value="/mrObstacleDetector/status" />
+		</node>
+	</group>
+
 	<!-- NAVIGATION CONTROLLER -->
 	<group ns="MR_NavigationController">
 		<node pkg="mr_navigation_controller" name="NavigationController" type="mr_navigation_controller">
-			  <param name="speed_normal" value="0.2"/>
-			  <param name="speed_slow" value="0.1"/>
+			  <param name="speed_normal" value="0.4"/>
+			  <param name="speed_slow" value="0.2"/>
 			  <param name="speed_error" value="0.0"/>
-			  <param name="max_angle_speed" value="0.3"/>
-			  <param name="pid_coeff_p" value="1.2"/>
-			  <param name="pid_coeff_i" value="0"/>
-			  <param name="pid_coeff_d" value="0"/>
+			  <param name="max_angle_speed" value="0.6"/>
+			  <param name="pid_coeff_p" value="0.1"/>
+			  <param name="pid_coeff_i" value="0.0"/>
+			  <param name="pid_coeff_d" value="0.05"/>
 			  <param name="pid_max_i" value="1000"/>
 			  <param name="func_nominator" value="1.0"/>
-			  <param name="func_denominato" value="50.0"/>
+			  <param name="func_denominato" value="40.0"/>
 			  <param name="motor_update_rate" value="50"/>
 			  <param name="deadman_pub" value="/fmSafe/deadman"/>
 			  <param name="cmd_vel_pub" value="/fmCommand/cmd_vel"/>
@@ -211,17 +224,6 @@
 			<param name="cmd_pub" value="/fmCommand/cmd_vel"/>
 			<param name="tipper_pub" value="/mrMainController/tipper"/>
 		</node>			
-	</group>
-
-	<!-- OBSTACLE DETECTOR -->
-	<group ns="obstacle_detector">
-		<node pkg="mr_obstacle_detector" name="obstacle_detector" type="obstacle_detector.py">
-			<param name="threshold_slow" value="0.4" />
-			<param name="threshold_stop" value="0.3" />
-			<param name="threshold_ignore" value="0.05" />
-			<param name="laser_scan" value="/scan" />
-			<param name="publishTopic" value="/mrObstacleDetector/status" />
-		</node>
 	</group>
 </launch>
 

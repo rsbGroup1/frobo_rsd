@@ -85,7 +85,7 @@ struct Line
 bool newImage = false;
 ros::Publisher img_publisher, angleOnWalls, distanceOfCenter, visualOdometry;
 bool runOnce = false;
-double minScoreForPublish, covX, covYaw;
+double minScoreForPublish, covX, covYaw, ransacThreshold, laserMaxDistance;
 
 void FindBestLineRemoveInliers(vector<Point2d>& points, vector<Line>& lines, double inlierTreshold, int iterations = 30, bool removeInliers = true)
 {
@@ -156,7 +156,7 @@ pair<Line, Line> getLines(const sensor_msgs::LaserScanPtr& scanMsg, double& qual
     {
         // Calculate x and y
         double x, y;
-        if (scanMsg->ranges[i] < 3.5)
+        if (scanMsg->ranges[i] < laserMaxDistance)
         {
             //x = 450 + (scanMsg->ranges[i] * 100) * cos(((225 + (3 * i)) % 360) * PI / 180);
            // y = 450 + (scanMsg->ranges[i] * 100) * sin(((225 + (3 * i)) % 360) * PI / 180);
@@ -174,8 +174,8 @@ pair<Line, Line> getLines(const sensor_msgs::LaserScanPtr& scanMsg, double& qual
 
     cv::circle(img, Point2f(450, 450), 3, cv::Scalar(255, 255, 255), 2);
 
-    FindBestLineRemoveInliers(points, lines, 2, 50);
-    FindBestLineRemoveInliers(points, lines, 2, 50);
+    FindBestLineRemoveInliers(points, lines, ransacThreshold, 50);
+    FindBestLineRemoveInliers(points, lines, ransacThreshold, 50);
 
     // Determine quality (parrallel, distance)
     if(lines.size() == 2)
@@ -221,7 +221,7 @@ pair<Line, Line> getLines(const sensor_msgs::LaserScanPtr& scanMsg, double& qual
             // Publish the Odometry message
             nav_msgs::Odometry odoMsg;
             odoMsg.pose.pose.position.y = distaneToCenterLine/100.0;
-            tf::quaternionTFToMsg( tf::createQuaternionFromRPY(0,0,angleOnWallValue*180.0/PI),odoMsg.pose.pose.orientation );
+            tf::quaternionTFToMsg( tf::createQuaternionFromRPY(0,0,angleOnWallValue),odoMsg.pose.pose.orientation );
 
             for (int i=0; i<odoMsg.pose.covariance.size(); i++)
                 odoMsg.pose.covariance[i] = 0.01;
@@ -270,9 +270,11 @@ int main(int argc, char** argv)
     ros::NodeHandle n;
 
     // Set parameters
-    n.param<double>("minScoreForPublishing",minScoreForPublish,0.5);
-    n.param<double>("covX",covX,0.8);
-    n.param<double>("covYaw",covYaw,0.8);
+    n.param<double>("/BridgeWallTracking/minScoreForPublishing",minScoreForPublish,0.5);
+    n.param<double>("/BridgeWallTracking/covX",covX,0.8);
+    n.param<double>("/BridgeWallTracking/covYaw",covYaw,0.8);
+    n.param<double>("/BridgeWallTracking/ransacThreshold",ransacThreshold,3);
+    n.param<double>("/BridgeWallTracking/laserMaxDistance",laserMaxDistance,3);
 
     //Subscribe to topic
     ros::Subscriber sub = n.subscribe("scan", 1000, laserScanCallBack);

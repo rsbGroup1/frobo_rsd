@@ -17,6 +17,7 @@
 // Defines
 #define M_PI                    3.14159265358979323846
 #define DEGREETORAD             (M_PI/180.0)
+#define RADTODEGREE             (180.0/M_PI)
 #define SSTR(x)                 dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
 
 // System mode enum
@@ -152,25 +153,26 @@ double calculateError(double deltaX, double deltaTheta)
 void kalmanCallback(geometry_msgs::PoseWithCovarianceStamped msg)
 {
     static double oldError = 0.0, integral = 0.0;
+     
+    // Get deltaX
+    double deltaX = msg.pose.pose.position.y;
+
+    // Get theta
+    tf::Quaternion quat;
+    tf::quaternionMsgToTF(msg.pose.pose.orientation, quat);
+    double deltaTheta = tf::getYaw(quat) * RADTODEGREE;
+
+    // Publish received values
+    std_msgs::Float64 msgF;
+    msgF.data = deltaX;
+    _deltaXTopic.publish(msgF);
+    msgF.data = deltaTheta;
+    _deltaThetaTopic.publish(msgF);
 
     _runningMutex.lock();
     if(_running)
     {
         _runningMutex.unlock();
-        // Get deltaX
-        double deltaX = msg.pose.pose.position.y;
-
-        // Get theta
-        tf::Quaternion quat;
-        tf::quaternionMsgToTF(msg.pose.pose.orientation, quat);
-        double deltaTheta = tf::getYaw(quat);
-
-        // Publish received values
-        std_msgs::Float64 msg;
-        msg.data = deltaX;
-        _deltaXTopic.publish(msg);
-        msg.data = deltaTheta;
-        _deltaThetaTopic.publish(msg);
 
         // Calculate error
         double error = calculateError(deltaX, deltaTheta);

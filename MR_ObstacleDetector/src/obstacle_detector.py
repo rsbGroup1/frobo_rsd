@@ -67,13 +67,13 @@ class obs_detector():
 		self.updater()
 
 	def on_lidar_data(self,msg):
-		# our laserscanner has 90 measurements - 270 degree total
+		# our laserscanner has 270 measurements - 270 degree total
 		# going right to left
 		self.slow = False
 		self.stop = False
 		for x in range(len(msg.ranges)):
 			if msg.ranges[x] > self.threshold_ignore:
-				if msg.ranges[x] < self.threshold_stop:
+				if ((x > len(msg.ranges)/3) and (x < len(msg.ranges)*2/3) and (msg.ranges[x] < self.threshold_stop)):
 					self.stop = True
 					break
 				elif msg.ranges[x] < self.threshold_slow:

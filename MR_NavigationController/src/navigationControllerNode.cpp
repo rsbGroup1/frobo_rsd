@@ -41,6 +41,7 @@ double _maxAngleSpeed;
 double _speedNormal, _speedSlow, _speedError;
 int _motorUpdateRate;
 double _funcDen, _funcNom;
+boost::thread *_motorPublishThread;
 
 // Function prototype
 void setSpeed(double pidError = 0);
@@ -237,20 +238,30 @@ void motorUpdateThread()
 {
     while(true)
     {
-        _runningMutex.lock();
-        if(_running)
+        try
         {
-            _runningMutex.unlock();
+            _runningMutex.lock();
+            if(_running)
+            {
+                _runningMutex.unlock();
 
-            // Send motor command
-            setSpeed();
-            sendMotorCommand(_forwardSpeed, _angleSpeed);
+                // Send motor command
+                setSpeed();
+                sendMotorCommand(_forwardSpeed, _angleSpeed);
+            }
+            else
+                _runningMutex.unlock();
+
+            // Sleep
+            usleep(_motorUpdateRate); // Sleep for 50 ms = 20Hz
+
+            // Signal interrupt point
+            boost::this_thread::interruption_point();
         }
-        else
-            _runningMutex.unlock();
-
-        // Sleep
-        usleep(_motorUpdateRate); // Sleep for 50 ms = 20Hz
+        catch(const boost::thread_interrupted&)
+        {
+            break;
+        }
     }
 }
 
@@ -297,13 +308,14 @@ int main()
     ros::Subscriber subKalman = nh.subscribe(kalmanParam, 1, kalmanCallback);
 
     // Start motor update thread
-    boost::thread motorPublishThread(motorUpdateThread);
+    _motorPublishThread = new boost::thread(motorUpdateThread);
 
     // ROS Spin: Handle callbacks
-    ros::spin();
+    while(ros::ok())
+	ros::spinOnce();
 
     // Close thread
-    motorPublishThread.interrupt();
+    _motorPublishThread->interrupt();
 
     // Return
     return 0;

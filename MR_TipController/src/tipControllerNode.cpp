@@ -69,6 +69,7 @@ serial::Serial *_serialConnection;
 bool _isDown = true;
 bool _debugMsg;
 SynchronisedQueue<std::string> _queue;
+boost::thread *_writeThread;
 
 // Functions
 void tipControlCallback(std_msgs::String msg)
@@ -102,7 +103,18 @@ void writeSerialThread()
 {
     while(true)
     {
-        _serialConnection->write(_queue.dequeue());
+        try
+        {
+            // Write
+            _serialConnection->write(_queue.dequeue());
+
+            // Signal interrupt point
+            boost::this_thread::interruption_point();
+        }
+        catch(const boost::thread_interrupted&)
+        {
+            break;
+        }
     }
 }
 
@@ -220,13 +232,14 @@ int main()
         ROS_INFO("Successfully connected!");
 
     // Start serial read thread
-    boost::thread serialWriteThread(writeSerialThread);
+    _writeThread = new boost::thread(writeSerialThread);
 
     // ROS Spin: Handle callbacks
-    ros::spin();
+    while(ros::ok())
+	ros::spinOnce();
 
     // Close connection
-    serialWriteThread.interrupt();
+    _writeThread->interrupt();
     _serialConnection->close();
 
     // Return

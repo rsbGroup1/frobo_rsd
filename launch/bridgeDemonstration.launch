@@ -175,7 +175,7 @@
 	<!-- OBSTACLE DETECTOR -->
 	<group ns="obstacle_detector">
 		<node pkg="mr_obstacle_detector" name="obstacle_detector" type="obstacle_detector.py">
-			<param name="threshold_slow" value="0.3" />
+			<param name="threshold_slow" value="0.4" />
 			<param name="threshold_stop" value="0.3" />
 			<param name="threshold_ignore" value="0.05" />
 			<param name="laser_scan" value="/scan" />
@@ -207,14 +207,14 @@
 	</group>
 
 	<!-- TIP CONTROLLER -->
-	<!--group ns="MR_TipController">
+	<group ns="MR_TipController">
 		<node pkg="mr_tip_controller" name="TipController" type="mr_tip_controller">
 			<param name="baud_rate" value="115200"/>
 			<param name="port" value="/dev/serial/by-id/usb-Arduino_Srl_Arduino_Uno_7543932393535120F172-if00"/>  	
 			<param name="debug" value="true"/>  
 			<param name="mr_maincontroller_tipper_pub" value="/mrMainController/tipper"/>	   	
 		</node>
-	</group>-->
+	</group>
 
 	<!-- HMI -->
 	<group ns="MR_HMI">

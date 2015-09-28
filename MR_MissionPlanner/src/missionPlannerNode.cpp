@@ -67,112 +67,147 @@ class SynchronisedQueue
 // System mode enum
 enum MODES
 {
-    SLOW = 0,
-    ERROR,
-    STOP,
-    START,
-    MANUAL
+    M_OFF = 0,
+    M_RUN,
+    M_IDLE,
+    M_MANUAL,
+    M_NORMAL,
+    M_SLOW,
+    M_STOP
 };
 
 // Global var
 bool _running = false;
 serial::Serial *_serialConnection;
 ros::Publisher _missionPlannerPublisher;
-MODES _systemMode = STOP;
-boost::mutex _serialMutex;
+MODES _errorMode = M_OFF, _runMode = M_OFF;
 bool _debug;
 SynchronisedQueue<std::string> _queue;
+boost::thread *_readThread, *_writeThread;
+boost::mutex _modeMutex;
 
 // Functions
-void changeMode(MODES mode)
+void changeMode()
 {
-    if(mode != _systemMode)
+    std_msgs::String temp;
+
+    if(_runMode == M_OFF)
     {
-        std_msgs::String temp;
-
-        switch(mode)
+        _queue.enqueue("off\n");
+        temp.data = "off";
+    }
+    else if(_runMode == M_IDLE)
+    {
+        switch(_errorMode)
         {
-            case SLOW:
-                _queue.enqueue("slow\n");
-                temp.data = "slow";
+            case M_NORMAL:
+                _queue.enqueue("idle\n");
+                temp.data = "idle";
                 break;
 
-            case START:
-                _running = true;
-                _queue.enqueue("start\n");
-                temp.data = "start";
+            case M_SLOW:
+                _queue.enqueue("idleSlow\n");
+                temp.data = "idleSlow";
                 break;
 
-            case ERROR:
-                _queue.enqueue("error\n");
-                temp.data = "error";
-                break;
-
-            case STOP:
-                _running = false;
-                _queue.enqueue("stop\n");
-                temp.data = "stop";
-             break;
-
-            case MANUAL:
-                _running = false;
-                _queue.enqueue("manual\n");
-                temp.data = "manual";
+            case M_STOP:
+                _queue.enqueue("idleStop\n");
+                temp.data = "idleStop";
                 break;
 
             default:
                 break;
         }
-
-        _missionPlannerPublisher.publish(temp);
-        _systemMode = mode;
     }
+    else if(_runMode == M_RUN)
+    {
+        switch(_errorMode)
+        {
+            case M_NORMAL:
+                _queue.enqueue("run\n");
+                temp.data = "run";
+                break;
+
+            case M_SLOW:
+                _queue.enqueue("runSlow\n");
+                temp.data = "runSlow";
+                break;
+
+            case M_STOP:
+                _queue.enqueue("runStop\n");
+                temp.data = "runStop";
+                break;
+
+            default:
+                break;
+        }
+    }
+    else if(_runMode == M_MANUAL)
+    {
+        switch(_errorMode)
+        {
+            case M_NORMAL:
+                _queue.enqueue("manual\n");
+                temp.data = "manual";
+                break;
+
+            case M_SLOW:
+                _queue.enqueue("manualSlow\n");
+                temp.data = "manualSlow";
+                break;
+
+            case M_STOP:
+                _queue.enqueue("manualStop\n");
+                temp.data = "manualStop";
+                break;
+
+            default:
+                break;
+        }
+    }
+
+
+    _missionPlannerPublisher.publish(temp);
+}
+
+void changeErrorMode(MODES errorMode)
+{
+    _modeMutex.lock();
+
+    _errorMode = errorMode;
+    changeMode();
+
+    _modeMutex.unlock();
+}
+
+void changeRunMode(MODES runMode)
+{
+    _modeMutex.lock();
+
+    _runMode = runMode;
+    changeMode();
+
+    _modeMutex.unlock();
 }
 
 void collisionCallback(std_msgs::String msg)
 {
-    static MODES oldMode = STOP;
-
     if(msg.data == "stop")
-    {
-        if(_running)
-            changeMode(ERROR);
-        else if(oldMode != ERROR && _debug)
-        {
-             _queue.enqueue("error\n");
-             oldMode = ERROR;
-        }
-    }
+        changeErrorMode(M_STOP);
     else if(msg.data == "slow")
-    {
-        if(_running)
-            changeMode(SLOW);
-        else if(oldMode != SLOW && _debug)
-        {
-             _queue.enqueue("slow\n");
-             oldMode = SLOW;
-        }
-    }
+        changeErrorMode(M_SLOW);
     else if(msg.data == "normal")
-    {
-        if(_running)
-            changeMode(START);
-        else if(oldMode != STOP && _debug)
-        {
-             _queue.enqueue("stop\n");
-             oldMode = STOP;
-        }
-    }
+        changeErrorMode(M_NORMAL);
 }
 
 void startStopCallback(std_msgs::String msg)
 {
-    if(msg.data == "start")
-        changeMode(START);
-    else if(msg.data == "stop")
-        changeMode(STOP);
+    if(msg.data == "run")
+        changeRunMode(M_RUN);
+    else if(msg.data == "idle")
+        changeRunMode(M_IDLE);
     else if(msg.data == "manual")
-        changeMode(MANUAL);
+        changeRunMode(M_MANUAL);
 }
 
 bool compareMsg(char* msg, char* command)
@@ -195,7 +230,17 @@ void writeSerialThread()
 {
     while(true)
     {
-        _serialConnection->write(_queue.dequeue());
+        try
+        {
+            _serialConnection->write(_queue.dequeue());
+
+            // Signal interrupt point
+            boost::this_thread::interruption_point();
+        }
+        catch(const boost::thread_interrupted&)
+        {
+            break;
+        }
     }
 }
 
@@ -208,42 +253,47 @@ void readSerialThread()
 
     while(true)
     {
-        _serialMutex.lock();
-        tempString = _serialConnection->read(1);
-        _serialMutex.unlock();
-
-        if(tempString.size() == 1)
+        try
         {
-            msg[i] = tempString[0];
+            tempString = _serialConnection->read(1);
 
-            if(msg[i] == '\n')
+            if(tempString.size() == 1)
             {
-                if(compareMsg(msg, "start\n"))
-                    changeMode(START);
-		else if(compareMsg(msg, "stop\n"))
-                    changeMode(STOP);
+                msg[i] = tempString[0];
 
-                // Clear data
-                i = 0;
+                if(msg[i] == '\n')
+                {
+                    if(compareMsg(msg, "run\n"))
+                        changeRunMode(M_RUN);
+                    else if(compareMsg(msg, "idle\n"))
+                        changeRunMode(M_IDLE);
+
+                    // Clear data
+                    i = 0;
+                }
+                else	// Wait for new character
+                    i++;
             }
-            else	// Wait for new character
-                i++;
+            else
+            {
+                // Clear if buffer is full without newline
+                if(i == DATA_LENGTH-1)
+                {
+                    i = 0;
+                    for(int k=0; k<DATA_LENGTH; k++)
+                        msg[k] = ' ';
+                    msg[DATA_LENGTH] = '\n';
+                }
+            }
+
+            // Signal interrupt point
+            boost::this_thread::interruption_point();
         }
-        else
+        catch(const boost::thread_interrupted&)
         {
-            // Clear if buffer is full without newline
-            if(i == DATA_LENGTH-1)
-            {
-                i = 0;
-                for(int k=0; k<DATA_LENGTH; k++)
-                    msg[k] = ' ';
-                msg[DATA_LENGTH] = '\n';
-            }
+            break;
         }
     }
-
-    // Close connection
-    _serialConnection->close();
 }
 
 int main()
@@ -276,10 +326,6 @@ int main()
     nh.param<int>("/MR_MissionPlanner/MissionPlanner/baud_rate", baudRate, 115200);
     nh.param<std::string>("/MR_MissionPlanner/MissionPlanner/port", port, "/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00");
 
-    // Inform user
-    //std::string temp = "Connecting to '" + port + "' with baud '" + SSTR(baudRate) + "'";
-    //ROS_INFO(temp.c_str());
-
     // Open connection
     _serialConnection = new serial::Serial(port.c_str(), baudRate, serial::Timeout::simpleTimeout(50));
 
@@ -293,20 +339,25 @@ int main()
     else
         ROS_INFO("Successfully connected!");
 
+    // Start serial threads
+    _readThread = new boost::thread(readSerialThread);
+    _writeThread = new boost::thread(writeSerialThread);
 
-    // Start serial read thread
-    boost::thread serialReadThread(readSerialThread);
-    boost::thread serialWriteThread(writeSerialThread);
+    // Sleep for a second
+    ros::Duration(2).sleep();
 
-    for(int i=0; i<10; i++)
-	    _queue.enqueue("stop\n");
+    // Change mode to idle
+    changeMode(M_IDLE, M_IDLE);
 
     // ROS Spin: Handle callbacks
-    ros::spin();
+    while(ros::ok())
+	ros::spinOnce();
 
     // Close connection
-    serialReadThread.interrupt();
-    serialWriteThread.interrupt();
+    changeRunMode(M_OFF);
+    ros::Duration(2).sleep();
+    _readThread->interrupt();
+    _writeThread->interrupt();
     _serialConnection->close();
 
     // Return

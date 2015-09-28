@@ -83,6 +83,8 @@ class MyServerProtocol( WebSocketServerProtocol ):
                 enaSignal = messageIn["data"]["ena"]
 
                 self.updateActuation( enaSignal )
+		print("hej")
+	
 
                 if leftButton == u"u":
                     drive( 0.2, 0.0 )
@@ -97,6 +99,7 @@ class MyServerProtocol( WebSocketServerProtocol ):
                 elif rightButton == u"y":
                     tip( False )
                 elif rightButton == u"a":
+ 	            rospy.loginfo("HEJ")
                     setManualMode( False )
                     publishCommand( pubModeUpdate, u"start" )
                 elif rightButton == u"b":
@@ -200,6 +203,7 @@ def callback( data ):
 
 def publishCommand( rosPublisher, command ):
     rosPublisher.publish( command )
+    rospy.loginfo(command.data)
 
 def initProxy():
 

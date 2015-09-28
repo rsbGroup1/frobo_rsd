@@ -43,7 +43,9 @@ rsdNamespace.StartListening = function() {
                 "data":{
                     "left": rsdNamespace.activeButtonLeft,
                     "right": rsdNamespace.activeButtonRight,
-                    "ena": rsdNamespace.actuationEnable
+                    "ena": rsdNamespace.actuationEnable,
+                    "linV": rsdNamespace.linearVelocity,
+                    "angV": rsdNamespace.angularVelocity
                 }
             }
 

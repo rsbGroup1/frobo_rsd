@@ -12,7 +12,7 @@ from twisted.internet import reactor
 import rospy
 from geometry_msgs.msg import Twist, TwistStamped
 from msgs.msg import BoolStamped
-from std_msgs.msg import String, Bool
+from std_msgs.msg import String
 
 LOCATION_REQUEST = "location_request"
 REMOTE_UPDATE = "remote_update"
@@ -93,9 +93,9 @@ class MyServerProtocol( WebSocketServerProtocol ):
                 elif leftButton == u"l":
                     drive( 0.0, 0.8 )
                 elif rightButton == u"x":
-                    tip( True )
+                    tip( u"up" )
                 elif rightButton == u"y":
-                    tip( False )
+                    tip( u"down" )
                 elif rightButton == u"a":
                     setManualMode( False )
                     publishCommand( pubModeUpdate, u"start" )
@@ -223,13 +223,13 @@ def initProxy():
     # Read parameters
 
     MODE_UPDATE_PUB = rospy.get_param( "~missionplanner_pub", MODE_UPDATE_PUB )
-    TIPPER_UPDATE_PUB = rospy.get_param( "~deadman_pub", TIPPER_UPDATE_PUB )
+    TIPPER_UPDATE_PUB = rospy.get_param( "~tipper_pub", TIPPER_UPDATE_PUB )
     CMD_VEL_UPDATE_PUB = rospy.get_param( "~cmd_pub", CMD_VEL_UPDATE_PUB )
-    ACTUATION_ENA_PUB = rospy.get_param( "~tipper_pub", ACTUATION_ENA_PUB )
+    ACTUATION_ENA_PUB = rospy.get_param( "~deadman_pub", ACTUATION_ENA_PUB )
 
     # Register Publisers
     pubModeUpdate = rospy.Publisher( MODE_UPDATE_PUB, String, queue_size = 1 )
-    pubTipperUpdate = rospy.Publisher( TIPPER_UPDATE_PUB, Bool, queue_size = 1 )
+    pubTipperUpdate = rospy.Publisher( TIPPER_UPDATE_PUB, String, queue_size = 1 )
     pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 1 )
     pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
 

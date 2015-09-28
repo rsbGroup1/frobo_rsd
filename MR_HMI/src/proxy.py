@@ -193,10 +193,10 @@ def tip( direction ):
 
     publishCommand( pubTipperUpdate, direction )
 
-def callback( data ):
-    global location
-    location = data.data
-    rospy.loginfo( rospy.get_caller_id() + "I heard %s", location )
+#def callback( data ):
+    #global location
+    #location = data.data
+    #rospy.loginfo( rospy.get_caller_id() + "I heard %s", location )
 
 def publishCommand( rosPublisher, command ):
     rosPublisher.publish( command )
@@ -218,7 +218,7 @@ def initProxy():
     # anonymous=True flag means that rospy will choose a unique
     # name for our 'talker' node so that multiple talkers can
     # run simultaneously.
-    rospy.init_node( 'proxy', anonymous = True )
+    rospy.init_node( 'MR_Proxy', anonymous = True )
 
     # Read parameters
 
@@ -234,7 +234,7 @@ def initProxy():
     pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
 
     # Register Listeners
-    rospy.Subscriber( "hmi_mobile", String, callback )
+    #rospy.Subscriber( "hmi_mobile", String, callback )
 
     # Start publishing the activationEna sygnal in a separate thread
     aThread = actuationThread( 1, "actuation_thread" )
@@ -251,7 +251,13 @@ def initProxy():
     reactor.run()
 
     # spin() simply keeps python from exiting until this node is stopped
-    rospy.spin()
+    #rospy.spin()
+
+    rate = rospy.Rate(10) # 10hz
+    while not rospy.is_shutdown():
+        rate.sleep()
+
+    # PUT SHUTDOWN CODE HERE
 
 if __name__ == '__main__':
     initProxy()

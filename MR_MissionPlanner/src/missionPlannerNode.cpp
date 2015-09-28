@@ -5,10 +5,6 @@
 #include <iostream>
 #include <queue>
 #include <sstream>
-#include <signal.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
 #include "serial/serial.h"
 #include <boost/thread/mutex.hpp>
 #include <boost/thread.hpp>
@@ -263,20 +259,6 @@ void readSerialThread()
             break;
         }
     }
-
-    // Close connection
-    _serialConnection->close();
-}
-
-void signalCallback(int signal)
-{
-    // Interrupt threads
-    _readThread->interrupt();
-    _writeThread->interrupt();
-    _serialConnection->close();
-
-    // Exit program
-    exit(1);
 }
 
 int main()
@@ -309,13 +291,6 @@ int main()
     nh.param<int>("/MR_MissionPlanner/MissionPlanner/baud_rate", baudRate, 115200);
     nh.param<std::string>("/MR_MissionPlanner/MissionPlanner/port", port, "/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00");
 
-    // Handle signals
-    struct sigaction sigIntHandler;
-    sigIntHandler.sa_handler = signalCallback;
-    sigemptyset(&sigIntHandler.sa_mask);
-    sigIntHandler.sa_flags = 0;
-    sigaction(SIGINT, &sigIntHandler, NULL);
-
     // Open connection
     _serialConnection = new serial::Serial(port.c_str(), baudRate, serial::Timeout::simpleTimeout(50));
 
@@ -330,8 +305,8 @@ int main()
         ROS_INFO("Successfully connected!");
 
     // Start serial threads
-    _readThread = new boost::thread(readFunction);
-    _writeThread = new boost::thread(writeFunction);
+    _readThread = new boost::thread(readSerialThread);
+    _writeThread = new boost::thread(writeSerialThread);
 
     // Sleep for a second
     ros::Duration(1).sleep();
@@ -340,7 +315,8 @@ int main()
     _queue.enqueue("stop\n");
 
     // ROS Spin: Handle callbacks
-    ros::spin();
+    while(ros::ok())
+	ros::spinOnce();
 
     // Close connection
     _readThread->interrupt();

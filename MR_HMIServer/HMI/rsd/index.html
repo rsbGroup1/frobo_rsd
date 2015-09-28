@@ -454,6 +454,8 @@
          xmlns="http://www.w3.org/2000/svg"
          xmlns:xlink="http://www.w3.org/1999/xlink"
          version="1.1"
+         width="100%"
+         height="100%"
          viewBox="0 0 78 78"
          id="svgRemoteRight">
         <defs
@@ -3006,10 +3008,18 @@
             </g>
           </svg>
 
-          <div id="hostname_lable">Hostname: <div id="hostname_data" contenteditable="true">localhost</div></div>
+          <div id="hostname_settings"><span id="hostname_lable">Hostname:</span>
+              <div id="hostname_data" contenteditable="true">localhost</div>
+              <div id="hostname_instructions">press SPACE or ENTER</div>
+          </div>
 
           <section>
-
+              <ul id="label_list">
+                  <li>Bottom X: </li>
+                  <li>Bottom Y: </li>
+                  <li>Bottom A: Start MR</li>
+                  <li>Bottom B: Stop MR</li>
+              </ul>
           </section>
       </div>
       <div id="button_home" class="touchSurface"></div>

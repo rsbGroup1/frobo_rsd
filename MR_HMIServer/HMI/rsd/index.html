@@ -3008,18 +3008,23 @@
             </g>
           </svg>
 
-          <div id="hostname_settings"><span id="hostname_lable">Hostname:</span>
+          <div id="hostname_settings"><span id="hostname_lable" class="main_label">Hostname:</span>
               <div id="hostname_data" contenteditable="true">localhost</div>
               <div id="hostname_instructions">press SPACE or ENTER</div>
           </div>
 
           <section>
+              <div id="button_functionality" class="main_label">Speed controller:</div>
               <ul id="label_list">
-                  <li>Bottom X: </li>
-                  <li>Bottom Y: </li>
-                  <li>Bottom A: Start MR</li>
-                  <li>Bottom B: Stop MR</li>
+                  <li>Controller: UP, LEFT, DOWN, RIGHT</li>
+                  <li>Button X: Tipper UP</li>
+                  <li>Button Y: Tipper DOWN</li>
+                  <li>Button A: robot START</li>
+                  <li>Button B: robot STOP</li>
               </ul>
+
+              <div id="speed_controller_label" class="main_label">Speed controller:</div>
+              <input id="speed_controller" type="range" min="1" max="5" step="1" value="4" name="rating" onchange="rsdNamespace.updateSpeed(this.value)" />
           </section>
       </div>
       <div id="button_home" class="touchSurface"></div>
@@ -3619,8 +3624,11 @@
 
         rsdNamespace.RegisterTouchSurfaces();
 
-        // Set up watchdog
+        // Setting up watchdog
         rsdNamespace.SetWatchdog();
+
+        // Extracting hostname and sitting it as target for WebSocket communication
+        rsdNamespace.SetTarget();
 
         // Establish WebSocket communication
         rsdNamespace.StartListening();

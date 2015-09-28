@@ -156,7 +156,6 @@
 }
 
 #hostname_lable{
-    font-weight: 800;
     margin-left: 90px;
 }
 
@@ -184,9 +183,41 @@
     left: 10px;
 }
 
+#button_functionality{
+    width: 100%;
+    margin-top: 50px;
+
+    text-align: center;
+}
+
 #label_list{
-    margin-left: 100px;
+    font-size: 14px;
+    margin-left: 30px;
     list-style-type: none;
+}
+
+#speed_controller, #speed_controller:active, #speed_controller:hover, #speed_controller:focus{
+    height: 50px;
+    width: 100%;
+    font-size: 15px;
+
+    border: 0;
+}
+
+input[type=range]::-moz-focus-outer {
+    border: 0;
+}
+
+#speed_controller_label{
+    width: 100%;
+    margin-top: 50px;
+
+    text-align: center;
+}
+
+.main_label{
+    font-size: 20px;
+    font-weight: 800;
 }
 
 #button_home{

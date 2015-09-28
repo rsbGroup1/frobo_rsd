@@ -33,6 +33,21 @@ rsdNamespace.actuationEnable = false;
 // Safety
 rsdNamespace.watchdog;
 
+// Locomotion
+rsdNamespace.linearVelocity = 0.4;
+rsdNamespace.angularVelocity = 0.8;
+
+rsdNamespace.SetTarget = function() {
+
+    var address = $(location).attr( 'href' );
+    var start = address.indexOf( '//' );
+    var newAddress = address.slice( start + 2, address.length - 1 );
+    rsdNamespace.commAddr = newAddress;
+
+    $('#hostname_data').text( rsdNamespace.commAddr + ":" + rsdNamespace.commPort );
+
+};
+
 rsdNamespace.ToggleHighlighting = function( selector ) {
 
     var id;
@@ -110,6 +125,11 @@ rsdNamespace.WindowResizeHandler = function( event ) {
 
     $('#remoteBottomContent').css( 'left', '50%' ).css( 'left', '-=200px' );
 
+};
+
+rsdNamespace.updateSpeed = function( newSpeed ) {
+    rsdNamespace.linearVelocity = ( newSpeed * 0.1 );
+    rsdNamespace.angularVelocity = ( newSpeed * 0.2 );
 };
 
 rsdNamespace.RegisterTouchSurfaces = function() {

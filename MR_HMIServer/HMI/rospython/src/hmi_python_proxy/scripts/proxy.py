@@ -36,18 +36,23 @@ pubTipperUpdate = 0
 pubCmdVelUpdate = 0
 pubActuationEna = 0
 
+linearVelocity = 0.4
+angularVelocity = 0.8
+
 #tipperTilted = False
 isManual = False
 actuationEna = False
 
 class MyServerProtocol( WebSocketServerProtocol ):
+
     def __init__( self ):
+        super( MyServerProtocol, self).__init__()
         self.lock = threading.Lock()
 
     def onConnect( self, request ):
         global address
         address = request.peer[5:]
-        print("Client connecting: {0}".format(request.peer))
+        print( "Client connecting: {0}".format( request.peer ) )
 
     def onOpen( self ):
         print("WebSocket connection open.")
@@ -55,6 +60,8 @@ class MyServerProtocol( WebSocketServerProtocol ):
     def onMessage( self, payload, isBinary ):
         global pubModeUpdate
         global actuationEna
+        global linearVelocity
+        global angularVelocity
 
         if isBinary:
             print( "Binary message received: {0} bytes".format( len( payload ) ) )
@@ -81,17 +88,19 @@ class MyServerProtocol( WebSocketServerProtocol ):
                 leftButton = messageIn["data"]["left"]
                 rightButton = messageIn["data"]["right"]
                 enaSignal = messageIn["data"]["ena"]
+                linearVelocity = messageIn["data"]["linV"]
+                angularVelocity = messageIn["data"]["angV"]
 
                 self.updateActuation( enaSignal )
 
                 if leftButton == u"u":
-                    drive( 0.2, 0.0 )
+                    drive( linearVelocity, 0.0 )
                 elif leftButton == u"r":
-                    drive( 0.0, -0.8 )
+                    drive( 0.0, -angularVelocity )
                 elif leftButton == u"d":
-                    drive( -0.2, 0.0 )
+                    drive( -linearVelocity, 0.0 )
                 elif leftButton == u"l":
-                    drive( 0.0, 0.8 )
+                    drive( 0.0, angularVelocity )
                 elif rightButton == u"x":
                     tip( True )
                 elif rightButton == u"y":
@@ -136,15 +145,19 @@ class actuationThread( threading.Thread ):
         self.name = name
 
     def run( self ):
+
         print "Starting " + self.name
-        while True:
+        while not rospy.is_shutdown():
+
             self.publishActuationEna()
             time.sleep(0.05)
+
+        stopServer()
 
     def publishActuationEna( self ):
         global actuationEna
 
-        print "actuationEna: " + str(actuationEna)
+        # print "actuationEna: " + str(actuationEna)
 
         self.lock.acquire()
         msg = createBoolStampedMessage( actuationEna )
@@ -183,7 +196,7 @@ def drive( linearX, angularZ ):
 
     msg = createdTwistedCommand( linearX, angularZ )
     setManualMode( True )
-    # print( "Msg to be published: " + str(msg.twist.linear.x) )
+    # print( "Msg *to be published: " + str(msg.twist.linear.x) )
     publishCommand( pubCmdVelUpdate, msg )
     # print( "Msg published OK")
 
@@ -200,6 +213,9 @@ def callback( data ):
 
 def publishCommand( rosPublisher, command ):
     rosPublisher.publish( command )
+
+def stopServer():
+    reactor.stop()
 
 def initProxy():
 
@@ -223,9 +239,9 @@ def initProxy():
     # Read parameters
 
     MODE_UPDATE_PUB = rospy.get_param( "~missionplanner_pub", MODE_UPDATE_PUB )
-    TIPPER_UPDATE_PUB = rospy.get_param( "~deadman_pub", TIPPER_UPDATE_PUB )
+    TIPPER_UPDATE_PUB = rospy.get_param( "~tipper_pub", TIPPER_UPDATE_PUB )
     CMD_VEL_UPDATE_PUB = rospy.get_param( "~cmd_pub", CMD_VEL_UPDATE_PUB )
-    ACTUATION_ENA_PUB = rospy.get_param( "~tipper_pub", ACTUATION_ENA_PUB )
+    ACTUATION_ENA_PUB = rospy.get_param( "~deadman_pub", ACTUATION_ENA_PUB )
 
     # Register Publisers
     pubModeUpdate = rospy.Publisher( MODE_UPDATE_PUB, String, queue_size = 1 )

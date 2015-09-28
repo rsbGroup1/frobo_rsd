@@ -23,22 +23,23 @@
 // System mode enum
 enum MODES
 {
-    SLOW = 0,
-    ERROR,
-    STOP,
-    START,
-    MANUAL
+    M_RUN = 0,
+    M_IDLE,
+    M_MANUAL,
+    M_NORMAL,
+    M_SLOW,
+    M_STOP
 };
 
 // Global var
 bool _running = false;
-MODES _systemMode = STOP;
+MODES _systemMode = M_IDLE;
 ros::Publisher _motorCommandTopic, _deadmanTopic, _deltaXTopic, _deltaThetaTopic;
 boost::mutex _runningMutex;
 double _angleSpeed = 0.0, _forwardSpeed = 0.0;
 double _coeffP, _coeffI, _coeffD, _maxI;
 double _maxAngleSpeed;
-double _speedNormal, _speedSlow, _speedError;
+double _speedNormal, _speedSlow, _speedStop;
 int _motorUpdateRate;
 double _funcDen, _funcNom;
 boost::thread *_motorPublishThread;
@@ -50,28 +51,29 @@ void missionCallback(std_msgs::String msg)
 {
     _runningMutex.lock();
 
-    if(msg.data == "start")
+    if(msg.data == "run")
     {
-        _systemMode = START;
+        _systemMode = M_RUN;
         _running = true;
     }
-    else if(msg.data == "stop")
+    else if(msg.data == "runStop")
     {
-        _systemMode = STOP;
+        _systemMode = M_STOP;
         _running = false;
     }
-    else if(msg.data == "slow")
+    else if(msg.data == "runSlow")
     {
-        _systemMode = SLOW;
-
+        _systemMode = M_SLOW;
+        _running = true;
     }
-    else if(msg.data == "error")
+    else if(msg.data == "idle")
     {
-        _systemMode = ERROR;
+        _systemMode = M_IDLE;
+        _running = false;
     }    
     else if(msg.data == "manual")
     {
-        _systemMode = MANUAL;
+        _systemMode = M_MANUAL;
         _running = false;
     }
 
@@ -90,21 +92,21 @@ void setSpeed(double pidError)
 
         switch(_systemMode)
         {
-            case START:
+            case M_RUN:
                 _forwardSpeed = _speedNormal;
                 break;
 
-            case ERROR:
-                _forwardSpeed = _speedError;
+            case M_STOP:
+                _forwardSpeed = _speedStop;
                 _angleSpeed = 0.0;
                 break;
 
-            case SLOW:
+            case M_SLOW:
                 _forwardSpeed = _speedSlow;
                 break;
 
-            case MANUAL:
-            case STOP:
+            case M_MANUAL:
+            case M_IDLE:
             default:
                 _forwardSpeed = 0.0;
                 break;
@@ -278,7 +280,7 @@ int main()
     // Get parameters
     nh.param<double>("/MR_NavigationController/NavigationController/speed_normal", _speedNormal, 0.6);
     nh.param<double>("/MR_NavigationController/NavigationController/speed_slow", _speedSlow, 0.2);
-    nh.param<double>("/MR_NavigationController/NavigationController/speed_error", _speedError, 0.0);
+    nh.param<double>("/MR_NavigationController/NavigationController/speed_error", _speedStop, 0.0);
     nh.param<double>("/MR_NavigationController/NavigationController/max_angle_speed", _maxAngleSpeed, 0.8);
     nh.param<double>("/MR_NavigationController/NavigationController/pid_coeff_p", _coeffP, 0.5);
     nh.param<double>("/MR_NavigationController/NavigationController/pid_coeff_i", _coeffI, 0.0001);

@@ -80,7 +80,7 @@ enum MODES
 bool _running = false;
 serial::Serial *_serialConnection;
 ros::Publisher _missionPlannerPublisher;
-MODES _errorMode = M_OFF, _runMode = M_OFF;
+MODES _errorMode = M_NORMAL, _runMode = M_OFF;
 bool _debug;
 SynchronisedQueue<std::string> _queue;
 boost::thread *_readThread, *_writeThread;
@@ -192,12 +192,21 @@ void changeRunMode(MODES runMode)
 
 void collisionCallback(std_msgs::String msg)
 {
+    static MODES oldMode = M_NORMAL;
+    MODES newMode = M_NORMAL;
+
     if(msg.data == "stop")
-        changeErrorMode(M_STOP);
+        newMode = M_STOP;
     else if(msg.data == "slow")
-        changeErrorMode(M_SLOW);
+        newMode = M_SLOW;
     else if(msg.data == "normal")
-        changeErrorMode(M_NORMAL);
+        newMode = M_NORMAL;
+
+    if(newMode != oldMode)
+    {
+	changeErrorMode(newMode);
+	oldMode = newMode;
+    }
 }
 
 void startStopCallback(std_msgs::String msg)
@@ -347,7 +356,7 @@ int main()
     ros::Duration(2).sleep();
 
     // Change mode to idle
-    changeMode(M_IDLE, M_IDLE);
+    changeRunMode(M_IDLE);
 
     // ROS Spin: Handle callbacks
     while(ros::ok())

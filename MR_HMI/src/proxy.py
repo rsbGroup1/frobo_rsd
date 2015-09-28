@@ -98,9 +98,9 @@ class MyServerProtocol( WebSocketServerProtocol ):
                     tip( u"down" )
                 elif rightButton == u"a":
                     setManualMode( False )
-                    publishCommand( pubModeUpdate, u"start" )
+                    publishCommand( pubModeUpdate, u"run" )
                 elif rightButton == u"b":
-                    publishCommand( pubModeUpdate, u"stop" )
+                    publishCommand( pubModeUpdate, u"idle" )
 
     def onClose( self, wasClean, code, reason ):
         global actuationEna

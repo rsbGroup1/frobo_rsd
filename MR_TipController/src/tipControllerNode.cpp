@@ -9,6 +9,10 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread.hpp>
 #include "std_msgs/String.h"
+#include <signal.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
 
 // Defines
 #define SSTR(x)                 dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
@@ -69,6 +73,7 @@ serial::Serial *_serialConnection;
 bool _isDown = true;
 bool _debugMsg;
 SynchronisedQueue<std::string> _queue;
+boost::thread *_writeThread;
 
 // Functions
 void tipControlCallback(std_msgs::String msg)
@@ -102,7 +107,19 @@ void writeSerialThread()
 {
     while(true)
     {
-        _serialConnection->write(_queue.dequeue());
+        try
+        {
+            // Write
+            _serialConnection->write(_queue.dequeue());
+
+            // Signal interrupt point
+            boost::this_thread::interruption_point();
+        }
+        catch(const boost::thread_interrupted&)
+        {
+            std::cout << "- Client thread interrupted. Exiting thread." << std::endl;
+            break;
+        }
     }
 }
 
@@ -178,6 +195,16 @@ void readSerialThread()
     _serialConnection->close();
 }*/
 
+void signalCallback(int signal)
+{
+    // Interrupt threads
+    _writeThread->interrupt();
+    _serialConnection->close();
+
+    // Exit program
+    exit(1);
+}
+
 int main()
 {
     // Setup ROS Arguments
@@ -219,14 +246,21 @@ int main()
     else
         ROS_INFO("Successfully connected!");
 
+    // Handle signals
+    struct sigaction sigIntHandler;
+    sigIntHandler.sa_handler = signalCallback;
+    sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_flags = 0;
+    sigaction(SIGINT, &sigIntHandler, NULL);
+
     // Start serial read thread
-    boost::thread serialWriteThread(writeSerialThread);
+    _writeThread = new boost::thread(writeSerialThread);
 
     // ROS Spin: Handle callbacks
     ros::spin();
 
     // Close connection
-    serialWriteThread.interrupt();
+    _writeThread->interrupt();
     _serialConnection->close();
 
     // Return

@@ -5,6 +5,10 @@
 #include <iostream>
 #include <queue>
 #include <sstream>
+#include <signal.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
 #include "serial/serial.h"
 #include <boost/thread/mutex.hpp>
 #include <boost/thread.hpp>
@@ -79,9 +83,9 @@ bool _running = false;
 serial::Serial *_serialConnection;
 ros::Publisher _missionPlannerPublisher;
 MODES _systemMode = STOP;
-boost::mutex _serialMutex;
 bool _debug;
 SynchronisedQueue<std::string> _queue;
+boost::thread *_readThread, *_writeThread;
 
 // Functions
 void changeMode(MODES mode)
@@ -195,7 +199,17 @@ void writeSerialThread()
 {
     while(true)
     {
-        _serialConnection->write(_queue.dequeue());
+        try
+        {
+            _serialConnection->write(_queue.dequeue());
+
+            // Signal interrupt point
+            boost::this_thread::interruption_point();
+        }
+        catch(const boost::thread_interrupted&)
+        {
+            break;
+        }
     }
 }
 
@@ -208,42 +222,61 @@ void readSerialThread()
 
     while(true)
     {
-        _serialMutex.lock();
-        tempString = _serialConnection->read(1);
-        _serialMutex.unlock();
-
-        if(tempString.size() == 1)
+        try
         {
-            msg[i] = tempString[0];
+            tempString = _serialConnection->read(1);
 
-            if(msg[i] == '\n')
+            if(tempString.size() == 1)
             {
-                if(compareMsg(msg, "start\n"))
-                    changeMode(START);
-		else if(compareMsg(msg, "stop\n"))
-                    changeMode(STOP);
+                msg[i] = tempString[0];
 
-                // Clear data
-                i = 0;
+                if(msg[i] == '\n')
+                {
+                    if(compareMsg(msg, "start\n"))
+                        changeMode(START);
+            else if(compareMsg(msg, "stop\n"))
+                        changeMode(STOP);
+
+                    // Clear data
+                    i = 0;
+                }
+                else	// Wait for new character
+                    i++;
             }
-            else	// Wait for new character
-                i++;
+            else
+            {
+                // Clear if buffer is full without newline
+                if(i == DATA_LENGTH-1)
+                {
+                    i = 0;
+                    for(int k=0; k<DATA_LENGTH; k++)
+                        msg[k] = ' ';
+                    msg[DATA_LENGTH] = '\n';
+                }
+            }
+
+            // Signal interrupt point
+            boost::this_thread::interruption_point();
         }
-        else
+        catch(const boost::thread_interrupted&)
         {
-            // Clear if buffer is full without newline
-            if(i == DATA_LENGTH-1)
-            {
-                i = 0;
-                for(int k=0; k<DATA_LENGTH; k++)
-                    msg[k] = ' ';
-                msg[DATA_LENGTH] = '\n';
-            }
+            break;
         }
     }
 
     // Close connection
     _serialConnection->close();
+}
+
+void signalCallback(int signal)
+{
+    // Interrupt threads
+    _readThread->interrupt();
+    _writeThread->interrupt();
+    _serialConnection->close();
+
+    // Exit program
+    exit(1);
 }
 
 int main()
@@ -276,9 +309,12 @@ int main()
     nh.param<int>("/MR_MissionPlanner/MissionPlanner/baud_rate", baudRate, 115200);
     nh.param<std::string>("/MR_MissionPlanner/MissionPlanner/port", port, "/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00");
 
-    // Inform user
-    //std::string temp = "Connecting to '" + port + "' with baud '" + SSTR(baudRate) + "'";
-    //ROS_INFO(temp.c_str());
+    // Handle signals
+    struct sigaction sigIntHandler;
+    sigIntHandler.sa_handler = signalCallback;
+    sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_flags = 0;
+    sigaction(SIGINT, &sigIntHandler, NULL);
 
     // Open connection
     _serialConnection = new serial::Serial(port.c_str(), baudRate, serial::Timeout::simpleTimeout(50));
@@ -293,20 +329,22 @@ int main()
     else
         ROS_INFO("Successfully connected!");
 
+    // Start serial threads
+    _readThread = new boost::thread(readFunction);
+    _writeThread = new boost::thread(writeFunction);
 
-    // Start serial read thread
-    boost::thread serialReadThread(readSerialThread);
-    boost::thread serialWriteThread(writeSerialThread);
+    // Sleep for a second
+    ros::Duration(1).sleep();
 
-    for(int i=0; i<10; i++)
-	    _queue.enqueue("stop\n");
+    // Send "stop" mode message
+    _queue.enqueue("stop\n");
 
     // ROS Spin: Handle callbacks
     ros::spin();
 
     // Close connection
-    serialReadThread.interrupt();
-    serialWriteThread.interrupt();
+    _readThread->interrupt();
+    _writeThread->interrupt();
     _serialConnection->close();
 
     // Return

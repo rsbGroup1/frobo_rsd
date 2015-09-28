@@ -13,6 +13,10 @@
 #include "msgs/BoolStamped.h"
 #include <tf/tf.h>
 #include <tf/transform_datatypes.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
 
 // Defines
 #define M_PI                    3.14159265358979323846
@@ -41,6 +45,7 @@ double _maxAngleSpeed;
 double _speedNormal, _speedSlow, _speedError;
 int _motorUpdateRate;
 double _funcDen, _funcNom;
+boost::thread *_motorPublishThread;
 
 // Function prototype
 void setSpeed(double pidError = 0);
@@ -237,21 +242,41 @@ void motorUpdateThread()
 {
     while(true)
     {
-        _runningMutex.lock();
-        if(_running)
+        try
         {
-            _runningMutex.unlock();
+            _runningMutex.lock();
+            if(_running)
+            {
+                _runningMutex.unlock();
 
-            // Send motor command
-            setSpeed();
-            sendMotorCommand(_forwardSpeed, _angleSpeed);
+                // Send motor command
+                setSpeed();
+                sendMotorCommand(_forwardSpeed, _angleSpeed);
+            }
+            else
+                _runningMutex.unlock();
+
+            // Sleep
+            usleep(_motorUpdateRate); // Sleep for 50 ms = 20Hz
+
+            // Signal interrupt point
+            boost::this_thread::interruption_point();
         }
-        else
-            _runningMutex.unlock();
-
-        // Sleep
-        usleep(_motorUpdateRate); // Sleep for 50 ms = 20Hz
+        catch(const boost::thread_interrupted&)
+        {
+            std::cout << "- Client thread interrupted. Exiting thread." << std::endl;
+            break;
+        }
     }
+}
+
+void signalCallback(int signal)
+{
+    // Interrupt threads
+    _motorPublishThread->interrupt();
+
+    // Exit program
+    exit(1);
 }
 
 int main()
@@ -296,14 +321,21 @@ int main()
     ros::Subscriber subMissionPlanner = nh.subscribe(missionPlanParam, 1, missionCallback);
     ros::Subscriber subKalman = nh.subscribe(kalmanParam, 1, kalmanCallback);
 
+    // Handle signals
+    struct sigaction sigIntHandler;
+    sigIntHandler.sa_handler = signalCallback;
+    sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_flags = 0;
+    sigaction(SIGINT, &sigIntHandler, NULL);
+
     // Start motor update thread
-    boost::thread motorPublishThread(motorUpdateThread);
+    _motorPublishThread = new boost::thread(motorUpdateThread);
 
     // ROS Spin: Handle callbacks
     ros::spin();
 
     // Close thread
-    motorPublishThread.interrupt();
+    _motorPublishThread->interrupt();
 
     // Return
     return 0;

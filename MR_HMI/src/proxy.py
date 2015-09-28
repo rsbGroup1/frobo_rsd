@@ -225,6 +225,7 @@ def initProxy():
     rospy.init_node( 'proxy', anonymous = True )
 
     # Read parameters
+
     MODE_UPDATE_PUB = rospy.get_param( "~missionplanner_pub", MODE_UPDATE_PUB )
     TIPPER_UPDATE_PUB = rospy.get_param( "~deadman_pub", TIPPER_UPDATE_PUB )
     CMD_VEL_UPDATE_PUB = rospy.get_param( "~cmd_pub", CMD_VEL_UPDATE_PUB )

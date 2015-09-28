@@ -32,4 +32,4 @@ if __name__ == "__main__":
 	#eth0 or wlan0?
 	ip = ni.ifaddresses('wlan1')[AF_INET][0]['addr']
 	print ip
-	send_email("grouprsd1@gmail.com", "group_rsd_1", "veimox@gmail.com", "IP", ip)
+	send_email("grouprsd1@gmail.com", "group_rsd_1", "grouprsd1@gmail.com", "IP", ip)

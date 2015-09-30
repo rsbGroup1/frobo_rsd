@@ -301,3 +301,10 @@ input[type=range]::-moz-focus-outer {
 
   /*background-color: yellow;*/
 }
+
+.non_selectable{
+    -moz-user-select: none; 
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -o-user-select: none;
+}

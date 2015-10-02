@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(mr_camera)
 
-set(OpenCV_DIR "/usr/local/")
+set(OpenCV_DIR "/usr/share/OpenCV")
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs cv_bridge genmsg image_transport sensor_msgs OpenCV)

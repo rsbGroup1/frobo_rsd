@@ -6,3 +6,4 @@ CATKIN_IGNORE
 *.files
 *.user
 *.includes
+*.kdev4

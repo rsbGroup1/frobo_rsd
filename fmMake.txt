@@ -19,6 +19,10 @@
 /frobo_rsd/image_common
 /frobo_rsd/serial
 /frobo_rsd/sick_tim
+/frobo_rsd/navigation
+/frobo_rsd/openslam_gmapping
+/frobo_rsd/slam_gmapping/gmapping
+/frobo_rsd/slam_gmapping/slam_gmapping
 /frobo_rsd/MR_NavigationController
 /frobo_rsd/MR_MissionPlanner
 /frobo_rsd/MR_ObstacleDetector

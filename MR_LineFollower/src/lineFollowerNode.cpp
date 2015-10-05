@@ -21,8 +21,8 @@ class ImageConverter {
 public:
     ImageConverter() : it_ ( nh_ ) {
         // Subscribe to input video feed and publish output video feed
-        sub_image_ = it_.subscribe ( "/camera/image", 1, &ImageConverter::imageCb, this, 
-									 image_transport::TransportHints("compressed"));
+        sub_image_ = it_.subscribe ( "/camera/image", 1, &ImageConverter::imageCb, this,
+                                     image_transport::TransportHints ( "compressed" ) );
         pub_image_ = it_.advertise ( "/mr_line_follower/image_filtered", 1 );
 
         cv::namedWindow ( OPENCV_WINDOW );
@@ -34,27 +34,32 @@ public:
 
     void imageCb ( const sensor_msgs::ImageConstPtr& msg ) {
         //Transform the message to an OpenCV image
-		cv_bridge::CvImagePtr image_ptr;
+        cv_bridge::CvImagePtr image_ptr;
         try {
-			//Load the image in MONO8
+            //Load the image in MONO8
             image_ptr = cv_bridge::toCvCopy ( msg, sensor_msgs::image_encodings::MONO8 );
         } catch ( cv_bridge::Exception& e ) {
             ROS_ERROR ( "cv_bridge exception: %s", e.what() );
             return;
         }
 
-       /*
-		* Canny Edge detector
-		*/
-		//To binary
-		cv::threshold(image_ptr->image, image_ptr->image, 160, 255, CV_THRESH_BINARY);
-		//Blur
-		cv::blur(image_ptr->image, image_ptr->image, cv::Size(3,3));
-		//Canny edge
-		double cannyMinThreshold = 200;
-		double cannyMaxThreshold = 255;
-		cv::Canny(image_ptr->image, image_ptr->image, cannyMinThreshold, cannyMaxThreshold);
-	   
+        /*
+        * Canny Edge detector
+        */
+		//Flip
+		cv::flip(image_ptr->image, image_ptr->image, 1);
+        //To binary
+        cv::threshold(image_ptr->image, image_ptr->image, 40, 255, CV_THRESH_BINARY);
+		//Erode and Dilate
+		cv::erode(image_ptr->image, image_ptr->image, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(9,9)));
+		cv::dilate(image_ptr->image, image_ptr->image, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(9,9)));
+        //Blur
+        cv::blur (image_ptr->image, image_ptr->image, cv::Size (9,9));
+        //Canny edge
+        double cannyMinThreshold = 150;
+        double cannyMaxThreshold = 255;
+        cv::Canny ( image_ptr->image, image_ptr->image, cannyMinThreshold, cannyMaxThreshold );
+
         // Update GUI Window
         cv::imshow ( OPENCV_WINDOW, image_ptr->image );
         cv::waitKey ( 3 );

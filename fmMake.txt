@@ -19,7 +19,8 @@
 /frobo_rsd/image_common
 /frobo_rsd/serial
 /frobo_rsd/sick_tim
-/frobo_rsd/navigation
+/frobo_rsd/navigation/map_server
+/frobo_rsd/navigation/amcl
 /frobo_rsd/openslam_gmapping
 /frobo_rsd/slam_gmapping/gmapping
 /frobo_rsd/slam_gmapping/slam_gmapping

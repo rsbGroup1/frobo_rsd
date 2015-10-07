@@ -431,7 +431,9 @@ SlamGMapping::initMapper(const sensor_msgs::LaserScan& scan)
 
   double angle_center = (scan.angle_min + scan.angle_max)/2;
 
-  if (up.z() > 0)
+//  DSW
+//  if (up.z() > 0)
+  if (up.z() < 0)
   {
     do_reverse_range_ = scan.angle_min > scan.angle_max;
     centered_laser_pose_ = tf::Stamped<tf::Pose>(tf::Transform(tf::createQuaternionFromRPY(0,0,angle_center),

@@ -15,11 +15,14 @@
 // Defines
 #define SSTR(x)                 dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
 
-#define CAMERA_FREQUENCY		15      // FPS
-#define AUTO_FOCUS              false   // Set autofocus: True/false
-#define FOCUS                   0       // Set focus to a specific value. High values for nearby objects and low values for distant objects.
-#define SHARPNESS               200     // Sharpness (int): min=0 max=255 step=1 default=128 value=128
-
+#define FRAME_WIDTH		640   //1280, 960, 640, 640, 320, 160
+#define FRAME_HEIGHT		480   //720, 544, 480, 360, 240, 120
+#define CAMERA_FREQUENCY	15    //max: 10,  15,  30,  30,  30, 30
+#define SHARPNESS               2     //(int): min=1 max=7 step=1 default=2
+#define BRIGHTNESS              2     //(int): min=1 max=7 step=1 default=2
+#define WHITE_BALANCE_AUTO	true  //(bool): default=1
+#define WHITE_BALANCE_TEMP	4600  //(int): min=2800 max=6500 step=1 default=4600
+// You can also control: Hue, contrast, saturation, gamma, power line freq, backlight compensation, exposure etc. type "v4l2-ctl --all" in console for more info
 
 // Global variables
 cv::VideoCapture *_camera;
@@ -31,17 +34,23 @@ int main()
     {
         // Open the video camera no. i
         _camera = new cv::VideoCapture(i);
-        _camera->set(CV_CAP_PROP_FRAME_WIDTH, 1024); //1920, 1280, 1024, 640
-        _camera->set(CV_CAP_PROP_FRAME_HEIGHT, 576); //1080, 720, 576, 480
+        _camera->set(CV_CAP_PROP_FRAME_WIDTH, FRAME_WIDTH); 
+        _camera->set(CV_CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT); 
         _camera->set(CV_CAP_PROP_FPS, CAMERA_FREQUENCY);
 
         // Change camera parameters
-        std::string msg = "v4l2-ctl -d " + SSTR(i) + " -c focus_auto=" + (AUTO_FOCUS?"1":"0");
+        std::string msg = "v4l2-ctl -d " + SSTR(i) + " -c sharpness=" + SSTR(SHARPNESS);
         std::system(msg.c_str());
-        msg = "v4l2-ctl -d " + SSTR(i) + " -c focus_absolute=" + SSTR(FOCUS);
+	msg = "v4l2-ctl -d " + SSTR(i) + " -c brightness=" + SSTR(BRIGHTNESS);
         std::system(msg.c_str());
-        msg = "v4l2-ctl -d " + SSTR(i) + " -c sharpness=" + SSTR(SHARPNESS);
+	msg = "v4l2-ctl -d " + SSTR(i) + " -c white_balance_temperature_auto=" + (WHITE_BALANCE_AUTO?"1":"0");
         std::system(msg.c_str());
+	if(!WHITE_BALANCE_AUTO)
+	{
+	   msg = "v4l2-ctl -d " + SSTR(i) + " -c white_balance_temperature=" + SSTR(WHITE_BALANCE_TEMP);
+           std::system(msg.c_str());
+	}
+	
 
         // If not success, exit program
         if(!_camera->isOpened())

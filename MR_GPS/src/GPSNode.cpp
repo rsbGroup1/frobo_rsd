@@ -138,8 +138,9 @@ int main(int argc, char** argv)
 {
     srand(time(NULL));
 
-    ros::init(argc, argv, "MR_GPS_Node");
-    ros::NodeHandle n, pNh("~");
+    ros::init(argc, argv, "mr_gps");
+    ros::NodeHandle n;
+    ros::NodeHandle pNh(ros::this_node::getName() + "/");
 
     // Get parameters
     std::string stateSub, posePub;

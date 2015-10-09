@@ -15,40 +15,58 @@
 // Defines
 #define SSTR(x)                 dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
 
-#define FRAME_WIDTH             640     // 1280, 960, 640, 640, 320, 160
-#define FRAME_HEIGHT            480     // 720, 544, 480, 360, 240, 120
-#define CAMERA_FREQUENCY        15      // max: 10,  15,  30,  30,  30, 30
-#define SHARPNESS               2       // (int): min=1 max=7 step=1 default=2
-#define BRIGHTNESS              2       // (int): min=1 max=7 step=1 default=2
-#define WHITE_BALANCE_AUTO      true    // (bool): default=1
-#define WHITE_BALANCE_TEMP      4600    // (int): min=2800 max=6500 step=1 default=4600
-
-// You can also control: Hue, contrast, saturation, gamma, power line freq, backlight compensation, exposure etc. type "v4l2-ctl --all" in console for more info
-
 // Global variables
 cv::VideoCapture *_camera;
 
 int main()
 {
+    // Setup ROS Arguments
+    char** argv = NULL;
+    int argc = 0;
+
+    // Init ROS Node
+    ros::init(argc, argv, "mr_camera");
+    ros::NodeHandle nh;
+    ros::NodeHandle pNh(ros::this_node::getName() + "/");
+
+    std::string imagePub;
+    int frameWidth, frameHeight, cameraFrequency, sharpness, brightness, whiteBalanceTemp;
+    bool whiteBalanceAuto;
+    pNh.param<std::string>("image_pub", imagePub, "/mrCamera/image");
+    pNh.param<int>("frameWidth", frameWidth, 640);
+    pNh.param<int>("frameHeight", frameHeight, 480);
+    pNh.param<int>("cameraFrequency", cameraFrequency, 15);
+    pNh.param<int>("sharpness", sharpness, 2);
+    pNh.param<int>("brightness", brightness, 2);
+    pNh.param<int>("whiteBalanceTemp", whiteBalanceTemp, 4600);
+    pNh.param<bool>("whiteBalanceAuto", whiteBalanceAuto, true);
+
+    // Create publisher topic
+    image_transport::ImageTransport it(nh);
+    image_transport::Publisher pub = it.advertise(imagePub, 1);
+
+    // Set loop rate
+    ros::Rate loop_rate(cameraFrequency);
+
     // Loop through possible camera serial devices
     for(int i=0; i<2; i++)
     {
         // Open the video camera no. i
         _camera = new cv::VideoCapture(i);
-        _camera->set(CV_CAP_PROP_FRAME_WIDTH, FRAME_WIDTH); 
-        _camera->set(CV_CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT); 
-        _camera->set(CV_CAP_PROP_FPS, CAMERA_FREQUENCY);
+        _camera->set(CV_CAP_PROP_FRAME_WIDTH, frameWidth);
+        _camera->set(CV_CAP_PROP_FRAME_HEIGHT, frameHeight);
+        _camera->set(CV_CAP_PROP_FPS, cameraFrequency);
 
         // Change camera parameters
-        std::string msg = "v4l2-ctl -d " + SSTR(i) + " -c sharpness=" + SSTR(SHARPNESS);
+        std::string msg = "v4l2-ctl -d " + SSTR(i) + " -c sharpness=" + SSTR(sharpness);
         std::system(msg.c_str());
-        msg = "v4l2-ctl -d " + SSTR(i) + " -c brightness=" + SSTR(BRIGHTNESS);
+        msg = "v4l2-ctl -d " + SSTR(i) + " -c brightness=" + SSTR(brightness);
         std::system(msg.c_str());
-        msg = "v4l2-ctl -d " + SSTR(i) + " -c white_balance_temperature_auto=" + (WHITE_BALANCE_AUTO?"1":"0");
+        msg = "v4l2-ctl -d " + SSTR(i) + " -c white_balance_temperature_auto=" + (whiteBalanceAuto?"1":"0");
         std::system(msg.c_str());
-        if(!WHITE_BALANCE_AUTO)
+        if(!whiteBalanceAuto)
         {
-           msg = "v4l2-ctl -d " + SSTR(i) + " -c white_balance_temperature=" + SSTR(WHITE_BALANCE_TEMP);
+           msg = "v4l2-ctl -d " + SSTR(i) + " -c white_balance_temperature=" + SSTR(whiteBalanceTemp);
            std::system(msg.c_str());
         }
 
@@ -57,6 +75,7 @@ int main()
         {
             delete _camera;
             ROS_ERROR("Error opening camera feed!");
+            return -1;
         }
         else
         {
@@ -64,24 +83,6 @@ int main()
             break;
         }
     }
-
-    // Setup ROS Arguments
-    char** argv = NULL;
-    int argc = 0;
-
-    // Init ROS Node
-    ros::init(argc, argv, "RSD_Camera_Node");
-    ros::NodeHandle nh, pNh("~");
-
-    std::string imagePub;
-    pNh.param<std::string>("image_pub", imagePub, "/mrCamera/image");
-
-    // Create publisher topic
-    image_transport::ImageTransport it(nh);
-    image_transport::Publisher pub = it.advertise(imagePub, 1);
-
-    // Set loop rate
-    ros::Rate loop_rate(CAMERA_FREQUENCY);
 
     // Spin
     cv::Mat _image;

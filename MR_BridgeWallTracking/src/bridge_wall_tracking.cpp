@@ -277,7 +277,7 @@ int main(int argc, char** argv)
     srand(time(NULL));
 
 
-    ros::init(argc, argv, "bridge_wall_tracking");
+    ros::init(argc, argv, "mr_bridgewalltracking");
     ros::NodeHandle n;
 
     // Set parameters

@@ -22,7 +22,7 @@ class ImageConverter
     image_transport::Publisher pub_image_;
 
 public:
-    ImageConverter() : it_(nh_), _pNh("~")
+    ImageConverter() : it_(nh_), _pNh(ros::this_node::getName() + "/")
     {
         // Subscribe to input video feed and publish output video feed
         std::string imageSub, imagePub;
@@ -106,7 +106,7 @@ public:
 
 int main ( int argc, char** argv )
 {
-    ros::init(argc, argv, "MR_LineFollower_Node");
+    ros::init(argc, argv, "mr_line_follower");
     ImageConverter ic;
     ros::spin();
     return 0;

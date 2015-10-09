@@ -105,7 +105,11 @@ std::string readCode(cv::Mat src)
 // use this main for a single picture.
 int main(int argc, char* argv[] )
 {
-    //, pNh("~");
+    // Init ROS
+    ros::init(argc, argv, "mr_qr");
+    ros::NodeHandle nh;
+    ros::NodeHandle pNh(ros::this_node::getName() + "/");
+
 	// load image
     cv::Mat image = cv::imread("/home/student/workspace/QR_reader/market-qr-code.png", 1);
 	

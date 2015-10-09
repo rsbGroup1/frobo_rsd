@@ -197,8 +197,9 @@ int main()
     int argc = 0;
 
     // Init ROS Node
-    ros::init(argc, argv, "RSD_TipController_Node");
-    ros::NodeHandle nh, pNh("~");
+    ros::init(argc, argv, "mr_tip_controller");
+    ros::NodeHandle nh;
+    ros::NodeHandle pNh(ros::this_node::getName() + "/");
 
     // Topic names
     std::string tipControlSub;

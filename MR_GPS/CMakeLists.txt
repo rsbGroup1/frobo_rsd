@@ -1,10 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(mr_gps)
 
-## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg)
-
-#generate_messages(DEPENDENCIES sensor_msgs)
 
 catkin_package()
 

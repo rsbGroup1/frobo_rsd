@@ -2,7 +2,7 @@
 
 <launch>
 	<group ns="MR_LineFollower">
-		<node pkg="mr_line_follower" name="LineFollower" type="mr_line_follower">
+		<node pkg="mr_line_follower" name="mr_line_follower" type="mr_line_follower">
 			<param name="imageInput_sub" value="/mrCamera/image"/> 
 			<param name="imageFiltered_pub" value="/mrLineFollower/image_filtered"/> 
 		</node>

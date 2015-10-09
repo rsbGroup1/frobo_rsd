@@ -46,26 +46,46 @@ public:
         /*
         * Canny Edge detector
         */
-		//Flip
-		cv::flip(image_ptr->image, image_ptr->image, 1);
+        unsigned char binaryThreshold = 30;
+        unsigned char erodeDilateSize = 12;
+        unsigned char blurSize = 3;
+        unsigned char cannyMinThreshold = 50;
+        unsigned char cannyMaxThreshold = 100;
+        //Flip
+        //cv::flip(image_ptr->image, image_ptr->image, 1);
         //To binary
-        cv::threshold(image_ptr->image, image_ptr->image, 40, 255, CV_THRESH_BINARY);
-		//Erode and Dilate
-		cv::erode(image_ptr->image, image_ptr->image, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(9,9)));
-		cv::dilate(image_ptr->image, image_ptr->image, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(9,9)));
+        cv::threshold(image_ptr->image, image_ptr->image, binaryThreshold, 255, CV_THRESH_BINARY_INV);
+        //Erode and Dilate
+        cv::erode(image_ptr->image, image_ptr->image, 
+            cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(erodeDilateSize,erodeDilateSize)));
+        cv::dilate(image_ptr->image, image_ptr->image, 
+            cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(erodeDilateSize,erodeDilateSize)));
         //Blur
-        cv::blur (image_ptr->image, image_ptr->image, cv::Size (9,9));
+        cv::blur (image_ptr->image, image_ptr->image, cv::Size (blurSize,blurSize));
         //Canny edge
-        double cannyMinThreshold = 150;
-        double cannyMaxThreshold = 255;
-        cv::Canny ( image_ptr->image, image_ptr->image, cannyMinThreshold, cannyMaxThreshold );
+        cv::Canny(image_ptr->image, image_ptr->image, cannyMinThreshold, cannyMaxThreshold);
+
+        //Hough Lines
+        std::vector<cv::Vec4i> lines;
+        //cv::HoughLinesP(image_ptr->image, lines, 1, CV_PI/180, 100, 0, 0);
+        for(size_t i = 0; i < lines.size(); i++ ) {
+            float rho = lines[i][0], theta = lines[i][1];
+            cv::Point pt1, pt2;
+            double a = cos(theta), b = sin(theta);
+            double x0 = a*rho, y0 = b*rho;
+            pt1.x = cvRound(x0 + 1000*(-b));
+            pt1.y = cvRound(y0 + 1000*(a));
+            pt2.x = cvRound(x0 - 1000*(-b));
+            pt2.y = cvRound(y0 - 1000*(a));
+            cv::line(image_ptr->image, pt1, pt2, cv::Scalar(0,255,255), 3, CV_AA);
+        }
 
         // Update GUI Window
-        cv::imshow ( OPENCV_WINDOW, image_ptr->image );
-        cv::waitKey ( 3 );
+        cv::imshow(OPENCV_WINDOW, image_ptr->image);
+        cv::waitKey(3);
 
         // Output modified video stream
-        pub_image_.publish ( image_ptr->toImageMsg() );
+        pub_image_.publish(image_ptr->toImageMsg());
     }
 };
 

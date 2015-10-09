@@ -1,0 +1,13 @@
+<!-- GPS launch file -->
+
+<launch>
+	<group ns="MR_GPS">
+		<node pkg="mr_gps" name="GPS" type="mr_gps">
+			<param name="ServerIP" value="10.115.253.233"/>  	
+			<param name="ServerPort" value="21212"/>  
+			<param name="requestMsg" value="Get position 5"/>  
+			<param name="stateSub" value="mrGPS/State"/>  
+			<param name="posePub" value="mrGPS/Pose"/>  
+		</node>
+	</group>
+</launch>

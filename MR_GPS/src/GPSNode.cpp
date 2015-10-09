@@ -1,9 +1,8 @@
+// Includes
 #include "ros/ros.h"
 #include <std_msgs/Int8.h>
 #include <tf/tf.h>
-
 #include <geometry_msgs/PoseStamped.h>
-
 #include <iostream>
 #include <string>
 #include <cmath>
@@ -13,23 +12,27 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-
-using namespace std;
-
+// Defines
 #define BUFFER_SIZE 50
 
-bool searchForMarker = true;
+// Namespace
+using namespace std;
+
+// Global variable
+bool _searchForMarker = true;
+std::string _serverIP, _requestMsg;
+int _serverPORT;
 
 void stateCallback(const std_msgs::Int8 &stateMsg)
 {
     if(stateMsg.data == 1)
     {
-        searchForMarker = true;
+        _searchForMarker = true;
         cout << "Enable pose" << endl;
     }
     else
     {
-        searchForMarker = false;
+        _searchForMarker = false;
         cout << "Disabling pose" << endl;
     }
 }
@@ -37,29 +40,29 @@ void stateCallback(const std_msgs::Int8 &stateMsg)
 bool getPoseFromCamLocalizer(geometry_msgs::PoseStamped &newPose)
 {
     // Create network variables
-    string requestMsg = "Get position 5";
     struct sockaddr_in addr;
     bzero(&addr, sizeof(addr));
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr("10.115.253.233");
-    addr.sin_port = htons(21212);
+    addr.sin_addr.s_addr = inet_addr(_serverIP.c_str());
+    addr.sin_port = htons(_serverPORT);
 
     int s = socket(AF_INET, SOCK_STREAM, 0);
-    ROS_INFO("Connecting");
+    //ROS_INFO("Connecting");
     connect(s, (sockaddr*)&addr, sizeof(addr));
     char buffer[BUFFER_SIZE];
     ros::Time requestRosTime = ros::Time::now();
     time_t timer;
     timer = time(NULL);
     //cout << "RosTime: " << requestRosTime << "\tSystem time: " << timer << endl;
-    int writeSize = write(s,requestMsg.c_str(),requestMsg.length());
-    int readSize = read(s,buffer,BUFFER_SIZE);
+    int writeSize = write(s, _requestMsg.c_str(), _requestMsg.length());
+    int readSize = read(s, buffer, BUFFER_SIZE);
 
     bool returnValue = false;
     if(writeSize < 0)
         ROS_ERROR("NO CONNECTION TO CAM-LOCALIZER!");
 
     geometry_msgs::PoseStamped pose;
+
     if(readSize <= 0)
     {
         ROS_ERROR("NO MESSAGE FROM CAM-LOCALIZER!");
@@ -72,31 +75,39 @@ bool getPoseFromCamLocalizer(geometry_msgs::PoseStamped &newPose)
         float x, y, angle;
         int markerOrder;
         int commasPast = 0;
-        string currentBuilding = "";
+        std::string currentBuilding = "";
+
         for(int i = 0; i < readSize;i++)
         {
             if(buffer[i] == ',')
             {
-                switch (commasPast) {
-                case 0: // makerNumber
-                    markerOrder = atoi(currentBuilding.c_str());
-                    break;
-                case 1: // timestamp
-                    serverTimeStamp = atol(currentBuilding.c_str());
-                    serverTime = (double) serverTimeStamp / 1000.0;
-                    break;
-                case 2: // x
-                    x = atof(currentBuilding.c_str());
-                    break;
-                case 3: // y
-                    y = atof(currentBuilding.c_str());
-                    break;
-                case 4: // angle
-                    angle = atof(currentBuilding.c_str());
-                    break;
-                default:
-                    break;
+                switch (commasPast)
+                {
+                    case 0: // makerNumber
+                        markerOrder = atoi(currentBuilding.c_str());
+                        break;
+
+                    case 1: // timestamp
+                        serverTimeStamp = atol(currentBuilding.c_str());
+                        serverTime = (double) serverTimeStamp / 1000.0;
+                        break;
+
+                    case 2: // x
+                        x = atof(currentBuilding.c_str());
+                        break;
+
+                    case 3: // y
+                        y = atof(currentBuilding.c_str());
+                        break;
+
+                    case 4: // angle
+                        angle = atof(currentBuilding.c_str());
+                        break;
+
+                    default:
+                        break;
                 }
+
                 currentBuilding = "";
                 commasPast++;
             }
@@ -114,52 +125,50 @@ bool getPoseFromCamLocalizer(geometry_msgs::PoseStamped &newPose)
         newPose.header.stamp = requestRosTime;
         newPose.pose.position.x = x;
         newPose.pose.position.y = y;
-        newPose.pose.orientation = tf::createQuaternionMsgFromYaw(angle * (M_PI / 180));
-        cout << newPose << endl;
+        newPose.pose.orientation = tf::createQuaternionMsgFromYaw(angle * (M_PI / 180.0));
+        std::cout << newPose << std::endl;
         returnValue = true;
     }
+
     close(s);
     return returnValue;
 }
-
 
 int main(int argc, char** argv)
 {
     srand(time(NULL));
 
-
-    ros::init(argc, argv, "camLocalisation");
+    ros::init(argc, argv, "MR_GPS_Node");
     ros::NodeHandle n;
 
+    // Get parameters
+    std::string stateSub, posePub;
+    n.param<std::string>("/MR_GPS/GPS/stateSub", stateSub, "mrGPS/State");
+    n.param<std::string>("/MR_GPS/GPS/posePub", posePub, "mrGPS/Pose");
+    n.param<std::string>("/MR_GPS/GPS/ServerIP", _serverIP, "10.115.253.233");
+    n.param<int>("/MR_GPS/GPS/ServerPort", _serverPORT, 21212);
+    n.param<std::string>("/MR_GPS/GPS/requestMsg", _requestMsg, "Get position 5");
 
-    // Set parameters
-    int port;
-
-
-    //Publisher
-    ros::Publisher statePublisher = n.advertise<geometry_msgs::PoseStamped>("gps_pose",10);
-
-    //Subscribe to topic
-    ros::Subscriber stateSubscriber = n.subscribe("state",1,stateCallback);
+    // Handle subscribers and publisher
+    ros::Publisher statePublisher = n.advertise<geometry_msgs::PoseStamped>(posePub, 10);
+    ros::Subscriber stateSubscriber = n.subscribe(stateSub, 1, stateCallback);
 
     geometry_msgs::PoseStamped pStamped;
+
     // Spin
     ros::Rate r(2);
-    while (ros::ok()) {
-
+    while(ros::ok())
+    {
         ros::spinOnce();
-        if(searchForMarker)
+
+        if(_searchForMarker)
         {
             //cout << "Getting pose"<< endl;
-            if(getPoseFromCamLocalizer(pStamped)){
+            if(getPoseFromCamLocalizer(pStamped))
                 statePublisher.publish(pStamped);
-            }
         }
+
         r.sleep();
-
-
-
-        // cv::imshow("Lines",currentImg);
     }
 
     return 0;

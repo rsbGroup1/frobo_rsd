@@ -74,7 +74,7 @@ int main()
     ros::NodeHandle nh, pNh("~");
 
     std::string imagePub;
-    pNh.param<std::string>("image_pub", imagePub, "/rcCamera/image");
+    pNh.param<std::string>("image_pub", imagePub, "/mrCamera/image");
 
     // Create publisher topic
     image_transport::ImageTransport it(nh);

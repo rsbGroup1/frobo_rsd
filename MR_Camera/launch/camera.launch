@@ -1,0 +1,9 @@
+<!-- Camera launch file -->
+
+<launch>
+	<group ns="MR_Camera">
+		<node pkg="mr_camera" name="Camera" type="mr_camera">
+			<param name="image_pub" value="/mrCamera/image"/> 
+		</node>
+	</group>
+</launch>

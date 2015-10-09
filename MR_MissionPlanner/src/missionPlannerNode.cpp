@@ -313,13 +313,13 @@ int main()
 
     // Init ROS Node
     ros::init(argc, argv, "RSD_MissionPlanner_Node");
-    ros::NodeHandle nh;
+    ros::NodeHandle nh, pNh("~");
 
     // Topic names
     std::string obstaclePub, startStopSub, missionPlannerPub;
-    nh.param<std::string>("/MR_MissionPlanner/MissionPlanner/mr_collision_status_sub", obstaclePub, "/mrObstacleDetector/status");
-    nh.param<std::string>("/MR_MissionPlanner/MissionPlanner/mr_hmi_sub", startStopSub, "/mrHMI/start_stop");
-    nh.param<std::string>("/MR_MissionPlanner/MissionPlanner/mr_missionplanner_pub", missionPlannerPub, "/mrMissionPlanner/status");
+    pNh.param<std::string>("mr_collision_status_sub", obstaclePub, "/mrObstacleDetector/status");
+    pNh.param<std::string>("mr_hmi_sub", startStopSub, "/mrHMI/start_stop");
+    pNh.param<std::string>("mr_missionplanner_pub", missionPlannerPub, "/mrMissionPlanner/status");
 
     // Publisher
     _missionPlannerPublisher = nh.advertise<std_msgs::String>(missionPlannerPub, 1);
@@ -331,9 +331,9 @@ int main()
     // Get serial data parameters
     int baudRate;
     std::string port;
-    nh.param<bool>("/MR_MissionPlanner/MissionPlanner/debug", _debug, false);
-    nh.param<int>("/MR_MissionPlanner/MissionPlanner/baud_rate", baudRate, 115200);
-    nh.param<std::string>("/MR_MissionPlanner/MissionPlanner/port", port, "/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00");
+    pNh.param<bool>("debug", _debug, false);
+    pNh.param<int>("baud_rate", baudRate, 115200);
+    pNh.param<std::string>("port", port, "/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00");
 
     // Open connection
     _serialConnection = new serial::Serial(port.c_str(), baudRate, serial::Timeout::simpleTimeout(50));

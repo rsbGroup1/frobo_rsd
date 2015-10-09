@@ -15,13 +15,14 @@
 // Defines
 #define SSTR(x)                 dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
 
-#define FRAME_WIDTH		640   //1280, 960, 640, 640, 320, 160
-#define FRAME_HEIGHT		480   //720, 544, 480, 360, 240, 120
-#define CAMERA_FREQUENCY	15    //max: 10,  15,  30,  30,  30, 30
-#define SHARPNESS               2     //(int): min=1 max=7 step=1 default=2
-#define BRIGHTNESS              2     //(int): min=1 max=7 step=1 default=2
-#define WHITE_BALANCE_AUTO	true  //(bool): default=1
-#define WHITE_BALANCE_TEMP	4600  //(int): min=2800 max=6500 step=1 default=4600
+#define FRAME_WIDTH             640     // 1280, 960, 640, 640, 320, 160
+#define FRAME_HEIGHT            480     // 720, 544, 480, 360, 240, 120
+#define CAMERA_FREQUENCY        15      // max: 10,  15,  30,  30,  30, 30
+#define SHARPNESS               2       // (int): min=1 max=7 step=1 default=2
+#define BRIGHTNESS              2       // (int): min=1 max=7 step=1 default=2
+#define WHITE_BALANCE_AUTO      true    // (bool): default=1
+#define WHITE_BALANCE_TEMP      4600    // (int): min=2800 max=6500 step=1 default=4600
+
 // You can also control: Hue, contrast, saturation, gamma, power line freq, backlight compensation, exposure etc. type "v4l2-ctl --all" in console for more info
 
 // Global variables
@@ -41,26 +42,25 @@ int main()
         // Change camera parameters
         std::string msg = "v4l2-ctl -d " + SSTR(i) + " -c sharpness=" + SSTR(SHARPNESS);
         std::system(msg.c_str());
-	msg = "v4l2-ctl -d " + SSTR(i) + " -c brightness=" + SSTR(BRIGHTNESS);
+        msg = "v4l2-ctl -d " + SSTR(i) + " -c brightness=" + SSTR(BRIGHTNESS);
         std::system(msg.c_str());
-	msg = "v4l2-ctl -d " + SSTR(i) + " -c white_balance_temperature_auto=" + (WHITE_BALANCE_AUTO?"1":"0");
+        msg = "v4l2-ctl -d " + SSTR(i) + " -c white_balance_temperature_auto=" + (WHITE_BALANCE_AUTO?"1":"0");
         std::system(msg.c_str());
-	if(!WHITE_BALANCE_AUTO)
-	{
-	   msg = "v4l2-ctl -d " + SSTR(i) + " -c white_balance_temperature=" + SSTR(WHITE_BALANCE_TEMP);
+        if(!WHITE_BALANCE_AUTO)
+        {
+           msg = "v4l2-ctl -d " + SSTR(i) + " -c white_balance_temperature=" + SSTR(WHITE_BALANCE_TEMP);
            std::system(msg.c_str());
-	}
-	
+        }
 
         // If not success, exit program
         if(!_camera->isOpened())
         {
             delete _camera;
-            std::cerr << "Error opening camera feed..!" << std::endl;
+            ROS_ERROR("Error opening camera feed!");
         }
         else
         {
-            std::cout << "Camera " << i << " opened!" << std::endl;
+            ROS_INFO("Camera opened!");
             break;
         }
     }
@@ -71,11 +71,14 @@ int main()
 
     // Init ROS Node
     ros::init(argc, argv, "RSD_Camera_Node");
-    ros::NodeHandle nh;
+    ros::NodeHandle nh, pNh("~");
+
+    std::string imagePub;
+    pNh.param<std::string>("image_pub", imagePub, "/rcCamera/image");
 
     // Create publisher topic
     image_transport::ImageTransport it(nh);
-    image_transport::Publisher pub = it.advertise("camera/image", 1);
+    image_transport::Publisher pub = it.advertise(imagePub, 1);
 
     // Set loop rate
     ros::Rate loop_rate(CAMERA_FREQUENCY);

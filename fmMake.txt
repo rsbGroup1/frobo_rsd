@@ -27,7 +27,7 @@
 /frobo_rsd/MR_NavigationController
 /frobo_rsd/MR_MissionPlanner
 /frobo_rsd/MR_ObstacleDetector
-/frobo_rsd/MR_BridgeWallTracking
+#/frobo_rsd/MR_BridgeWallTracking
 /frobo_rsd/MR_ExtendedKalmanFilter
 /frobo_rsd/MR_TipController
 /frobo_rsd/MR_HMI

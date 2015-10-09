@@ -275,29 +275,29 @@ int main()
 
     // Init ROS Node
     ros::init(argc, argv, "RSD_NavigationController_Node");
-    ros::NodeHandle nh;
+    ros::NodeHandle nh, pNh("~");
 
     // Get parameters
-    nh.param<double>("/MR_NavigationController/NavigationController/speed_normal", _speedNormal, 0.6);
-    nh.param<double>("/MR_NavigationController/NavigationController/speed_slow", _speedSlow, 0.2);
-    nh.param<double>("/MR_NavigationController/NavigationController/speed_error", _speedStop, 0.0);
-    nh.param<double>("/MR_NavigationController/NavigationController/max_angle_speed", _maxAngleSpeed, 0.8);
-    nh.param<double>("/MR_NavigationController/NavigationController/pid_coeff_p", _coeffP, 0.5);
-    nh.param<double>("/MR_NavigationController/NavigationController/pid_coeff_i", _coeffI, 0.0001);
-    nh.param<double>("/MR_NavigationController/NavigationController/pid_coeff_d", _coeffD, 0.01);
-    nh.param<double>("/MR_NavigationController/NavigationController/pid_max_i", _maxI, 1000);
-    nh.param<int>("/MR_NavigationController/NavigationController/motor_update_rate", _motorUpdateRate, 50); // Sleep for 50 ms = 20Hz
-    nh.param<double>("/MR_NavigationController/NavigationController/func_nominator", _funcNom, 1.0);
-    nh.param<double>("/MR_NavigationController/NavigationController/func_denominator", _funcDen, 40.0);
+    pNh.param<double>("speed_normal", _speedNormal, 0.6);
+    pNh.param<double>("speed_slow", _speedSlow, 0.2);
+    pNh.param<double>("speed_error", _speedStop, 0.0);
+    pNh.param<double>("max_angle_speed", _maxAngleSpeed, 0.8);
+    pNh.param<double>("pid_coeff_p", _coeffP, 0.5);
+    pNh.param<double>("pid_coeff_i", _coeffI, 0.0001);
+    pNh.param<double>("pid_coeff_d", _coeffD, 0.01);
+    pNh.param<double>("pid_max_i", _maxI, 1000);
+    pNh.param<int>("motor_update_rate", _motorUpdateRate, 50); // Sleep for 50 ms = 20Hz
+    pNh.param<double>("func_nominator", _funcNom, 1.0);
+    pNh.param<double>("func_denominator", _funcDen, 40.0);
 
     // Get topic names
     std::string deadmanParameter, motorParameter, missionPlanParam, kalmanParam, deltaXParam, deltaThetaParam;
-    nh.param<std::string>("/MR_NavigationController/NavigationController/deadman_pub", deadmanParameter, "/fmSafe/deadman");
-    nh.param<std::string>("/MR_NavigationController/NavigationController/cmd_vel_pub", motorParameter, "/fmCommand/cmd_vel");
-    nh.param<std::string>("/MR_NavigationController/NavigationController/mr_missionplan_sub", missionPlanParam, "/mrMissionPlanner/status");
-    nh.param<std::string>("/MR_NavigationController/NavigationController/mr_kalman_sub", kalmanParam, "/mrKalman/data");
-    nh.param<std::string>("/MR_NavigationController/NavigationController/deltaX_pub", deltaXParam, "/mrNavigationController/deltaX");
-    nh.param<std::string>("/MR_NavigationController/NavigationController/deltaTheta_pub", deltaThetaParam, "mrNavigationController/deltaTheta");
+    pNh.param<std::string>("deadman_pub", deadmanParameter, "/fmSafe/deadman");
+    pNh.param<std::string>("cmd_vel_pub", motorParameter, "/fmCommand/cmd_vel");
+    pNh.param<std::string>("mr_missionplan_sub", missionPlanParam, "/mrMissionPlanner/status");
+    pNh.param<std::string>("mr_kalman_sub", kalmanParam, "/mrKalman/data");
+    pNh.param<std::string>("deltaX_pub", deltaXParam, "/mrNavigationController/deltaX");
+    pNh.param<std::string>("deltaTheta_pub", deltaThetaParam, "mrNavigationController/deltaTheta");
 
     // Publisher
     _motorCommandTopic = nh.advertise<geometry_msgs::TwistStamped>(motorParameter, 1);

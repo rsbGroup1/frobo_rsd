@@ -105,6 +105,7 @@ std::string readCode(cv::Mat src)
 // use this main for a single picture.
 int main(int argc, char* argv[] )
 {
+    //, pNh("~");
 	// load image
     cv::Mat image = cv::imread("/home/student/workspace/QR_reader/market-qr-code.png", 1);
 	

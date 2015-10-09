@@ -10,7 +10,7 @@ int main()
 
     // Init ROS Node
     ros::init(argc, argv, "RSD_MESServer_Node");
-    ros::NodeHandle nh;
+    ros::NodeHandle nh, pNh("~");
 
     // Set loop rate
     ros::Rate loop_rate(10);

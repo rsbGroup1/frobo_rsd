@@ -198,11 +198,11 @@ int main()
 
     // Init ROS Node
     ros::init(argc, argv, "RSD_TipController_Node");
-    ros::NodeHandle nh;
+    ros::NodeHandle nh, pNh("~");
 
     // Topic names
     std::string tipControlSub;
-    nh.param<std::string>("/MR_TipController/TipController/mr_maincontroller_tipper_pub", tipControlSub, "/mrMainController/tipper");
+    pNh.param<std::string>("mr_maincontroller_tipper_pub", tipControlSub, "/mrMainController/tipper");
 
     // Subscriber
     ros::Subscriber subTipControl = nh.subscribe(tipControlSub, 10, tipControlCallback);
@@ -210,13 +210,9 @@ int main()
     // Get serial data parameters
     int baudRate;    
     std::string port;
-    nh.param<bool>("/MR_TipController/TipController/debug", _debugMsg, false);
-    nh.param<int>("/MR_TipController/TipController/baud_rate", baudRate, 115200);
-    nh.param<std::string>("/MR_TipController/TipController/port", port, "/dev/serial/by-id/usb-Arduino_Srl_Arduino_Uno_7543932393535120F172-if00");
-
-    // Inform user
-    //std::string temp = "Connecting to '" + port + "' with baud '" + SSTR(baudRate) + "'";
-    //ROS_INFO(temp.c_str());
+    pNh.param<bool>("debug", _debugMsg, false);
+    pNh.param<int>("baud_rate", baudRate, 115200);
+    pNh.param<std::string>("port", port, "/dev/serial/by-id/usb-Arduino_Srl_Arduino_Uno_7543932393535120F172-if00");
 
     // Open connection
     _serialConnection = new serial::Serial(port.c_str(), baudRate, serial::Timeout::simpleTimeout(50));

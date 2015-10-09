@@ -139,15 +139,15 @@ int main(int argc, char** argv)
     srand(time(NULL));
 
     ros::init(argc, argv, "MR_GPS_Node");
-    ros::NodeHandle n;
+    ros::NodeHandle n, pNh("~");
 
     // Get parameters
     std::string stateSub, posePub;
-    n.param<std::string>("/MR_GPS/GPS/stateSub", stateSub, "mrGPS/State");
-    n.param<std::string>("/MR_GPS/GPS/posePub", posePub, "mrGPS/Pose");
-    n.param<std::string>("/MR_GPS/GPS/ServerIP", _serverIP, "10.115.253.233");
-    n.param<int>("/MR_GPS/GPS/ServerPort", _serverPORT, 21212);
-    n.param<std::string>("/MR_GPS/GPS/requestMsg", _requestMsg, "Get position 5");
+    pNh.param<std::string>("stateSub", stateSub, "mrGPS/State");
+    pNh.param<std::string>("posePub", posePub, "mrGPS/Pose");
+    pNh.param<std::string>("ServerIP", _serverIP, "10.115.253.233");
+    pNh.param<int>("ServerPort", _serverPORT, 21212);
+    pNh.param<std::string>("requestMsg", _requestMsg, "Get position 5");
 
     // Handle subscribers and publisher
     ros::Publisher statePublisher = n.advertise<geometry_msgs::PoseStamped>(posePub, 10);

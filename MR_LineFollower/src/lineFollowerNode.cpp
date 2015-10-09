@@ -3,6 +3,7 @@
  * and publishes information for the robot to follow it
  */
 
+// Includes
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
@@ -10,65 +11,79 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+// Constants
 static const std::string OPENCV_WINDOW = "Image filtered";
 
-class ImageConverter {
-    ros::NodeHandle nh_;
+class ImageConverter
+{
+    ros::NodeHandle nh_, _pNh;
     image_transport::ImageTransport it_;
     image_transport::Subscriber sub_image_;
     image_transport::Publisher pub_image_;
 
 public:
-    ImageConverter() : it_ ( nh_ ) {
+    ImageConverter() : it_(nh_), _pNh("~")
+    {
         // Subscribe to input video feed and publish output video feed
-        sub_image_ = it_.subscribe ( "/camera/image", 1, &ImageConverter::imageCb, this,
-                                     image_transport::TransportHints ( "compressed" ) );
-        pub_image_ = it_.advertise ( "/mr_line_follower/image_filtered", 1 );
+        std::string imageSub, imagePub;
+        _pNh.param<std::string>("imageInput_sub", imageSub, "/mrCamera/image");
+        _pNh.param<std::string>("imageFiltered_pub", imagePub, "/mrLineFollower/image_filtered");
 
-        cv::namedWindow ( OPENCV_WINDOW );
+        sub_image_ = it_.subscribe(imageSub, 1, &ImageConverter::imageCb, this, image_transport::TransportHints("compressed"));
+        pub_image_ = it_.advertise(imagePub, 1);
+
+        cv::namedWindow(OPENCV_WINDOW);
     }
 
-    ~ImageConverter() {
-        cv::destroyWindow ( OPENCV_WINDOW );
+    ~ImageConverter()
+    {
+        cv::destroyWindow(OPENCV_WINDOW);
     }
 
-    void imageCb ( const sensor_msgs::ImageConstPtr& msg ) {
-        //Transform the message to an OpenCV image
+    void imageCb(const sensor_msgs::ImageConstPtr& msg)
+    {
+        // Transform the message to an OpenCV image
         cv_bridge::CvImagePtr image_ptr;
-        try {
-            //Load the image in MONO8
+
+        try
+        {
+            // Load the image in MONO8
             image_ptr = cv_bridge::toCvCopy ( msg, sensor_msgs::image_encodings::MONO8 );
-        } catch ( cv_bridge::Exception& e ) {
-            ROS_ERROR ( "cv_bridge exception: %s", e.what() );
+        }
+        catch( cv_bridge::Exception& e )
+        {
+            ROS_ERROR("cv_bridge exception: %s", e.what());
             return;
         }
 
-        /*
-        * Canny Edge detector
-        */
+        // Canny Edge detector
         unsigned char binaryThreshold = 30;
         unsigned char erodeDilateSize = 12;
         unsigned char blurSize = 3;
         unsigned char cannyMinThreshold = 50;
         unsigned char cannyMaxThreshold = 100;
-        //Flip
+
+        // Flip
         //cv::flip(image_ptr->image, image_ptr->image, 1);
-        //To binary
+
+        // To binary
         cv::threshold(image_ptr->image, image_ptr->image, binaryThreshold, 255, CV_THRESH_BINARY_INV);
-        //Erode and Dilate
-        cv::erode(image_ptr->image, image_ptr->image, 
-            cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(erodeDilateSize,erodeDilateSize)));
-        cv::dilate(image_ptr->image, image_ptr->image, 
-            cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(erodeDilateSize,erodeDilateSize)));
-        //Blur
-        cv::blur (image_ptr->image, image_ptr->image, cv::Size (blurSize,blurSize));
-        //Canny edge
+
+        // Erode and Dilate
+        cv::erode(image_ptr->image, image_ptr->image, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(erodeDilateSize,erodeDilateSize)));
+        cv::dilate(image_ptr->image, image_ptr->image, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(erodeDilateSize,erodeDilateSize)));
+
+        // Blur
+        cv::blur(image_ptr->image, image_ptr->image, cv::Size (blurSize,blurSize));
+
+        // Canny edge
         cv::Canny(image_ptr->image, image_ptr->image, cannyMinThreshold, cannyMaxThreshold);
 
-        //Hough Lines
+        // Hough Lines
         std::vector<cv::Vec4i> lines;
         //cv::HoughLinesP(image_ptr->image, lines, 1, CV_PI/180, 100, 0, 0);
-        for(size_t i = 0; i < lines.size(); i++ ) {
+        for(size_t i = 0; i < lines.size(); i++)
+        {
             float rho = lines[i][0], theta = lines[i][1];
             cv::Point pt1, pt2;
             double a = cos(theta), b = sin(theta);
@@ -89,8 +104,9 @@ public:
     }
 };
 
-int main ( int argc, char** argv ) {
-    ros::init ( argc, argv, "mr_line_follower" );
+int main ( int argc, char** argv )
+{
+    ros::init(argc, argv, "MR_LineFollower_Node");
     ImageConverter ic;
     ros::spin();
     return 0;

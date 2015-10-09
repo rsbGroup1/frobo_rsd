@@ -199,7 +199,7 @@
 #speed_controller, #speed_controller:active, #speed_controller:hover, #speed_controller:focus{
     height: 50px;
     width: 100%;
-    font-size: 15px;
+    font-size: 30px;
 
     border: 0;
 }
@@ -303,7 +303,7 @@ input[type=range]::-moz-focus-outer {
 }
 
 .non_selectable{
-    -moz-user-select: none; 
+    -moz-user-select: none;
     -khtml-user-select: none;
     -webkit-user-select: none;
     -o-user-select: none;

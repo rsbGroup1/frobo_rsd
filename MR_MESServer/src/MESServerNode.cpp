@@ -9,7 +9,7 @@ int main()
     int argc = 0;
 
     // Init ROS Node
-    ros::init(argc, argv, "RSD_Camera_Node");
+    ros::init(argc, argv, "RSD_MESServer_Node");
     ros::NodeHandle nh;
 
     // Set loop rate

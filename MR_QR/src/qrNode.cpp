@@ -1,50 +1,42 @@
-// standard includes
+// Includes
 #include <stdio.h>
 #include <iostream>
 #include <string>
 #include <iomanip>
 #include <sstream>
-
-// include for OpenCV
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
-
-// include Zbar for barcode and QR decoder
 #include <zbar.h>
 
-using namespace cv;
-using namespace std;
-using namespace zbar;
-
-String read_code(Mat src)
+std::string readCode(cv::Mat src)
 {
 	// set up the scanner 
-	Mat gray;
-	ImageScanner scanner;
-	scanner.set_config(ZBAR_NONE, ZBAR_CFG_ENABLE, 1);
+    cv::Mat gray;
+    zbar::ImageScanner scanner;
+    scanner.set_config(zbar::ZBAR_NONE, zbar::ZBAR_CFG_ENABLE, 1);
 	
 	// convort image to grayscale
-	cvtColor(src,gray,CV_RGB2GRAY); // image should always be grayscale!!!
+    cv::cvtColor(src, gray, CV_RGB2GRAY); // image should always be grayscale!!!
 	
 	// get size of image
 	int width = src.cols;
 	int height = src.rows;
 	
 	// ready the image for reading
-	uchar *raw = (uchar *)gray.data;
-	Image image( width, height, "Y800", raw , width * height);
+    uchar *raw = (uchar*)gray.data;
+    zbar::Image image( width, height, "Y800", raw , width * height);
 	
 	// scan the image for QR code
 	int n = scanner.scan(image);
 
 	// string used for telling what the QR or barcode says.
-	string data_type, data;
+    std::string data_type, data;
 	
 	// read the image
-	for( Image::SymbolIterator symbol = image.symbol_begin(); symbol != image.symbol_end(); ++symbol)
+    for(zbar::Image::SymbolIterator symbol = image.symbol_begin(); symbol != image.symbol_end(); ++symbol)
 	{
-		vector<Point> vp;
+        std::vector<cv::Point> vp;
 		
 		// write out the symbols and data
 		// type name equals type of code QR or Barcode...
@@ -55,28 +47,23 @@ String read_code(Mat src)
 		data = symbol->get_data();
 		
 		// get the point for the QR code to show where they are. 
-		for(int i = 0; i < n; i++)
-		{
-			vp.push_back(Point(symbol->get_location_x(i), symbol->get_location_y(i)));
-		}
+        for(int i = 0; i < n; i++)
+            vp.push_back(cv::Point(symbol->get_location_x(i), symbol->get_location_y(i)));
 		
-		RotatedRect r = minAreaRect(vp);
-		Point2f pts[4];
+        cv::RotatedRect r = cv::minAreaRect(vp);
+        cv::Point2f pts[4];
 		r.points(pts); 
 		
 		// draw the lines around the QR code. not working fully yet.
-		for( int i = 0; i < 4; i++)
-		{
-			line(src,pts[i],pts[i+1],Scalar(255,0,0),3);
-		}
+        for(int i = 0; i < 4; i++)
+            cv::line(src, pts[i], pts[i+1], cv::Scalar(255,0,0), 3);
 	}
 	// show the image with the QR code + lines around. 
-	namedWindow("decoded image", WINDOW_AUTOSIZE);
-	imshow("decoded image", src);
+    cv::namedWindow("decoded image", cv::WINDOW_AUTOSIZE);
+    cv::imshow("decoded image", src);
 	
 	return data; 
 }
-
 
 // video main
 // used this main for capture an image from a webcam and use it for image processing.
@@ -115,25 +102,23 @@ String read_code(Mat src)
 }
 */
 
-
 // use this main for a single picture.
 int main(int argc, char* argv[] )
 {
 	// load image
-	Mat image;
-	image = imread("/home/student/workspace/QR_reader/market-qr-code.png", 1);
+    cv::Mat image = cv::imread("/home/student/workspace/QR_reader/market-qr-code.png", 1);
 	
-	// check for image was found.
-	if( !image.data)
+    // Check for image was found.
+    if(!image.data)
 	{
-		cout << "no image found with that name" << endl;
+        std::cout << "No image found with that name!" << std::endl;
 	}
 	
 	// read and show the QR code.
-	string test = read_code(image);
-	cout << test << endl;
+    std::string test = readCode(image);
+    std::cout << test << std::endl;
 	
 	// wait and exit. 
-	waitKey(0);
+    cv::waitKey(0);
     return 0;
 }

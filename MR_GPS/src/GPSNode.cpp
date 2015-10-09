@@ -34,7 +34,7 @@ void stateCallback(const std_msgs::Int8 &stateMsg)
     }
 }
 
-bool getPoseFromCamLocalizer(geometry_msgs::PoseStamped newPose)
+bool getPoseFromCamLocalizer(geometry_msgs::PoseStamped &newPose)
 {
     // Create network variables
     string requestMsg = "Get position 5";
@@ -115,7 +115,7 @@ bool getPoseFromCamLocalizer(geometry_msgs::PoseStamped newPose)
         newPose.pose.position.x = x;
         newPose.pose.position.y = y;
         newPose.pose.orientation = tf::createQuaternionMsgFromYaw(angle * (M_PI / 180));
-
+        cout << newPose << endl;
         returnValue = true;
     }
     close(s);
@@ -150,7 +150,7 @@ int main(int argc, char** argv)
         ros::spinOnce();
         if(searchForMarker)
         {
-            cout << "Getting pose"<< endl;
+            //cout << "Getting pose"<< endl;
             if(getPoseFromCamLocalizer(pStamped)){
                 statePublisher.publish(pStamped);
             }

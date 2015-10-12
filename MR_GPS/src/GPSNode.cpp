@@ -79,6 +79,7 @@ bool getPoseFromCamLocalizer(geometry_msgs::PoseStamped &newPose)
 
         for(int i = 0; i < readSize;i++)
         {
+            cout << buffer[i] ;
             if(buffer[i] == ',')
             {
                 switch (commasPast)
@@ -101,6 +102,7 @@ bool getPoseFromCamLocalizer(geometry_msgs::PoseStamped &newPose)
                         break;
 
                     case 4: // angle
+                        // never entering here
                         angle = atof(currentBuilding.c_str());
                         break;
 
@@ -119,14 +121,15 @@ bool getPoseFromCamLocalizer(geometry_msgs::PoseStamped &newPose)
                     currentBuilding += buffer[i];
             }
         }
-
+        angle = atof(currentBuilding.c_str());
+        //cout << endl;
         //cout << "Receiveds: " << markerOrder << " " << serverTime << " " << x << " " << y << " " << angle << endl;
         //cout << "TimeDifference: " << requestRosTime.toSec() - serverTime << endl;
         newPose.header.stamp = requestRosTime;
         newPose.pose.position.x = x;
         newPose.pose.position.y = y;
         newPose.pose.orientation = tf::createQuaternionMsgFromYaw(angle * (M_PI / 180.0));
-        std::cout << newPose << std::endl;
+        //std::cout << newPose << std::endl;
         returnValue = true;
     }
 

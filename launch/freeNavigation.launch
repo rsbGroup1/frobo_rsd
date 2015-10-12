@@ -36,7 +36,7 @@
 			<param name="wheel_turn_kd" value="3" /> 
 			<param name="wheel_turn_max_integral_output" value="300" /> 
 			<param name="supply_voltage_scale_factor" value="0.03747" /> 
-			<param name="min_supply_voltage" value="11.7" /> 
+			<param name="min_supply_voltage" value="12.1" /> 
 			<param name="show_voltage_interval" value="300" /> 
 		</node>
 	</group>
@@ -107,20 +107,20 @@
 	    <param name="max_ang" type="double" value="2.35619449019" />
 	    <param name="intensity" type="bool" value="True" />
 	    <param name="skip" type="int" value="0" />
-	    <param name="frame_id" type="str" value="base_footprint" />
+	    <param name="frame_id" type="str" value="laser_frame" />
 	    <param name="time_offset" type="double" value="-0.001" />
 	    <param name="publish_datagram" type="bool" value="False" />
 	    <param name="port" type="str" value="/dev/lidar" />
 	</node>
 	<!-- HMI -->
-	<group ns="MR_HMI">
+	<!--group ns="MR_HMI">
 		<node pkg="mr_hmi" name="proxy" type="proxy.py">
 			<param name="missionplanner_pub" value="/mrHMI/start_stop"/>
 			<param name="deadman_pub" value="/fmSafe/deadman"/>
 			<param name="cmd_pub" value="/fmCommand/cmd_vel"/>
 			<param name="tipper_pub" value="/mrMainController/tipper"/>
 		</node>			
-	</group>
+	</group-->
 
 
 
@@ -139,7 +139,7 @@
  	<!--node pkg="stage_ros" type="stageros" name="simulator" args="/home/martin/roswork/src/frobo_rsd/Navigation_Setup/maps/boxSimTest.world"/>
 	<remap from="/fmKnowledge/pose" to="/odom" /-->
 
-	<node pkg="frobit_plot" name="frobit_plot" type="frobit_plot_node.py" output="screen" >
+	<!--node pkg="frobit_plot" name="frobit_plot" type="frobit_plot_node.py" output="screen" >
 			<param name="pose_sub" value="/fmKnowledge/pose" />
 			<param name="gnss_sub" value="/fmInformation/gpgga_tranmerc" />
 			<param name="odom_sub" value="/fmKnowledge/odom" />
@@ -160,7 +160,7 @@
 			<param name="avatar_extension_rear" value="0.06" />
 			<param name="avatar_extension_lateral" value="0.13" />
 			<param name="avatar_reverse" value="false" />
-		</node>
+		</node-->
 
 	<node pkg="move_base" name="move_base" type="move_base" >
 		<param name="footprint_padding" value="0.01" />
@@ -180,10 +180,12 @@
 
   	<node name="rviz" pkg="rviz" type="rviz" args="-d move_base_config/move_base_config.rviz" />
 
-	<node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0 0 0 map odom 50"  >
+	<!--node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0 0 0 map odom 50"  >
+	</node-->
+	<node pkg="tf" type="static_transform_publisher" name="laser_transform" args="0 0 0 0 0 3.141592 base_footprint laser_frame 50"  >
 	</node>
 
-	<node name="map_server" pkg="map_server" type="map_server" args="/home/martin/roswork/src/frobo_rsd/Navigation_Setup/maps/map2.yaml" />
+	<node name="map_server" pkg="map_server" type="map_server" args="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/maps/map2.yaml" />
 
 	<node pkg="amcl" type="amcl" name="amcl" respawn="true">
 	  <!--remap from="scan" to="base_scan" /-->
@@ -214,18 +216,19 @@
 	  <param name="laser_likelihood_max_dist" value="2.0"/>
 	  <param name="update_min_d" value="0.2"/>
 	  <param name="update_min_a" value="0.5"/>
-	  <param name="odom_frame_id" value="odom"/>
+	  <param name="odom_frame_id" value="odom_combined"/>
+	  <param name="base_frame_id" value="base_footprint"/>
 	  <param name="resample_interval" value="1"/>
 	  <param name="transform_tolerance" value="0.1"/>
 	  <param name="recovery_alpha_slow" value="0.0"/>
 	  <param name="recovery_alpha_fast" value="0.0"/>
-	<param name="initial_pose_x" value="5.0"/>
-	<param name="initial_pose_y" value="5.0"/>
+	<param name="initial_pose_x" value="0"/>
+	<param name="initial_pose_y" value="0"/>
 	 
 	</node>
 
 	<!-- Record Rosbag -->
-	<!--node pkg="rosbag" type="record" name="rosbag_record_all" args="-a"/-->
+	<node pkg="rosbag" type="record" name="rosbag_record_scans" args="/scan"/>
 
 </launch>
 

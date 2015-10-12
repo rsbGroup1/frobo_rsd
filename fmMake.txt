@@ -36,4 +36,4 @@
 /frobo_rsd/MR_Camera
 #/frobo_rsd/MR_PythonExample
 /frobo_rsd/MR_LineFollower
-
+/frobo_rsd/MR_GPS

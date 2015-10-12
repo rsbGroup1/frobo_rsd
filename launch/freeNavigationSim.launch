@@ -72,12 +72,12 @@
 
   	<node name="rviz" pkg="rviz" type="rviz" args="-d move_base_config/move_base_config.rviz" />
 
-	<node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0 0 0 map odom 50"  >
-	</node>
+	<!--node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0 0 0 map odom 50"  >
+	</node-->
 
 	<node name="map_server" pkg="map_server" type="map_server" args="/home/martin/roswork/src/frobo_rsd/Navigation_Setup/maps/map2.yaml" />
 
-	<!--node pkg="amcl" type="amcl" name="amcl" respawn="true">
+	<node pkg="amcl" type="amcl" name="amcl" respawn="true">
 	  <remap from="scan" to="base_scan" />
 	
 	  <param name="odom_model_type" value="omni"/>
@@ -85,6 +85,7 @@
 	  <param name="transform_tolerance" value="0.2" />
 	  <param name="gui_publish_rate" value="10.0"/>
 	  <param name="laser_max_beams" value="30"/>
+	  <param name="laser_min_range" value="0.1"/>
 	  <param name="min_particles" value="500"/>
 	  <param name="max_particles" value="5000"/>
 	  <param name="kld_err" value="0.05"/>
@@ -107,14 +108,22 @@
 	  <param name="update_min_d" value="0.2"/>
 	  <param name="update_min_a" value="0.5"/>
 	  <param name="odom_frame_id" value="odom"/>
+	  <param name="odom_frame_id" value="odom"/>
+	  <param name="global_frame_id" value="map"/>
+
 	  <param name="resample_interval" value="1"/>
 	  <param name="transform_tolerance" value="0.1"/>
 	  <param name="recovery_alpha_slow" value="0.0"/>
 	  <param name="recovery_alpha_fast" value="0.0"/>
-	<param name="initial_pose_x" value="5.0"/>
-	<param name="initial_pose_y" value="5.0"/>
+	<param name="initial_pose_x" value="10"/>
+	<param name="initial_pose_y" value="5"/>
+	<param name="initial_cov_xx" value="50"/>
+	<param name="initial_cov_yy" value="50"/>
+	<param name="initial_cov_aa" value="6"/>
+
+
 	 
-	</node-->
+	</node>
 
 
 

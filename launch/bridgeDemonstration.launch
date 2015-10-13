@@ -109,10 +109,11 @@
 	 </node>
 
 	<!-- LIDAR TF-->
-	<group ns="MR_TFBroadcaster">
-		<node pkg="mr_tfbroadcaster" name="mr_tfbroadcaster" type="mr_tfbroadcaster">
-		</node>
-	</group>
+	<node pkg="mr_tfbroadcaster" name="mr_tfbroadcaster" type="mr_tfbroadcaster">
+		<param name="vehicle_frame" value="base_footprint" />
+		<param name="lidar_frame" value="lidar_frame" />		
+	</node>
+
 
 	<!-- LIDAR -->
 	<node name="sick_tim310s01" pkg="sick_tim" type="sick_tim310s01" respawn="false" output="screen">

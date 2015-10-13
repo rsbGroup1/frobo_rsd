@@ -24,6 +24,7 @@
 /frobo_rsd/openslam_gmapping
 /frobo_rsd/slam_gmapping/gmapping
 /frobo_rsd/slam_gmapping/slam_gmapping
+/frobo_rsd/MR_TFBroadcaster
 #/frobo_rsd/MR_NavigationController
 /frobo_rsd/MR_MissionPlanner
 /frobo_rsd/MR_ObstacleDetector

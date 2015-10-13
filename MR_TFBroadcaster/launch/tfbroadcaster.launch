@@ -1,0 +1,9 @@
+<!-- Tip Controller launch file -->
+
+<launch>
+	<group ns="MR_TFBroadcaster">
+		<node pkg="mr_tfbroadcaster" name="mr_tfbroadcaster" type="mr_tfbroadcaster">
+
+		</node>
+	</group>
+</launch>

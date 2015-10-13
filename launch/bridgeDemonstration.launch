@@ -108,13 +108,19 @@
 		<param name="covariance_z" value="0.001"/>
 	 </node>
 
+	<!-- LIDAR TF-->
+	<group ns="MR_TFBroadcaster">
+		<node pkg="mr_tfbroadcaster" name="mr_tfbroadcaster" type="mr_tfbroadcaster">
+		</node>
+	</group>
+
 	<!-- LIDAR -->
 	<node name="sick_tim310s01" pkg="sick_tim" type="sick_tim310s01" respawn="false" output="screen">
 	    <param name="min_ang" type="double" value="-2.35619449019" />
 	    <param name="max_ang" type="double" value="2.35619449019" />
 	    <param name="intensity" type="bool" value="True" />
 	    <param name="skip" type="int" value="0" />
-	    <param name="frame_id" type="str" value="base_footprint" />
+	    <param name="frame_id" type="str" value="lidar_frame" />
 	    <param name="time_offset" type="double" value="-0.001" />
 	    <param name="publish_datagram" type="bool" value="False" />
 	    <param name="port" type="str" value="/dev/lidar" />

@@ -79,18 +79,44 @@ public:
 		// Probabilistic Hough Lines
 		std::vector<cv::Vec4i> lines;
 		cv::HoughLinesP(image_filtered, lines, 1, CV_PI/180, threshold_slider+1, minLength_slider+1, maxLineGap_slider+1 );
-		// Drawing
-		for( size_t i = 0; i < lines.size(); i++ ) {
-			cv::Vec4i l = lines[i];
-			line(image_ptr->image, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0,0,255), 3, CV_AA);
-		}
-		
+
 		// Fusion lines and find the center
-		double fusionThreshold = 10;
+		std::vector<cv::Vec4i> lines_fusioned;
+		double fusionThreshold = 30; //pixels
 		
-		for(auto &i : lines) {
-			std::cout << i << std::endl;
+		lines_fusioned.clear();
+		for(unsigned char i=0; i<lines.size(); i++) {
+			cv::Vec4i lineToAdd = lines[i];
+			std::cout << "Line added" << lineToAdd << std::endl;
+			lines_fusioned.push_back(lineToAdd);
+			for(unsigned char j=0; j<lines_fusioned.size(); j++) {
+				cv::Vec4i lineToCompare = lines_fusioned[j];
+				std::cout << "Line compared" << lineToCompare << std::endl;
+				//Check if they are similar. If so, remove it.
+				if( ( lineToAdd[0] - lineToCompare[0])<fusionThreshold && 
+					( lineToAdd[1] - lineToCompare[1])<fusionThreshold && 
+					( lineToAdd[2] - lineToCompare[2])<fusionThreshold && 
+					( lineToAdd[3] - lineToCompare[3])<fusionThreshold &&
+					( lineToAdd[0] - lineToCompare[0]) != 0 && 
+					( lineToAdd[1] - lineToCompare[1]) != 0 && 
+					( lineToAdd[2] - lineToCompare[2]) != 0 && 
+					( lineToAdd[3] - lineToCompare[3]) != 0 )
+				{
+						lines_fusioned.pop_back();
+						std::cout << "Same line" << std::endl;
+				}
+			}
 		}
+		
+		std::cout << "\n" << std::endl;		
+		
+		// Drawing
+		for(unsigned char i = 0; i < lines_fusioned.size(); i++) {
+			cv::Vec4i l = lines_fusioned[i];
+			line(image_ptr->image, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0,0,255), 1, CV_AA);
+		}
+		
+		
         // Update GUI Window
         cv::createTrackbar( "threshold", OPENCV_WINDOW, &threshold_slider, threshold_slider_max);
 		cv::createTrackbar( "minLength", OPENCV_WINDOW, &minLength_slider, minLength_slider_max);

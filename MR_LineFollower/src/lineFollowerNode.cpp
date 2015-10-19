@@ -26,7 +26,7 @@ public:
     {
         // Subscribe to input video feed and publish output video feed
         std::string imageSub, imagePub;
-        _pNh.param<std::string>("imageInput_sub", imageSub, "/mrCamera/image");
+        _pNh.param<std::string>("imageInput_sub", imageSub, "/mr_camera_false/image" /*"/mrCamera/image"*/);
         _pNh.param<std::string>("imageFiltered_pub", imagePub, "/mrLineFollower/image_filtered");
 
         sub_image_ = it_.subscribe(imageSub, 1, &ImageConverter::imageCb, this, image_transport::TransportHints("compressed"));

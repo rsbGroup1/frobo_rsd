@@ -3,6 +3,8 @@ project(mr_line_follower)
 
 find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs cv_bridge genmsg image_transport sensor_msgs)
 
+set(CMAKE_CXX_FLAGS "-std=c++11")
+
 catkin_package()
 
 # Use OpenCV

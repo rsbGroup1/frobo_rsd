@@ -86,8 +86,10 @@ public:
 		}
 		
 		// Fusion lines and find the center
-		for( size_t i = 0; i < lines.size(); i++ ) {
-			
+		double fusionThreshold = 10;
+		
+		for(auto &i : lines) {
+			std::cout << i << std::endl;
 		}
         // Update GUI Window
         cv::createTrackbar( "threshold", OPENCV_WINDOW, &threshold_slider, threshold_slider_max);

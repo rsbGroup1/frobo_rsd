@@ -58,7 +58,7 @@ public:
 
         // Canny Edge detector
         unsigned char binaryThreshold = 30;
-        unsigned char erodeDilateSize = 12;
+        unsigned char erodeDilateSize = 15;
         unsigned char blurSize = 3;
         unsigned char cannyMinThreshold = 50;
         unsigned char cannyMaxThreshold = 100;
@@ -80,11 +80,31 @@ public:
         cv::Canny(image_ptr->image, image_ptr->image, cannyMinThreshold, cannyMaxThreshold);
 
         // Hough Lines
-        std::vector<cv::Vec4i> lines;
-        //cv::HoughLinesP(image_ptr->image, lines, 1, CV_PI/180, 100, 0, 0);
-        for(size_t i = 0; i < lines.size(); i++)
+        std::vector<cv::Vec4i> lines_filtered, lines_hough;
+		float r, t, lactual, ldiff;
+		std::vector<int> lines_ignored;
+        cv::HoughLinesP(image_ptr->image, lines_hough, 1, CV_PI/180, 100, 0, 0);
+		cv::cvtColor(image_ptr->image, image_ptr->image, cv::COLOR_GRAY2BGR);
+		
+		// Filter ortogonal lines
+		for (size_t i = 0; i < lines_hough.size(); i++) {
+			lactual = lines_hough[i][1];
+			
+			for (size_t j = 0; j < lines_hough.size(); j++) {
+				ldiff = fabs(( lines_hough[j][1]) - lactual);
+				if (((ldiff > 1.565) && (ldiff < 1.575)) || (ldiff < 0.0005)) {
+					std::cout << ldiff << std::endl;
+					lines_ignored.push_back(j);
+					lines_filtered.push_back(lines_hough[j]);
+					lines_hough.erase(lines_hough.begin() + j);
+				}
+			}
+		}
+		
+		// Print
+		for(size_t i = 0; i < lines_filtered.size(); i++)
         {
-            float rho = lines[i][0], theta = lines[i][1];
+			float rho = lines_filtered[i][0], theta = lines_filtered[i][1];
             cv::Point pt1, pt2;
             double a = cos(theta), b = sin(theta);
             double x0 = a*rho, y0 = b*rho;
@@ -92,12 +112,12 @@ public:
             pt1.y = cvRound(y0 + 1000*(a));
             pt2.x = cvRound(x0 - 1000*(-b));
             pt2.y = cvRound(y0 - 1000*(a));
-            cv::line(image_ptr->image, pt1, pt2, cv::Scalar(0,255,255), 3, CV_AA);
+            cv::line(image_ptr->image, pt1, pt2, cv::Scalar(0,255,0), 3, CV_AA);
         }
 
         // Update GUI Window
         cv::imshow(OPENCV_WINDOW, image_ptr->image);
-        cv::waitKey(3);
+        cv::waitKey(1000);
 
         // Output modified video stream
         pub_image_.publish(image_ptr->toImageMsg());

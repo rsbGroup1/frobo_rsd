@@ -41,7 +41,7 @@
 		</node>
 	</group>
 
-	<group ns="fmDecisionMakers">
+	<!--group ns="fmDecisionMakers">
 		<node pkg="frobit_demo" name="mission" type="keyboard_mission_node.py" output="screen">
 			<param name="keyboard_sub" value="/fmHMI/keyboard" />
 			<param name="automode_pub" value="/fmPlan/automode" />
@@ -52,7 +52,7 @@
             <param name="linear_velocity_step" value="0.1"/>
             <param name="angular_velocity_step" value="0.2"/>
 		</node>
-	</group>
+	</group-->
 
 	<!-- SAFETY MODULE -->
 	<group ns="fmSafety">
@@ -77,12 +77,17 @@
         </node>
 
 	<!-- TWIST CONVERTER -->
-	<group ns="fmLib">
+	<!--group ns="fmLib">
 		<node pkg="twist_stamped_to_twist" name="converter" type="cmd_vel_converter.py">	
 			<param name="cmd_vel_sub" value="/fmCommand/cmd_vel" />
 			<param name="cmd_vel_pub" value="/cmd_vel" />
 		</node>
-	</group>
+	</group-->
+
+	<node pkg="twist_to_twist_stamped" name="converter_stamped" type="cmd_vel_converter.py">	
+		<param name="cmd_vel_sub" value="/cmd_vel" />
+		<param name="cmd_vel_pub" value="/fmCommand/cmd_vel" />
+	</node>
 
 	<!-- CALCULATE ODOMETRY (Based on wheel encoders and IMU yaw axis orientation) -->
 	<group ns="fmProcessors">
@@ -92,8 +97,8 @@
 			<param name="imu_sub" value="/fmInformation/imu" />
 			<param name="odom_reset_sub" value="/fmInformation/odom_reset" />
 			<param name="odom_pub" value="/fmKnowledge/pose" />
-			<param name="odom_estimate_frame" value="/odom_combined" />
-			<param name="vehicle_frame" value="base_footprint" />
+			<param name="odom_estimate_frame" value="/odom" />
+			<param name="vehicle_frame" value="base_link" />
 			<param name="encoder_output" value="absolute" />
 			<param name="max_ticks_per_update" value="200" />
 			<param name="yaw_angle_source" value="/imu_angular_velocity" />
@@ -112,15 +117,19 @@
 	    <param name="publish_datagram" type="bool" value="False" />
 	    <param name="port" type="str" value="/dev/lidar" />
 	</node>
+	<node pkg="laser_filters" type="scan_to_scan_filter_chain" name="laser_filter">
+		<rosparam command="load" file="../Navigation_Setup/Laser_filter/laser_config.yaml" />
+	</node>
+
 	<!-- HMI -->
-	<!--group ns="MR_HMI">
+	<group ns="MR_HMI">
 		<node pkg="mr_hmi" name="proxy" type="proxy.py">
 			<param name="missionplanner_pub" value="/mrHMI/start_stop"/>
 			<param name="deadman_pub" value="/fmSafe/deadman"/>
 			<param name="cmd_pub" value="/fmCommand/cmd_vel"/>
 			<param name="tipper_pub" value="/mrMainController/tipper"/>
 		</node>			
-	</group-->
+	</group>
 
 
 
@@ -129,10 +138,6 @@
 		<param name="keyboard_pub" value="/fmHMI/keyboard" />
 	</node>
 
-	<node pkg="twist_stamped_to_twist" name="converter" type="cmd_vel_converter.py">	
-		<param name="cmd_vel_sub" value="/fmCommand/cmd_vel" />
-		<param name="cmd_vel_pub" value="/cmd_vel" />
-	</node>
 
 
 	<!-- Notice: Use pkg="stage" if running ROS Groovy and pkg="stage_ros" if running ROS Hydro --> 
@@ -162,7 +167,8 @@
 			<param name="avatar_reverse" value="false" />
 		</node-->
 
-	<node pkg="move_base" name="move_base" type="move_base" >
+	<node pkg="move_base" name="move_base" type="move_base" output="screen">
+		<!--remap from="/scan" to="/scan_filtered" /-->
 		<param name="footprint_padding" value="0.01" />
 		<param name="controller_frequency" value="10.0" />
 		<param name="controller_patience" value="3.0" />
@@ -182,53 +188,59 @@
 
 	<!--node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0 0 0 map odom 50"  >
 	</node-->
-	<node pkg="tf" type="static_transform_publisher" name="laser_transform" args="0 0 0 0 0 3.141592 base_footprint laser_frame 50"  >
+	<node pkg="tf" type="static_transform_publisher" name="laser_transform" args="0 0 0 0 0 3.141592 base_link laser_frame 50"  >
 	</node>
 
 	<node name="map_server" pkg="map_server" type="map_server" args="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/maps/map2.yaml" />
 
 	<node pkg="amcl" type="amcl" name="amcl" respawn="true">
-	  <!--remap from="scan" to="base_scan" /-->
+		<remap from="/scan" to="/scan_filtered" />
 	
-	  <param name="odom_model_type" value="omni"/>
-	  <param name="odom_alpha5" value="0.1"/>
-	  <param name="transform_tolerance" value="0.2" />
-	  <param name="gui_publish_rate" value="10.0"/>
-	  <param name="laser_max_beams" value="30"/>
-	  <param name="min_particles" value="500"/>
-	  <param name="max_particles" value="5000"/>
-	  <param name="kld_err" value="0.05"/>
-	  <param name="kld_z" value="0.99"/>
-	  <param name="odom_alpha1" value="0.2"/>
-	  <param name="odom_alpha2" value="0.2"/>
-	
-	  <param name="odom_alpha3" value="0.8"/>
-	  <param name="odom_alpha4" value="0.2"/>
-	  <param name="laser_z_hit" value="0.5"/>
-	  <param name="laser_z_short" value="0.05"/>
-	  <param name="laser_z_max" value="0.05"/>
-	  <param name="laser_z_rand" value="0.5"/>
-	  <param name="laser_sigma_hit" value="0.2"/>
-	  <param name="laser_lambda_short" value="0.1"/>
-	  <param name="laser_lambda_short" value="0.1"/>
-	  <param name="laser_model_type" value="likelihood_field"/>
-	
-	  <param name="laser_likelihood_max_dist" value="2.0"/>
-	  <param name="update_min_d" value="0.2"/>
-	  <param name="update_min_a" value="0.5"/>
-	  <param name="odom_frame_id" value="odom_combined"/>
-	  <param name="base_frame_id" value="base_footprint"/>
-	  <param name="resample_interval" value="1"/>
-	  <param name="transform_tolerance" value="0.1"/>
-	  <param name="recovery_alpha_slow" value="0.0"/>
-	  <param name="recovery_alpha_fast" value="0.0"/>
-	<param name="initial_pose_x" value="0"/>
-	<param name="initial_pose_y" value="0"/>
+		<param name="odom_model_type" value="omni"/>
+		<param name="odom_alpha5" value="0.1"/>
+		<param name="transform_tolerance" value="0.2" />
+		<param name="gui_publish_rate" value="10.0"/>
+		<param name="laser_max_beams" value="30"/>
+		<param name="min_particles" value="500"/>
+		<param name="max_particles" value="5000"/>
+		<param name="kld_err" value="0.05"/>
+		<param name="kld_z" value="0.99"/>
+		<param name="odom_alpha1" value="0.2"/>
+		<param name="odom_alpha2" value="0.2"/>
+
+		<param name="odom_alpha3" value="0.8"/>
+		<param name="odom_alpha4" value="0.2"/>
+		<param name="laser_z_hit" value="0.5"/>
+		<param name="laser_z_short" value="0.05"/>
+		<param name="laser_z_max" value="0.05"/>
+		<param name="laser_z_rand" value="0.5"/>
+		<param name="laser_sigma_hit" value="0.2"/>
+		<param name="laser_lambda_short" value="0.1"/>
+		<param name="laser_lambda_short" value="0.1"/>
+		<param name="laser_model_type" value="likelihood_field"/>
+
+		<param name="laser_likelihood_max_dist" value="2.0"/>
+		<param name="update_min_d" value="0.2"/>
+		<param name="update_min_a" value="0.5"/>
+		<param name="odom_frame_id" value="odom"/>
+		<param name="base_frame_id" value="base_link"/>
+
+		<param name="resample_interval" value="1"/>
+		<param name="transform_tolerance" value="0.1"/>
+		<param name="recovery_alpha_slow" value="0.0"/>
+		<param name="recovery_alpha_fast" value="0.0"/>
+		<!--param name="initial_pose_x" value="10"/-->
+		<!--param name="initial_pose_y" value="5"/-->
+		<param name="initial_pose_x" value="0"/>
+		<param name="initial_pose_y" value="0"/>
+		<param name="initial_cov_xx" value="1"/>
+		<param name="initial_cov_yy" value="1"/>
+		<param name="initial_cov_aa" value="6"/>
 	 
 	</node>
 
 	<!-- Record Rosbag -->
-	<node pkg="rosbag" type="record" name="rosbag_record_scans" args="/scan"/>
+	<node pkg="rosbag" type="record" name="rosbag_record_all" args="-a"/>
 
 </launch>
 

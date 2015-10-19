@@ -32,7 +32,7 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", image).toImageMsg();
+	sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", image).toImageMsg();
 	
 	ros::Rate loopRate(30);
 	

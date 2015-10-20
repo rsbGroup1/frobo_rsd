@@ -94,7 +94,6 @@ OdomEstimationNode::OdomEstimationNode()
     // so that user-defined tf frames are respected
     my_filter_.setOutputFrame(output_frame_);
     my_filter_.setBaseFootprintFrame(base_footprint_frame_);
-
     timer_ = nh_private.createTimer(ros::Duration(1.0 / max(freq, 1.0)),
         &OdomEstimationNode::spin, this);
 

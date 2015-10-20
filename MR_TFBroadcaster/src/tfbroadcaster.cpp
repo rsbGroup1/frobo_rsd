@@ -14,8 +14,8 @@ int main(int argc, char** argv){
 
   ros::Rate rate(10.0);
   while (node.ok()){
-    transform.setOrigin( tf::Vector3(0.01, 0.0, 0.14) );
-    transform.setRotation( tf::createQuaternionFromRPY(M_PI,0,0) );
+    transform.setOrigin( tf::Vector3(0.2, 0.0, 0.0) );
+    transform.setRotation( tf::createQuaternionFromRPY(0,0,0) );
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), vehicleFrame, lidarFrame));
     rate.sleep();
   }

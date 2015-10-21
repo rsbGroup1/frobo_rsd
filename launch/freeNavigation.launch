@@ -128,7 +128,7 @@
 	<group ns="MR_HMI">
 		<node pkg="mr_hmi" name="proxy" type="proxy.py">
 			<param name="missionplanner_pub" value="/mrHMI/start_stop"/>
-			<param name="deadman_pub" value="/fmSafe/deadman"/>
+			<param name="deadman_pub" value="/fmSafe/hmi_deadman"/>
 			<param name="cmd_pub" value="/fmCommand/cmd_vel"/>
 			<param name="tipper_pub" value="/mrMainController/tipper"/>
 		</node>			
@@ -262,9 +262,15 @@
 			<param name="threshold_ignore" value="0.00" />
 			<param name="laser_scan" value="/scan_filtered" />
 			<param name="publishTopic" value="/mrObstacleDetector/status" />
-			<param name="deadman_pub" value="/fmSafe/deadman"/>
+			<param name="deadman_pub" value="/fmSafe/obstacle_detector_deadman"/>
 		</node>
 	</group>
+	<!-- Deadman Priority -->
+	<node pkg="mr_deadmanpriority" name="deadmanpriority" type="deadmanpriority.py">
+		<param name="publishTopic" value="/fmSafe/deadman" />
+		<param name="obstacleDetectorTopic" value="/fmSafe/obstacle_detector_deadman"/>
+		<param name="hmiTopic" value="/fmSafe/hmi_deadman"/>
+	</node>
 
 	<!-- Record Rosbag -->
 	<!--node pkg="rosbag" type="record" name="rosbag_record_all" args="-a"/-->

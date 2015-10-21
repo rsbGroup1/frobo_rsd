@@ -39,7 +39,6 @@
 import rospy
 from std_msgs.msg import String
 from std_msgs.msg import Bool
-from sensor_msgs.msg import LaserScan
 from msgs.msg import BoolStamped
 
 def createBoolStampedMessage( data ):
@@ -49,82 +48,48 @@ def createBoolStampedMessage( data ):
 
     return msg
 
-class obs_detector():
+class deadman():
 	def __init__(self):
 		# initialize stuff
-		rospy.init_node('obstacle_detector')
+		rospy.init_node('deadmanpriority')
 
-		# deadman topic things
-		global pubActuationEna
-		ACTUATION_ENA_PUB = rospy.get_param( "~deadman_pub", "/fmSafe/deadman" )
-		pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
-
-		publishTopic = rospy.get_param("~publishTopic", "/mrObstacleDetector/status")
-		self.obstaclePub = rospy.Publisher(publishTopic, String, queue_size=1)
-		self.slow = False
-		self.stop = False
+		# parameters
+		self.hmi = False
+		self.obstacleDetector = False	
+		self.deadman = False
 		self.update_rate = 20 # [Hz]
 		self.r = rospy.Rate(self.update_rate)
-		self.oldValue = -1 # 0 = nothing, 1 = slow, 2 = stop
+		global pubActuationEna
 
 		# get parameters
-		self.threshold_slow = rospy.get_param("~threshold_slow", 1.2)
-		self.threshold_stop = rospy.get_param("~threshold_stop", 0.5)		
-		self.threshold_ignore = rospy.get_param("~threshold_ignore", 0.2)				
-		laser_scan_topic = rospy.get_param("~laser_scan", "/scan")
+		hmiTopic = rospy.get_param( "~hmiTopic", "/fmSafe/hmi_deadman" )
+		obstacleDetectorTopic = rospy.get_param( "~obstacleDetectorTopic", "/fmSafe/obstacle_detector_deadman" )
+		publishTopic = rospy.get_param("~publishTopic", "/fmSafe/deadman")
+		pubActuationEna = rospy.Publisher( publishTopic, BoolStamped, queue_size = 1 )
 
 		#subscribe to laser scan topic
-		rospy.Subscriber(laser_scan_topic, LaserScan, self.on_lidar_data)
+		rospy.Subscriber(hmiTopic, BoolStamped, self.on_hmi_data)
+		rospy.Subscriber(obstacleDetectorTopic, BoolStamped, self.on_obs_data)
 
 		#continously run the updater to publish
 		self.updater()
 
-	def on_lidar_data(self,msg):
-		# our laserscanner has 270 measurements - 270 degree total
-		# going right to left
-		self.slow = False
-		self.stop = False
-		for x in range(len(msg.ranges)):
-			if msg.ranges[x] > self.threshold_ignore:
-				if ((x > len(msg.ranges)/3) and (x < len(msg.ranges)*2/3) and (msg.ranges[x] < self.threshold_stop)):
-					self.stop = True
-					break
-				elif msg.ranges[x] < self.threshold_slow:
-					self.slow = True
+	def on_hmi_data(self,msg):
+		self.hmi = msg.data
 
-		self.value = 0
-		if self.stop:
-			self.value = 2
-		elif self.slow:
-			self.value = 1
-		
-		#if self.value != self.oldValue:
-		if self.value == 0:
-			self.obstaclePub.publish("normal")
-		elif self.value == 1:
-			self.obstaclePub.publish("slow")
-		elif self.value == 2:
-			self.obstaclePub.publish("stop")
-		self.oldValue = self.value
-
-		# publish deadman topic
-		#if self.value == 2:
-		#        msg = createBoolStampedMessage( False )
-		#if (self.stop):
-		msg = createBoolStampedMessage( not self.stop )
-		pubActuationEna.publish ( msg )
-		#else:
-		        #msg = createBoolStampedMessage( True )
-        		#pubActuationEna.publish ( msg )	
-			
+	def on_obs_data(self,msg):
+		self.obstacleDetector = msg.data			
 
 	def updater(self):
 		while not rospy.is_shutdown():
+			self.deadman = self.hmi and self.obstacleDetector
+			msg = createBoolStampedMessage( self.deadman )
+        		pubActuationEna.publish ( msg )
 			self.r.sleep()
 
 
 if __name__ == '__main__':
     try:
-        node_class = obs_detector()
+        node_class = deadman()
     except rospy.ROSInterruptException: pass
 

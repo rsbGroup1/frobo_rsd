@@ -40,12 +40,25 @@ import rospy
 from std_msgs.msg import String
 from std_msgs.msg import Bool
 from sensor_msgs.msg import LaserScan
+from msgs.msg import BoolStamped
+
+def createBoolStampedMessage( data ):
+    msg = BoolStamped()
+    msg.header.stamp = rospy.get_rostime()
+    msg.data = data
+
+    return msg
 
 class obs_detector():
 	def __init__(self):
 		# initialize stuff
 		rospy.init_node('obstacle_detector')
-				
+
+		# deadman topic things
+		global pubActuationEna
+		ACTUATION_ENA_PUB = rospy.get_param( "~deadman_pub", "/fmSafe/deadman" )
+		pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
+
 		publishTopic = rospy.get_param("~publishTopic", "/mrObstacleDetector/status")
 		self.obstaclePub = rospy.Publisher(publishTopic, String, queue_size=1)
 		self.slow = False
@@ -94,6 +107,16 @@ class obs_detector():
 			self.obstaclePub.publish("stop")
 		self.oldValue = self.value
 
+		# publish deadman topic
+		#if self.value == 2:
+		#        msg = createBoolStampedMessage( False )
+		if (self.stop):
+			msg = createBoolStampedMessage( not self.stop )
+        		pubActuationEna.publish ( msg )
+		#else:
+		        #msg = createBoolStampedMessage( True )
+        		#pubActuationEna.publish ( msg )	
+			
 
 	def updater(self):
 		while not rospy.is_shutdown():

@@ -108,8 +108,11 @@
 
 	<!-- LIDAR -->
 	<node name="sick_tim310s01" pkg="sick_tim" type="sick_tim310s01" respawn="false" output="screen">
+	    <!-- This is where we set the min max angle values to ignore the backwards scans
 	    <param name="min_ang" type="double" value="-2.35619449019" />
-	    <param name="max_ang" type="double" value="2.35619449019" />
+	    <param name="max_ang" type="double" value="2.35619449019" /-->
+	    <param name="min_ang" type="double" value="-1.85" />
+	    <param name="max_ang" type="double" value="1.85" />
 	    <param name="intensity" type="bool" value="True" />
 	    <param name="skip" type="int" value="0" />
 	    <param name="frame_id" type="str" value="laser_frame" />
@@ -188,20 +191,17 @@
 
 	<!--node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0 0 0 map odom 50"  >
 	</node-->
+	<!-- LIDAR TF-->
 	<node pkg="tf" type="static_transform_publisher" name="laser_transform" args="0.2 0 0 0 0 0 base_link laser_frame 50"  >
 	</node>
 
-	<!-- LIDAR TF-->
-	<!--node pkg="mr_tfbroadcaster" name="mr_tfbroadcaster" type="mr_tfbroadcaster">
-		<param name="vehicle_frame" value="base_link" />
-		<param name="lidar_frame" value="lidar_frame" />		
-	</node-->
-
-    <node pkg="map_server" type="map_server" name="map_server" args="/home/frobit_pro_group1/roswork/src/frobo_rsd/Other\ files/map_lidar_front.yaml" output="screen"/>
+    <node pkg="map_server" type="map_server" name="map_server" args="/home/frobit_pro_group1/roswork/src/frobo_rsd/Other\ files/frontal_map_big.yaml" output="screen"/>
 
     <node pkg="amcl" type="amcl" name="amcl" output="screen">
 	      <param name="base_frame_id" value="/base_link"/>
 	      <param name="odom_frame_id" value="/odom"/>
+	      <param name="initial_pose_a" value="-1.9"/>
+
     </node>
 
 	<!--node name="map_server" pkg="map_server" type="map_server" args="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/maps/map2.yaml" /-->
@@ -254,8 +254,20 @@
 	 
 	</node-->
 
+	<!-- OBSTACLE DETECTOR -->
+	<group ns="obstacle_detector">
+		<node pkg="mr_obstacle_detector" name="obstacle_detector" type="obstacle_detector.py">
+			<param name="threshold_slow" value="0.4" />
+			<param name="threshold_stop" value="0.1" />
+			<param name="threshold_ignore" value="0.00" />
+			<param name="laser_scan" value="/scan_filtered" />
+			<param name="publishTopic" value="/mrObstacleDetector/status" />
+			<param name="deadman_pub" value="/fmSafe/deadman"/>
+		</node>
+	</group>
+
 	<!-- Record Rosbag -->
-	<node pkg="rosbag" type="record" name="rosbag_record_all" args="-a"/>
+	<!--node pkg="rosbag" type="record" name="rosbag_record_all" args="-a"/-->
 
 </launch>
 

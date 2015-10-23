@@ -8,6 +8,7 @@
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
+
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
@@ -20,6 +21,7 @@ const int maxLineGap_slider_max = 254;
 int threshold_slider=37;
 int minLength_slider=66;
 int maxLineGap_slider=95;
+cv::RNG rng(12345);
 
 class ImageConverter
 {
@@ -49,6 +51,11 @@ public:
 
     void imageCb(const sensor_msgs::ImageConstPtr& msg)
     {
+		
+		/*
+		 * Image processing
+		 */
+		
         // Transform the message to an OpenCV image
         cv_bridge::CvImagePtr image_ptr;
 
@@ -73,12 +80,44 @@ public:
 		
         // Canny edge
         unsigned char cannyMinThreshold = 50;
-        unsigned char cannyMaxThreshold = 100;
-		cv::Canny(image_filtered, image_filtered, cannyMinThreshold, cannyMaxThreshold);
+        unsigned char cannyMaxThreshold = cannyMinThreshold * 2;
+		cv::Canny(image_filtered, image_filtered, cannyMinThreshold, cannyMaxThreshold, 3);
 		
+		
+		/* 
+		 * MOMENTS
+		 * 
+		// Find contours
+		std::vector<std::vector<cv::Point> > contours;
+		std::vector<cv::Vec4i> hierarchy;
+		
+		cv::findContours( image_filtered, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+		
+		// Calculate moments
+		std::vector<cv::Moments> mu(contours.size() );
+		for( size_t i = 0; i < contours.size(); i++ ){ 
+			mu[i] = cv::moments( contours[i], false ); 
+		}
+		cv::vector<cv::Point2f> mc( contours.size() );
+		for( size_t i = 0; i < contours.size(); i++ ){ 
+			mc[i] = cv::Point2f( static_cast<float>(mu[i].m10/mu[i].m00) , static_cast<float>(mu[i].m01/mu[i].m00) ); 
+			
+		}
+		cv::Mat drawing = cv::Mat::zeros( image_filtered.size(), CV_8UC3 );
+		for( size_t i = 0; i< contours.size(); i++ )
+		{
+			cv::Scalar color = cv::Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
+			cv::drawContours( drawing, contours, (int)i, color, 2, 8, hierarchy, 0, cv::Point() );
+			//cv::circle( drawing, mc[i], 4, color, -1, 8, 0 );
+		}
+		*/
+		
+		/*
+		 * HOUGH
+		 * 
 		// Probabilistic Hough Lines
 		std::vector<cv::Vec4i> lines;
-		cv::HoughLinesP(image_filtered, lines, 1, CV_PI/180, threshold_slider+1, minLength_slider+1, maxLineGap_slider+1 );
+		//cv::HoughLinesP(image_filtered, lines, 1, CV_PI/180, threshold_slider+1, minLength_slider+1, maxLineGap_slider+1 );
 
 		// Fusion lines and find the center
 		std::vector<cv::Vec4i> lines_fusioned;
@@ -108,20 +147,65 @@ public:
 			}
 		}
 		
-		std::cout << "\n" << std::endl;		
-		
 		// Drawing
 		for(unsigned char i = 0; i < lines_fusioned.size(); i++) {
 			cv::Vec4i l = lines_fusioned[i];
 			line(image_ptr->image, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0,0,255), 1, CV_AA);
+			line(image_filtered, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0,0,255), 1, CV_AA);
 		}
+		
+		*/
+		
+		
+		
+		/*
+		 * Find reference point
+		 */
+		cv::Point reference_point;
+		int y_reference = image_filtered.rows/2;
+		int x_reference;
+		std::vector<int> points_detected;
+		
+		//In the row of the y_reference search for the detected points
+		points_detected.clear();
+		for (int i=0; i<image_filtered.cols; i++){
+			if (image_filtered.at<uchar>(y_reference, i) == 255){ // Is white
+				points_detected.push_back(i);
+				//cv::circle(image_filtered, cv::Point(i, y_reference), 1, cv::Scalar(255),1);
+			}
+		}
+		
+		// Select the two first ones and find the middle point
+		// and update the point
+		if ( points_detected.size() >= 2) {
+			//Average
+			int aux;
+			for (auto i : points_detected)
+				aux+=i;
+			x_reference = aux/points_detected.size();
+			aux = 0;
+			// Update the point
+			reference_point.x = x_reference;
+			reference_point.y = y_reference;
+			cv::circle(image_filtered, reference_point, 1, cv::Scalar(255),2);
+			cv::circle(image_ptr->image, reference_point, 1, cv::Scalar(255),2);
+			//std::cout << reference_point << std::endl;
+		} else {
+			ROS_INFO("Not point found");
+		}		
+		
+
+		/*
+		 * PID
+		 */
 		
 		
         // Update GUI Window
-        cv::createTrackbar( "threshold", OPENCV_WINDOW, &threshold_slider, threshold_slider_max);
-		cv::createTrackbar( "minLength", OPENCV_WINDOW, &minLength_slider, minLength_slider_max);
-		cv::createTrackbar( "maxLineGap", OPENCV_WINDOW, &maxLineGap_slider, maxLineGap_slider_max);
-        cv::imshow(OPENCV_WINDOW, image_ptr->image);
+        //cv::createTrackbar( "threshold", OPENCV_WINDOW, &threshold_slider, threshold_slider_max);
+		//cv::createTrackbar( "minLength", OPENCV_WINDOW, &minLength_slider, minLength_slider_max);
+		//cv::createTrackbar( "maxLineGap", OPENCV_WINDOW, &maxLineGap_slider, maxLineGap_slider_max);
+        cv::imshow(OPENCV_WINDOW, image_filtered);
+		//cv::imshow("Final", image_ptr->image);
         cv::waitKey(3);
 
         // Output modified video stream

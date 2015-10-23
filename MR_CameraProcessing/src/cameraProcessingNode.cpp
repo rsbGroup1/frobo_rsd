@@ -42,10 +42,8 @@ private:
 public:
 	ImageConverter() : it_(nh_), _pNh(ros::this_node::getName() + "/")
 	{
-		sub_image_ = it_.subscribe("/mrCamera/image",1,
-								   &ImageConverter::imageCb,
-							 this, 
-							 image_transport::TransportHints("compressed"));
+		sub_image_ = it_.subscribe("/mr_camera/image",1, &ImageConverter::imageCb,
+							 this, image_transport::TransportHints("compressed"));
 		pub_line_ = nh_.advertise<geometry_msgs::Point>("mr_camera_processing/line", 1);
 		pub_qr_ = nh_.advertise<std_msgs::String>("mr_camera_processing/qr", 1);
 		pub_cross_ = nh_.advertise<std_msgs::Bool>("mr_camera_processing/cross", 1);
@@ -67,6 +65,10 @@ public:
 		if (image_ptr->image.empty()){
 			ROS_INFO("No image being received");
 		} else { 
+	
+		// Flip
+		cv::flip(image_ptr->image, image_ptr->image, 0);
+		// Detection	
 		lineDetector(image_ptr->image);
 		//qrDetector(image_ptr->image);
 		//crossDetector(image_ptr->image);

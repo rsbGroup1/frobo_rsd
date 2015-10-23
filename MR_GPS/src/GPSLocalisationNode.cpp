@@ -105,6 +105,10 @@ int main(int argc, char** argv)
     string gpsTopic = "/mrGPS/Pose";
     string gpsPublishTopic = "initialpose";
 
+    n.param<std::string>("odomTopic", odomTopic, "odom");
+    n.param<std::string>("gpsPoseTopic", gpsTopic, "/mrGPS/Pose");
+    n.param<std::string>("filterResetTopic", gpsPublishTopic, "initialpose");
+
     ros::Subscriber odomSubscriber = n.subscribe(odomTopic,20,odomCallback);
     ros::Subscriber gpsSubscriber = n.subscribe(gpsTopic,5,gpsFixCallBack);
     gpsOdomCombinedLocalisationPublisher = n.advertise<geometry_msgs::PoseWithCovariance>(gpsPublishTopic,10);

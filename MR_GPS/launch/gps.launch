@@ -9,5 +9,10 @@
 			<param name="stateSub" value="mrGPS/State"/>  
 			<param name="posePub" value="mrGPS/Pose"/>  
 		</node>
+		<node pkg="mr_gps" name="GPSLocalisation" type="GPSLocalisation">
+			<param name="odomTopic" value="/odom"/>  
+			<param name="gpsPoseTopic" value="mrGPS/Pose"/>  
+			<param name="filterResetTopic" value="initialpose"/>  
+		</node>
 	</group>
 </launch>

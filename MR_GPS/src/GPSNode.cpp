@@ -128,7 +128,9 @@ bool getPoseFromCamLocalizer(geometry_msgs::PoseStamped &newPose)
         newPose.header.stamp = requestRosTime;
         newPose.pose.position.x = x;
         newPose.pose.position.y = y;
-        newPose.pose.orientation = tf::createQuaternionMsgFromYaw(angle * (M_PI / 180.0));
+        double newAngle = angle ;//( M_PI / 180.0);
+        cout << "newAngle: " << newAngle << endl;
+        newPose.pose.orientation = tf::createQuaternionMsgFromYaw(newAngle);
         //std::cout << newPose << std::endl;
         returnValue = true;
     }

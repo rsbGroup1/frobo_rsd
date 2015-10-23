@@ -1,2 +1,2 @@
 email: grouprsd1@gmail.com
-pass: grou_rsd_1
+pass: group_rsd_1

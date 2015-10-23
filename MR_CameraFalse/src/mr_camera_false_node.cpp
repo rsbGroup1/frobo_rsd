@@ -18,7 +18,7 @@ int main(int argc, char** argv)
 	ros::NodeHandle nh;
 	// Create publisher topic
 	image_transport::ImageTransport it(nh);
-	image_transport::Publisher pub = it.advertise("mr_camera_false/image", 1);
+	image_transport::Publisher pub = it.advertise("/mr_camera_false/image", 1);
 	
 	//Load the image
 	if (argc<2){

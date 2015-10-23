@@ -1,4 +1,3 @@
-
 /**
  * Receive the processed information from the camera and 
  * use it to move the robot
@@ -9,9 +8,11 @@
 #include "std_msgs/String.h"
 #include "geometry_msgs/Point.h"
 #include "geometry_msgs/TwistStamped.h"
+#include "msgs/BoolStamped.h"
 
 #include <iostream>
 #include <string>
+#include <boost/thread.hpp>
 
 
 class cameraNavigation{
@@ -20,6 +21,8 @@ private:
 	ros::Subscriber sub_line_;
 	ros::Subscriber sub_cross_;
 	ros::Publisher pub_twist_;
+	ros::Publisher pub_deadman_;
+	boost::thread* deadmanThread_;
 	
 public:
 	/**
@@ -37,13 +40,16 @@ public:
 			&cameraNavigation::crossCallback, this);
 			
 		pub_twist_ = nh.advertise<geometry_msgs::TwistStamped>("/fmCommand/cmd_vel", 1);
-		
+
+		pub_deadman_ = nh.advertise<msgs::BoolStamped>("fmSafe/deadman",1);
+
+		deadmanThread_ = new boost::thread(&cameraNavigation::enableDeadman, this);
 	}
 	/**
 	 * Default destructor
 	 */
 	~cameraNavigation(){
-		// Nothing
+		deadmanThread_->interrupt();
 	}
 	/**
 	 * Uses the received point into a PID to move the robot
@@ -59,8 +65,8 @@ public:
 		double pid_max = 640/2;
 		double pid_min = -640/2;
 		double Kp = 1.0;
-		double Kd = 0.001;
-		double Ki = 0.001;
+		double Kd = 0.00;
+		double Ki = 0.00;
 		double pre_error;
 		double integral;
 		
@@ -90,11 +96,11 @@ public:
 		// Save error to previous error
 		pre_error = pid_error;
 		
-		std::cout << std::endl;
-		std::cout << "Error PID: " << pid_error << std::endl;
-		std::cout << "Output PID: " << pid_output << std::endl;
-		std::cout << "DTime PID: " << pid_dt << std::endl;
-		std::cout << std::endl;
+		//std::cout << std::endl;
+		//std::cout << "Error PID: " << pid_error << std::endl;
+		//std::cout << "Output PID: " << pid_output << std::endl;
+		//std::cout << "DTime PID: " << pid_dt << std::endl;
+		//std::cout << std::endl;
 		
 		/*
 		 * Robot movement
@@ -103,15 +109,16 @@ public:
 		geometry_msgs::TwistStamped twistStamp_msg;
 		double max_theta = 0.8;
 		double theta = max_theta*pid_output/pid_max;
-		std::cout << "Theta: " << theta << std::endl;
 		// Define the speed
 		double speed = 0.1;
 		// Publish the message
 		twistStamp_msg.header.stamp = ros::Time::now();
 		twistStamp_msg.twist.linear.x = speed;
 		twistStamp_msg.twist.angular.z = theta;
-		
-		pub_twist_.publish(twistStamp_msg);	
+		pub_twist_.publish(twistStamp_msg);
+
+		std::cout << "Speed: " << speed << " | Theta: " << theta << std::endl;
+
 	}
 	
 	/**
@@ -127,9 +134,32 @@ public:
 	void crossCallback(const std_msgs::Bool cross){
 		
 	}
+
+
+	void enableDeadman(){
+	    while(true)
+	    {
+	        try{
+				msgs::BoolStamped deadman;
+				deadman.data = true;
+				deadman.header.stamp = ros::Time::now();
+				pub_deadman_.publish(deadman);
+	            
+	            // Sleep
+	            usleep(50); // Sleep for 50 ms = 20Hz
+
+	            // Signal interrupt point
+	            boost::this_thread::interruption_point();
+	        }
+	        catch(const boost::thread_interrupted&)
+	        {
+	            break;
+	        }
+	    }
+
+	}
 	
 };
-
 
 
 int main(int argv, char** argc){

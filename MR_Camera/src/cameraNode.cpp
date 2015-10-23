@@ -32,7 +32,7 @@ int main()
     std::string imagePub;
     int frameWidth, frameHeight, cameraFrequency, sharpness, brightness, whiteBalanceTemp;
     bool whiteBalanceAuto;
-    pNh.param<std::string>("image_pub", imagePub, "/mrCamera/image");
+    pNh.param<std::string>("image_pub", imagePub, "/mr_camera/image");
     pNh.param<int>("frameWidth", frameWidth, 640);
     pNh.param<int>("frameHeight", frameHeight, 480);
     pNh.param<int>("cameraFrequency", cameraFrequency, 15);

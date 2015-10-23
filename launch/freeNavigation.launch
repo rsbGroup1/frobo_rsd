@@ -121,7 +121,7 @@
 			<param name="vehicle_frame" value="base_link" />
 			<param name="encoder_output" value="absolute" />
 			<param name="max_ticks_per_update" value="200" />
-			<param name="yaw_angle_source" value="/imu_angular_velocity" />
+			<param name="yaw_angle_source" value="imu_orientation" />
 			<param name="imu_angular_velocity_yaw_axis" value="z" />
 		</node>
 	</group>

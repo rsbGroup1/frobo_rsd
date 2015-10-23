@@ -8,6 +8,7 @@
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
+#include <ros/console.h>
 
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -51,6 +52,8 @@ public:
 
     void imageCb(const sensor_msgs::ImageConstPtr& msg)
     {
+		//Measure time for the PID
+		ros::WallTime time_init = ros::WallTime::now();
 		
 		/*
 		 * Image processing
@@ -161,51 +164,96 @@ public:
 		/*
 		 * Find reference point
 		 */
-		cv::Point reference_point;
-		int y_reference = image_filtered.rows/2;
-		int x_reference;
+		cv::Point detected_point;
+		int y_detected = image_filtered.rows/2;
+		int x_detected;
 		std::vector<int> points_detected;
 		
 		//In the row of the y_reference search for the detected points
 		points_detected.clear();
 		for (int i=0; i<image_filtered.cols; i++){
-			if (image_filtered.at<uchar>(y_reference, i) == 255){ // Is white
+			if (image_filtered.at<uchar>(y_detected, i) == 255) // Is white
 				points_detected.push_back(i);
-				//cv::circle(image_filtered, cv::Point(i, y_reference), 1, cv::Scalar(255),1);
-			}
 		}
 		
-		// Select the two first ones and find the middle point
-		// and update the point
+		for (auto i : points_detected){
+			std::cout << "point: " << i << std::endl;
+		}
+		
+		// Do the average of all the points detected to find the center of the line
 		if ( points_detected.size() >= 2) {
 			//Average
-			int aux;
+			int aux = 0;
 			for (auto i : points_detected)
 				aux+=i;
-			x_reference = aux/points_detected.size();
-			aux = 0;
+			std::cout << "aux: " << aux << std::endl;
+			std::cout << "point number: " << points_detected.size() << std::endl;
+			x_detected = aux/points_detected.size();
 			// Update the point
-			reference_point.x = x_reference;
-			reference_point.y = y_reference;
-			cv::circle(image_filtered, reference_point, 1, cv::Scalar(255),2);
-			cv::circle(image_ptr->image, reference_point, 1, cv::Scalar(255),2);
-			//std::cout << reference_point << std::endl;
+			detected_point.x = x_detected;
+			detected_point.y = y_detected;
+			cv::circle(image_filtered, detected_point, 1, cv::Scalar(255), 2);
+			cv::circle(image_ptr->image, detected_point, 1, cv::Scalar(255, 0, 255), 2);
+			std::cout << "Point: " << detected_point << std::endl;
 		} else {
 			ROS_INFO("Not point found");
 		}		
 		
-
+		
 		/*
 		 * PID
 		 */
+		cv::Point reference_point(image_filtered.cols/2, image_filtered.rows/2);
+		cv::circle(image_filtered, reference_point, 1, cv::Scalar(255), 2);
+		cv::circle(image_ptr->image, reference_point, 1, cv::Scalar(255, 255, 0), 2);
+		ros::WallTime time_end = ros::WallTime::now();
+		double pid_dt = (time_end - time_init).toSec();
+		double pid_max = 1.0;
+		double pid_min = 0;
+		double Kp = 1.0;
+		double Kd = 0.001;
+		double Ki = 0.001;
+		double pre_error;
+		double integral;
 		
+		// Calculate error
+		double pid_error = abs(detected_point.x - reference_point.x);
 		
+		// Proportional term
+		double Pout = Kp * pid_error;
+		
+		// Integral term
+		integral += pid_error * pid_dt;
+		double Iout = Ki * integral;
+		
+		// Derivative term
+		double derivative = ( pid_error - pre_error ) / pid_dt;
+		double Dout = Kd * derivative;
+		
+		// Calculate total output
+		double pid_output = Pout + Iout + Dout;
+		
+		// Restrict to max/min
+		if( pid_output > pid_max )
+			pid_output = pid_max;
+		else if( pid_output < pid_min )
+			pid_output = pid_min;
+		
+		// Save error to previous error
+		pre_error = pid_error;
+		
+		std::cout << std::endl;
+		std::cout << "Output PID: " << pid_output << std::endl;
+		std::cout << "Error PID: " << pid_error << std::endl;
+		std::cout << "DTime PID: " << pid_dt << std::endl;
+		std::cout << std::endl;
+
         // Update GUI Window
         //cv::createTrackbar( "threshold", OPENCV_WINDOW, &threshold_slider, threshold_slider_max);
 		//cv::createTrackbar( "minLength", OPENCV_WINDOW, &minLength_slider, minLength_slider_max);
 		//cv::createTrackbar( "maxLineGap", OPENCV_WINDOW, &maxLineGap_slider, maxLineGap_slider_max);
         cv::imshow(OPENCV_WINDOW, image_filtered);
-		//cv::imshow("Final", image_ptr->image);
+		cv::imshow("Final", image_ptr->image);
         cv::waitKey(3);
 
         // Output modified video stream

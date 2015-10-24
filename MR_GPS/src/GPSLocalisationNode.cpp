@@ -22,6 +22,7 @@ boost::circular_buffer<pair<geometry_msgs::Pose, ros::Time> > cb(100);
 pair<geometry_msgs::Pose, ros::Time> current;
 
 Publisher gpsOdomCombinedLocalisationPublisher;
+std::string gpsFrame;
 
 void odomCallback(nav_msgs::Odometry odomPoseMsg)
 {
@@ -95,6 +96,7 @@ void gpsFixCallBack(geometry_msgs::PoseStamped gpsPose)
 
     // publish new estimated pose
     gpsFixPoseEstimate.header.stamp = ros::Time::now();
+    gpsFixPoseEstimate.header.frame_id = gpsFrame;
     gpsOdomCombinedLocalisationPublisher.publish(gpsFixPoseEstimate);
 }
 
@@ -110,6 +112,7 @@ int main(int argc, char** argv)
     n.param<std::string>("odomTopic", odomTopic, "odom");
     n.param<std::string>("gpsPoseTopic", gpsTopic, "/mrGPS/Pose");
     n.param<std::string>("filterResetTopic", gpsPublishTopic, "initialpose");
+    n.param<std::string>("gpsFrame", gpsFrame, "gps_frame");
 
     ros::Subscriber odomSubscriber = n.subscribe(odomTopic,20,odomCallback);
     ros::Subscriber gpsSubscriber = n.subscribe(gpsTopic,5,gpsFixCallBack);

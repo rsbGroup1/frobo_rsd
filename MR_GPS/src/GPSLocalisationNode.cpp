@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <time.h>
 #include <boost/circular_buffer.hpp>
+#include <tf/transform_listener.h>
 
 using namespace std;
 using namespace ros;
@@ -22,6 +23,8 @@ boost::circular_buffer<pair<geometry_msgs::Pose, ros::Time> > cb(100);
 pair<geometry_msgs::Pose, ros::Time> current;
 
 Publisher gpsOdomCombinedLocalisationPublisher;
+std::string gpsFrame;
+tf::TransformListener* tfListener;
 
 void odomCallback(nav_msgs::Odometry odomPoseMsg)
 {
@@ -34,7 +37,7 @@ void odomCallback(nav_msgs::Odometry odomPoseMsg)
 
 void gpsFixCallBack(geometry_msgs::PoseStamped gpsPose)
 {
-    geometry_msgs::PoseWithCovarianceStamped gpsFixPoseEstimate;
+    geometry_msgs::PoseStamped gpsFixPoseEstimate;
 
     // find poseAtRequestTime
     bool odomMovementFound = false;
@@ -62,8 +65,8 @@ void gpsFixCallBack(geometry_msgs::PoseStamped gpsPose)
         deltaX = (current.first.position.x - prevFront.first.position.x);
         deltaY = (current.first.position.y - prevFront.first.position.y);
     }
-    gpsFixPoseEstimate.pose.pose.position.x = gpsPose.pose.position.x + deltaX;
-    gpsFixPoseEstimate.pose.pose.position.y = gpsPose.pose.position.y + deltaY;
+    gpsFixPoseEstimate.pose.position.x = gpsPose.pose.position.x + deltaX;
+    gpsFixPoseEstimate.pose.position.y = gpsPose.pose.position.y + deltaY;
     tf::Quaternion gpsQaut, odomCurrentQuat, odomOldQuat;
     if(odomMovementFound)
     {
@@ -77,40 +80,66 @@ void gpsFixCallBack(geometry_msgs::PoseStamped gpsPose)
         deltaYaw = (tf::getYaw(odomCurrentQuat) - tf::getYaw(odomOldQuat));
     }
     double newYaw = tf::getYaw(gpsQaut) + deltaYaw;
-    gpsFixPoseEstimate.pose.pose.orientation = tf::createQuaternionMsgFromYaw(newYaw);
+    gpsFixPoseEstimate.pose.orientation = tf::createQuaternionMsgFromYaw(newYaw);
     cout << "new Yaw: "  << newYaw<< endl;
     // create covariance
-    if(odomMovementFound)
-    {
-        gpsFixPoseEstimate.pose.covariance[0] = sqrt(abs(current.first.position.x - prevFront.first.position.x)); // X
-        gpsFixPoseEstimate.pose.covariance[7] = sqrt(abs(current.first.position.y - prevFront.first.position.y)); // Y
-        gpsFixPoseEstimate.pose.covariance[35] = sqrt(abs(newYaw)); // Yaw
-    }
-    else
-    {
-        gpsFixPoseEstimate.pose.covariance[0]  = 1.5;// X
-        gpsFixPoseEstimate.pose.covariance[7]  = 1.5; // Y
-        gpsFixPoseEstimate.pose.covariance[35] = 0.5; // Yaw
-    }
+
 
     // publish new estimated pose
     gpsFixPoseEstimate.header.stamp = ros::Time::now();
-    gpsOdomCombinedLocalisationPublisher.publish(gpsFixPoseEstimate);
+    gpsFixPoseEstimate.header.frame_id = gpsFrame;
+    geometry_msgs::PoseStamped inMapFrame;
+    try
+    {
+        tfListener->transformPose("/map",ros::Time::now(),gpsFixPoseEstimate,gpsFrame,inMapFrame);
+        geometry_msgs::PoseWithCovarianceStamped resultPose;
+        resultPose.pose.pose = inMapFrame.pose;
+        resultPose.header = inMapFrame.header;
+
+
+        if(odomMovementFound)
+        {
+            resultPose.pose.covariance[0] = sqrt(abs(current.first.position.x - prevFront.first.position.x)); // X
+            resultPose.pose.covariance[7] = sqrt(abs(current.first.position.y - prevFront.first.position.y)); // Y
+            resultPose.pose.covariance[35] = sqrt(abs(newYaw)); // Yaw
+        }
+        else
+        {
+            resultPose.pose.covariance[0]  = 0.1;// X
+            resultPose.pose.covariance[7]  = 0.1; // Y
+            resultPose.pose.covariance[35] = 0.1; // Yaw
+        }
+
+        gpsOdomCombinedLocalisationPublisher.publish(resultPose);
+    }
+    catch(tf::TransformException ex)
+    {
+        ROS_ERROR("%s",ex.what());
+    }
+
 }
 
 int main(int argc, char** argv)
 {
+    ROS_DEBUG("Init");
     ros::init(argc, argv, "gpsLocalisation");
-    ros::NodeHandle n(ros::this_node::getName() + "/");
+    ROS_DEBUG("Node handle");
+    ros::NodeHandle n;
+
+    tfListener = new tf::TransformListener;
 
     string odomTopic = "odom";
     string gpsTopic = "/mrGPS/Pose";
     string gpsPublishTopic = "initialpose";
 
+
+    ROS_DEBUG("Parameters");
     n.param<std::string>("odomTopic", odomTopic, "odom");
     n.param<std::string>("gpsPoseTopic", gpsTopic, "/mrGPS/Pose");
     n.param<std::string>("filterResetTopic", gpsPublishTopic, "initialpose");
+    n.param<std::string>("gpsFrame", gpsFrame, "gps_frame");
 
+    ROS_DEBUG("Subscrivber and publisher");
     ros::Subscriber odomSubscriber = n.subscribe(odomTopic,20,odomCallback);
     ros::Subscriber gpsSubscriber = n.subscribe(gpsTopic,5,gpsFixCallBack);
     gpsOdomCombinedLocalisationPublisher = n.advertise<geometry_msgs::PoseWithCovarianceStamped>(gpsPublishTopic,10);

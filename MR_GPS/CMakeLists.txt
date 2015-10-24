@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(mr_gps)
 
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg tf)
 
 catkin_package()
 

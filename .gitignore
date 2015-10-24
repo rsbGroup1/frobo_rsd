@@ -7,3 +7,4 @@ CATKIN_IGNORE
 *.user
 *.includes
 *.kdev4
+*.subl*

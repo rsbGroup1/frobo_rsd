@@ -9,7 +9,8 @@ find_package(catkin REQUIRED COMPONENTS
 	rospy
 	std_msgs 
 	geometry_msgs 
-	genmsg 
+	genmsg
+	msgs
 )
 
 set(CMAKE_CXX_FLAGS "-std=c++11")
@@ -106,7 +107,7 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES mr_camera_navigation
-	CATKIN_DEPENDS message_runtime std_msgs geometry_msgs
+	CATKIN_DEPENDS message_runtime std_msgs geometry_msgs msgs
 #  DEPENDS system_lib
 )
 

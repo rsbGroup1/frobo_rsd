@@ -17,17 +17,6 @@
 
 #include <zbar.h>
 
-// Constants
-static const std::string OPENCV_WINDOW = "Image filtered";
-
-const int threshold_slider_max = 254;
-const int minLength_slider_max = 254;
-const int maxLineGap_slider_max = 254;
-int threshold_slider=37;
-int minLength_slider=66;
-int maxLineGap_slider=95;
-cv::RNG rng(12345);
-
 class ImageConverter
 {
 private:
@@ -125,15 +114,6 @@ public:
 		/*
 		 * Publish
 		 */
-		// Update GUI Window
-		//cv::createTrackbar( "threshold", OPENCV_WINDOW, &threshold_slider, threshold_slider_max);
-		//cv::createTrackbar( "minLength", OPENCV_WINDOW, &minLength_slider, minLength_slider_max);
-		//cv::createTrackbar( "maxLineGap", OPENCV_WINDOW, &maxLineGap_slider, maxLineGap_slider_max);
-		//cv::imshow(OPENCV_WINDOW, image_filtered);
-		//cv::imshow("Final", image_original);
-		//cv::namedWindow(OPENCV_WINDOW);
-		//cv::waitKey(3);
-		
 		//Image
 		sensor_msgs::ImagePtr image_msg;
 		image_msg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", image_original).toImageMsg();
@@ -167,19 +147,19 @@ public:
 		std::string data_type, data;
 		
 		// Read the image
-		for(zbar::Image::SymbolIterator symbol = image.symbol_begin(); symbol != image.symbol_end(); ++symbol)
+		for( zbar::Image::SymbolIterator symbol = image.symbol_begin(); symbol != image.symbol_end(); ++symbol)
 		{
 			std::vector<cv::Point> vp;
 			
-			// write out the symbols and data
+			// Write out the symbols and data
 			// type name equals type of code QR or Barcode...
 			// data equals the data that can be found in the QR or Barcode 
-			//cout << "decode" << symbol->get_type_name() << " symbol \"" << symbol->get_data() << '"' << " " << endl;
+			// cout << "decode" << symbol->get_type_name() << " symbol \"" << symbol->get_data() << '"' << " " << endl;
 			
 			//data_type = symbol->get_type_name();
 			data = symbol->get_data();
 			
-			// get the point for the QR code to show where they are. 
+			// Get the point for the QR code to show where they are. 
 			for(int i = 0; i < n; i++)
 				vp.push_back(cv::Point(symbol->get_location_x(i), symbol->get_location_y(i)));
 			
@@ -191,8 +171,8 @@ public:
 			for(int i = 0; i < 4; i++)
 				cv::line(image_original, pts[i], pts[i+1], cv::Scalar(255,0,0), 3);
 		}
-		// show the image with the QR code + lines around. 
-		cv::namedWindow("decoded image", cv::WINDOW_AUTOSIZE);
+		// Show the image with the QR code + lines around. 
+		//cv::namedWindow("decoded image", cv::WINDOW_AUTOSIZE);
 		//cv::imshow("decoded image", image_original);
 		
 		std_msgs::String data_msg;

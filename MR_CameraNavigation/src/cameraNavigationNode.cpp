@@ -14,9 +14,10 @@
 #include <string>
 #include <boost/thread.hpp>
 
-class cameraNavigation{
+class cameraNavigation {
 private:
 	//ROS
+	ros::NodeHandle nh_;
 	ros::Subscriber sub_qr_;
 	ros::Subscriber sub_line_;
 	ros::Subscriber sub_cross_;
@@ -45,33 +46,33 @@ public:
 	 * Default constructor
 	 */
 	cameraNavigation(){
-		ros::NodeHandle nh;
+		
 		// Get parameters
-		nh.param<double>("pid_p", pid_p_, 1.0);
-		nh.param<double>("pid_i", pid_i_, 0);
-		nh.param<double>("pid_d", pid_d_, 0);
-		nh.param<double>("pid_dt", pid_dt_, 0.33);
-		nh.param<double>("pid_max", pid_max_, 320);
-		nh.param<double>("pid_min", pid_min_, -320);
-		nh.param<int>("reference_point_x", reference_point_x_, 320);
-		nh.param<int>("reference_point_y", reference_point_y_, 240);
-		nh.param<double>("robot_speed", robot_speed_, 0.1);
+		nh_.param<double>("pid_p", pid_p_, 1.0);
+		nh_.param<double>("pid_i", pid_i_, 0);
+		nh_.param<double>("pid_d", pid_d_, 0);
+		nh_.param<double>("pid_dt", pid_dt_, 0.33);
+		nh_.param<double>("pid_max", pid_max_, 320);
+		nh_.param<double>("pid_min", pid_min_, -320);
+		nh_.param<int>("reference_point_x", reference_point_x_, 320);
+		nh_.param<int>("reference_point_y", reference_point_y_, 240);
+		nh_.param<double>("robot_speed", robot_speed_, 0.1);
 		// Get topics name
-		nh.param<std::string>("sub_cross", sub_cross_name_, "/mr_camera_processing/cross");
-		nh.param<std::string>("sub_line", sub_line_name_, "/mr_camera_processing/line");
-		nh.param<std::string>("sub_qr", sub_qr_name_, "/mr_camera_processing/qr");
-		nh.param<std::string>("pub_twist", pub_twist_name_, "fmCommand/cmd_vel");
-		nh.param<std::string>("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
+		nh_.param<std::string>("sub_cross", sub_cross_name_, "/mr_camera_processing/cross");
+		nh_.param<std::string>("sub_line", sub_line_name_, "/mr_camera_processing/line");
+		nh_.param<std::string>("sub_qr", sub_qr_name_, "/mr_camera_processing/qr");
+		nh_.param<std::string>("pub_twist", pub_twist_name_, "fmCommand/cmd_vel");
+		nh_.param<std::string>("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
 		// Publishers and Subscribers
-		sub_qr_ = nh.subscribe<std_msgs::String>("/mr_camera_processing/qr", 1,
+		sub_qr_ = nh_.subscribe<std_msgs::String>(sub_qr_name_, 1,
 			&cameraNavigation::qrCallback, this);
-		sub_line_ = nh.subscribe<geometry_msgs::Point>("/mr_camera_processing/line", 1,
+		sub_line_ = nh_.subscribe<geometry_msgs::Point>(sub_line_name_, 1,
 			&cameraNavigation::lineCallback, this);
-		sub_cross_ = nh.subscribe<std_msgs::Bool>("/mr_camera_processing/cross", 1, 
+		sub_cross_ = nh_.subscribe<std_msgs::Bool>(sub_cross_name_, 1, 
 			&cameraNavigation::crossCallback, this);
 		
-		pub_twist_ = nh.advertise<geometry_msgs::TwistStamped>("/fmCommand/cmd_vel", 1);
-		pub_deadman_ = nh.advertise<msgs::BoolStamped>("fmSafe/deadman",1);
+		pub_twist_ = nh_.advertise<geometry_msgs::TwistStamped>(pub_twist_name_, 1);
+		pub_deadman_ = nh_.advertise<msgs::BoolStamped>(pub_deadman_name_,1);
 		//Threads
 		deadmanThread_ = new boost::thread(&cameraNavigation::enableDeadman, this);
 	}

@@ -17,8 +17,7 @@
 
 #include <zbar.h>
 
-class ImageConverter
-{
+class ImageConverter {
 private:
 	ros::NodeHandle nh_, _pNh;
 	image_transport::ImageTransport it_;
@@ -27,26 +26,29 @@ private:
 	ros::Publisher pub_line_;
 	ros::Publisher pub_qr_;
 	ros::Publisher pub_cross_;
+	std::string sub_image_name_;
+	std::string pub_cross_name_, pub_image_name_, pub_line_name_, pub_qr_name_;
 	
 public:
-	ImageConverter() : it_(nh_), _pNh(ros::this_node::getName() + "/")
-	{
-		sub_image_ = it_.subscribe("/mr_camera/image",1, &ImageConverter::imageCb,
-							 this, image_transport::TransportHints("compressed"));
-		pub_line_ = nh_.advertise<geometry_msgs::Point>("mr_camera_processing/line", 1);
-		pub_qr_ = nh_.advertise<std_msgs::String>("mr_camera_processing/qr", 1);
-		pub_cross_ = nh_.advertise<std_msgs::Bool>("mr_camera_processing/cross", 1);
-		pub_image_ = it_.advertise("/outputImage", 1);
-	}
-	
-	~ImageConverter()
-	{
-		//cv::destroyWindow(OPENCV_WINDOW);
-	}
-	
-	void imageCb(const sensor_msgs::ImageConstPtr& msg)
-	{;
+	ImageConverter() : it_(nh_), _pNh(ros::this_node::getName() + "/"){
+		nh_.param<std::string>("sub_image", sub_image_name_, "/mr_camera/image");
+		nh_.param<std::string>("pub_cross", pub_cross_name_, "mr_camera_processing/cross");
+		nh_.param<std::string>("pub_image", pub_image_name_, "/outputImage");
+		nh_.param<std::string>("pub_qr", pub_qr_name_, "mr_camera_processing/qr");
+		nh_.param<std::string>("pub_line", pub_line_name_, "mr_camera_processing/line");
 		
+		sub_image_ = it_.subscribe(sub_image_name_,1, &ImageConverter::imageCb,
+							 this, image_transport::TransportHints("compressed"));
+		pub_line_ = nh_.advertise<geometry_msgs::Point>(pub_line_name_, 1);
+		pub_qr_ = nh_.advertise<std_msgs::String>(pub_qr_name_, 1);
+		pub_cross_ = nh_.advertise<std_msgs::Bool>(pub_cross_name_, 1);
+		pub_image_ = it_.advertise(pub_image_name_, 1);
+	}
+	
+	~ImageConverter() {
+	}
+	
+	void imageCb(const sensor_msgs::ImageConstPtr& msg){
 		// Transform the message to an OpenCV image
 		cv_bridge::CvImagePtr image_ptr;
 		image_ptr = cv_bridge::toCvCopy (msg, sensor_msgs::image_encodings::TYPE_8UC3);

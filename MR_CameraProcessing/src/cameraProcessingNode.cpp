@@ -67,7 +67,7 @@ public:
 		} else { 
 	
 		// Flip
-		cv::flip(image_ptr->image, image_ptr->image, 0);
+		cv::flip(image_ptr->image, image_ptr->image, -1);
 		// Detection	
 		lineDetector(image_ptr->image);
 		//qrDetector(image_ptr->image);

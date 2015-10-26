@@ -93,5 +93,11 @@
 		<param name="pub_deadman" value="/fmSafe/deadman" />
     </node>
 	
+	<node pkg="mr_kalman_filter" name="mr_kalman" type="mr_kalman_filter_node" respawn="true" output="screen" >
+		<param name="sub_point" value="/mr_camera_processing/line" />
+		<param name="pub_point" value="/mr_kalman_filter/line" />
+		<param name="debugging" value="true" />
+	</node>
+	
 </launch>
 

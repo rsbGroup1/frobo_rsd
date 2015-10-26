@@ -1,19 +1,17 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(mr_camera_navigation)
+project(mr_kalman_filter)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-	roscpp 
-	rospy
-	std_msgs 
-	geometry_msgs 
-	genmsg
-	msgs
-)
+find_package(OpenCV REQUIRED)
 
-set(CMAKE_CXX_FLAGS "-std=c++11")
+find_package(catkin REQUIRED COMPONENTS
+	roscpp
+	rospy
+	std_msgs
+	message_generation
+)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -33,10 +31,10 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 ## * Let MSG_DEP_SET be the set of packages whose message types you use in
 ##   your messages/services/actions (e.g. std_msgs, actionlib_msgs, ...).
 ## * In the file package.xml:
-##   * add a build_depend tag for "message_generation"
 ##   * add a build_depend and a run_depend tag for each package in MSG_DEP_SET
-##   * If MSG_DEP_SET isn't empty the following dependency has been pulled in
-##     but can be declared for certainty nonetheless:
+##   * If MSG_DEP_SET isn't empty the following dependencies might have been
+##     pulled in transitively but can be declared for certainty nonetheless:
+##     * add a build_depend tag for "message_generation"
 ##     * add a run_depend tag for "message_runtime"
 ## * In this file (CMakeLists.txt):
 ##   * add "message_generation" and every package in MSG_DEP_SET to
@@ -75,26 +73,6 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 #   std_msgs  # Or other packages containing msgs
 # )
 
-################################################
-## Declare ROS dynamic reconfigure parameters ##
-################################################
-
-## To declare and build dynamic reconfigure parameters within this
-## package, follow these steps:
-## * In the file package.xml:
-##   * add a build_depend and a run_depend tag for "dynamic_reconfigure"
-## * In this file (CMakeLists.txt):
-##   * add "dynamic_reconfigure" to
-##     find_package(catkin REQUIRED COMPONENTS ...)
-##   * uncomment the "generate_dynamic_reconfigure_options" section below
-##     and list every .cfg file to be processed
-
-## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
-
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -106,8 +84,8 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES mr_camera_navigation
-	CATKIN_DEPENDS message_runtime std_msgs geometry_msgs msgs
+#  LIBRARIES kalman_filter
+#  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
 
@@ -121,26 +99,22 @@ include_directories(
 	${catkin_INCLUDE_DIRS}
 )
 
-## Declare a C++ library
-# add_library(mr_camera_navigation
-#   src/${PROJECT_NAME}/mr_camera_navigation.cpp
+## Declare a cpp library
+# add_library(kalman_filter
+#   src/${PROJECT_NAME}/kalman_filter.cpp
 # )
 
-## Add cmake target dependencies of the library
-## as an example, code may need to be generated before libraries
-## either from message generation or dynamic reconfigure
-# add_dependencies(mr_camera_navigation ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+## Declare a cpp executable
+add_executable(kalman_filter_node src/kalman_filter_node.cpp)
 
-## Declare a C++ executable
-add_executable(mr_camera_navigation src/cameraNavigationNode.cpp)
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(mr_camera_navigation_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+## Add cmake target dependencies of the executable/library
+## as an example, message headers may need to be generated before nodes
+add_dependencies(kalman_filter_node kalman_filter_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(mr_camera_navigation
-  ${catkin_LIBRARIES}
+target_link_libraries(kalman_filter_node
+	${catkin_LIBRARIES}
+	${OpenCV_LIBS}
 )
 
 #############
@@ -158,7 +132,7 @@ target_link_libraries(mr_camera_navigation
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS mr_camera_navigation mr_camera_navigation_node
+# install(TARGETS kalman_filter kalman_filter_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -183,7 +157,7 @@ target_link_libraries(mr_camera_navigation
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_mr_camera_navigation.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_kalman_filter.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

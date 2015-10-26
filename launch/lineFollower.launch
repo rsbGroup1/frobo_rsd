@@ -1,0 +1,103 @@
+<launch>
+	<!-- FROBIT PARAMETERS --> 
+	<param name="diff_steer_wheel_distance" value="0.375"/>
+	<param name="ticks_per_meter_left" value="677" />
+	<param name="ticks_per_meter_right" value="677" />
+
+	<!-- FROBIT INTERFACE -->
+	<group ns="fmControllers">
+		<node pkg="sdu_frobit_v2" name="frobit" type="frobit_interface_node.py" output="screen" >
+			<param name="actuation_enable_sub" value="/fmSafe/actuation_enable" />
+			<param name="cmd_vel_sub" value="/fmCommand/cmd_vel" />
+			<param name="/fmCommand/cmd_vel" value="True" />
+			<param name="enc_left_pub" value="/fmInformation/encoder_left" />
+			<param name="enc_right_pub" value="/fmInformation/encoder_right" />
+			<param name="wheel_status_left_pub" value="/fmInformation/wheel_status_left" />
+			<param name="wheel_status_right_pub" value="/fmInformation/wheel_status_right" />
+			<param name="wheel_feedback_left_pub" value="/fmInformation/wheel_feedback_left" />
+			<param name="wheel_feedback_right_pub" value="/fmInformation/wheel_feedback_right" />
+			<param name="wheel_pid_left_pub" value="/fmInformation/wheel_pid_left" />
+			<param name="wheel_pid_right_pub" value="/fmInformation/wheel_pid_right" />
+			<param name="nmea_from_frobit_sub" value="/fmSignal/nmea_from_frobit" />	 
+			<param name="nmea_to_frobit_pub" value="/fmSignal/nmea_to_frobit" />	 
+			<param name="publish_wheel_status_rate" value="10" />
+			<param name="publish_wheel_feedback_rate" value="10" />
+			<param name="publish_wheel_pid_rate" value="10" />
+			<param name="castor_front" value="true"/>
+		    <param name="max_linear_acceleration" value="16.2"/>
+        	<param name="max_angular_acceleration" value="16.0"/>
+			<param name="wheel_drive_feed_forward" value="85" /> 
+			<param name="wheel_drive_kp" value="5" /> 
+			<param name="wheel_drive_ki" value="10" /> 
+			<param name="wheel_drive_kd" value="5" /> 
+			<param name="wheel_drive_max_integral_output" value="300" /> 
+			<param name="wheel_turn_feed_forward" value="110" /> 
+			<param name="wheel_turn_kp" value="10" /> 
+			<param name="wheel_turn_ki" value="20" /> 
+			<param name="wheel_turn_kd" value="3" /> 
+			<param name="wheel_turn_max_integral_output" value="300" /> 
+			<param name="supply_voltage_scale_factor" value="0.03747" /> 
+			<param name="min_supply_voltage" value="11.7" /> 
+			<param name="show_voltage_interval" value="300" /> 
+		</node>
+	</group>
+
+	<!-- SAFETY MODULE -->
+	<group ns="fmSafety">
+		<node pkg="basic_incident_handler" name="incident_handler" type="basic_incident_handler_node.py" output="screen">
+    		<param name="deadman_enable" value="True" />
+    		<param name="deadman_timeout" value="0.100" />
+    		<param name="deadman_sub" value="/fmSafe/deadman" />
+    		<param name="critical_fault_enable" value="False" />
+    		<param name="critical_fault_timeout" value="0.100" />
+    		<param name="critical_fault_sub" value="/fmSafe/critical_fault" />
+		<param name="actuation_enable_pub" value="/fmSafe/actuation_enable" />
+		</node>
+	</group>
+
+	<!-- FROBIT SERIAL DEVICE AND PROTOCOL -->
+	<node pkg="serial_nmea" name="frobit_nmea" type="serial_nmea_node" respawn="true" output="screen">
+		<param name="nmea_from_device_pub" value="/fmSignal/nmea_from_frobit"/>
+		<param name="nmea_to_device_sub" value="/fmSignal/nmea_to_frobit"/>
+		<param name="serial_device" value="/dev/frobit"/>
+		<param name="serial_baudrate" value="57600"/>
+		<param name="use_nmea_checksum" value="true"/>
+        </node>
+
+    <node pkg="mr_camera" name="camera" type="mr_camera" output="screen">
+    </node>
+
+    <node pkg="mr_camera_processing" name="camera_processing" type="mr_camera_processing" output="screen">
+		<param name="sub_image" value="/mr_camera/image" />
+		<param name="pub_cross" value="/mr_camera_processing/cross" />
+		<param name="pub_qr" value="/mr_camera_processing/qr" />
+		<param name="pub_line" value="/mr_camera_processing/line" />
+		<param name="pub_image" value="/mr_camera_processing/output_image" />
+    </node>
+
+    <node pkg="mr_camera_navigation" name="camera_navigation" type="mr_camera_navigation" output="screen">
+		<param name="pid_p" value="1.0" />
+		<param name="pud_i" value="0" />
+		<param name="pid_d" value="0" />
+		<param name="pid_dt" value="0.33" />
+		<param name="pid_max" value="320" />
+		<param name="pid_min" value="-320" />
+		<param name="reference_point_x" value="320" />
+		<param name="reference_point_y" value="240" />
+		<param name="robot_speed" value="0.1" />
+		
+		<param name="sub_cross" value="/mr_camera_processing/cross" />
+		<param name="sub_line" value="/mr_camera_processing/line" />
+		<param name="sub_qr" value="/mr_camera_processing/qr" />
+		<param name="pub_twist" value="/fmCommand/cmd_vel" />
+		<param name="pub_deadman" value="/fmSafe/deadman" />
+    </node>
+	
+	<node pkg="mr_kalman_filter" name="mr_kalman" type="mr_kalman_filter_node" respawn="true" output="screen" >
+		<param name="sub_point" value="/mr_camera_processing/line" />
+		<param name="pub_point" value="/mr_kalman_filter/line" />
+		<param name="debugging" value="true" />
+	</node>
+	
+</launch>
+

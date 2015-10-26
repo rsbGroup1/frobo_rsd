@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(mr_camera_navigation)
+project(mr_line_follower)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 	geometry_msgs 
 	genmsg
 	msgs
+	message_generation
 )
 
 set(CMAKE_CXX_FLAGS "-std=c++11")
@@ -56,12 +57,10 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
-
+add_service_files(
+	FILES
+	enable.srv
+)
 ## Generate actions in the 'action' folder
 # add_action_files(
 #   FILES
@@ -70,10 +69,10 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+	DEPENDENCIES
+	std_msgs  # Or other packages containing msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -106,7 +105,7 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES mr_camera_navigation
+#  LIBRARIES mr_line_follower
 	CATKIN_DEPENDS message_runtime std_msgs geometry_msgs msgs
 #  DEPENDS system_lib
 )
@@ -122,24 +121,24 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(mr_camera_navigation
-#   src/${PROJECT_NAME}/mr_camera_navigation.cpp
+# add_library(mr_line_follower
+#   src/${PROJECT_NAME}/mr_line_follower.cpp
 # )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(mr_camera_navigation ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(mr_line_follower ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(mr_camera_navigation src/cameraNavigationNode.cpp)
+add_executable(mr_line_follower src/lineFollowerNode.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(mr_camera_navigation_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(mr_line_follower_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(mr_camera_navigation
+target_link_libraries(mr_line_follower
   ${catkin_LIBRARIES}
 )
 
@@ -158,7 +157,7 @@ target_link_libraries(mr_camera_navigation
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS mr_camera_navigation mr_camera_navigation_node
+# install(TARGETS mr_line_follower mr_line_follower_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -183,7 +182,7 @@ target_link_libraries(mr_camera_navigation
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_mr_camera_navigation.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_mr_line_follower.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

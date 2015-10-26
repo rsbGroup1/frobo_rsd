@@ -75,7 +75,7 @@
 		<param name="pub_image" value="/mr_camera_processing/output_image" />
     </node>
 
-    <node pkg="mr_camera_navigation" name="camera_navigation" type="mr_camera_navigation" output="screen">
+	<node pkg="mr_line_follower" name="line_follower" type="mr_line_follower" output="screen">
 		<param name="pid_p" value="1.0" />
 		<param name="pud_i" value="0" />
 		<param name="pid_d" value="0" />

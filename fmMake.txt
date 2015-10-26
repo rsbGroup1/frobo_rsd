@@ -38,5 +38,6 @@
 /frobo_rsd/MR_CameraFalse
 /frobo_rsd/MR_DeadManPriority
 /frobo_rsd/MR_CameraProcessing
-/frobo_rsd/MR_CameraNavigation
+/frobo_rsd/MR_LineFollower
 /frobo_rsd/MR_KalmanFilter
+/frobo_rsd/MR_Go

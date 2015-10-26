@@ -10,7 +10,7 @@
 			 
 		</node>
 
-		<node pkg="tf" type="static_transform_publisher" name="gps_tranform_broadcaster" args="-0.448 -1.27 0 -0.111 0 0 map gps_frame 100" />
+		<node pkg="tf" type="static_transform_publisher" name="gps_tranform_broadcaster" args="-2.07 -0.917 0 -0.166 0 0 map gps_frame 100" /> <!-- 2.07 1.117 0 0.166 -->
 
 		<node pkg="mr_gps" name="GPSLocalisation" type="GPSLocalisation" output="screen">
 			<param name="odomTopic" value="/fmKnowledge/poses"/>  

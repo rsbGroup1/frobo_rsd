@@ -32,10 +32,10 @@ private:
 public:
 	ImageConverter() : it_(nh_), _pNh(ros::this_node::getName() + "/"){
 		nh_.param<std::string>("sub_image", sub_image_name_, "/mr_camera/image");
-		nh_.param<std::string>("pub_cross", pub_cross_name_, "mr_camera_processing/cross");
-		nh_.param<std::string>("pub_image", pub_image_name_, "/outputImage");
-		nh_.param<std::string>("pub_qr", pub_qr_name_, "mr_camera_processing/qr");
-		nh_.param<std::string>("pub_line", pub_line_name_, "mr_camera_processing/line");
+		nh_.param<std::string>("pub_cross", pub_cross_name_, "/mr_camera_processing/cross");
+		nh_.param<std::string>("pub_image", pub_image_name_, "/mr_camera_processing/output_image");
+		nh_.param<std::string>("pub_qr", pub_qr_name_, "/mr_camera_processing/qr");
+		nh_.param<std::string>("pub_line", pub_line_name_, "/mr_camera_processing/line");
 		
 		sub_image_ = it_.subscribe(sub_image_name_,1, &ImageConverter::imageCb,
 							 this, image_transport::TransportHints("compressed"));

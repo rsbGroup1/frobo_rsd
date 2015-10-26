@@ -26,17 +26,17 @@ private:
 	//Threads
 	boost::thread* deadmanThread_;
 	//PID
-	double pid_dt_ = 0.33; // 1/rate
-	double pid_max_ = 640/2;
-	double pid_min_ = -640/2;
-	double pid_p_ = 1.0;
-	double pid_d_ = 0.00;
-	double pid_i_ = 0.00;
+	double pid_dt_;
+	double pid_max_;
+	double pid_min_;
+	double pid_p_;
+	double pid_d_;
+	double pid_i_;
 	//Reference point
-	int reference_point_x_ = 640/2;
-	int reference_point_y_ = 480/2;
+	int reference_point_x_;
+	int reference_point_y_;
 	//Robot
-	double robot_speed_ = 0.1;
+	double robot_speed_;
 	//Topics name
 	std::string sub_qr_name_, sub_line_name_, sub_cross_name_;
 	std::string pub_deadman_name_, pub_twist_name_;
@@ -51,7 +51,7 @@ public:
 		nh_.param<double>("pid_p", pid_p_, 1.0);
 		nh_.param<double>("pid_i", pid_i_, 0);
 		nh_.param<double>("pid_d", pid_d_, 0);
-		nh_.param<double>("pid_dt", pid_dt_, 0.33);
+		nh_.param<double>("pid_dt", pid_dt_, 0.33); // 1/rate
 		nh_.param<double>("pid_max", pid_max_, 320);
 		nh_.param<double>("pid_min", pid_min_, -320);
 		nh_.param<int>("reference_point_x", reference_point_x_, 320);
@@ -61,7 +61,7 @@ public:
 		nh_.param<std::string>("sub_cross", sub_cross_name_, "/mr_camera_processing/cross");
 		nh_.param<std::string>("sub_line", sub_line_name_, "/mr_camera_processing/line");
 		nh_.param<std::string>("sub_qr", sub_qr_name_, "/mr_camera_processing/qr");
-		nh_.param<std::string>("pub_twist", pub_twist_name_, "fmCommand/cmd_vel");
+		nh_.param<std::string>("pub_twist", pub_twist_name_, "/fmCommand/cmd_vel");
 		nh_.param<std::string>("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
 		// Publishers and Subscribers
 		sub_qr_ = nh_.subscribe<std_msgs::String>(sub_qr_name_, 1,
@@ -168,12 +168,16 @@ public:
 	            // Signal interrupt point
 	            boost::this_thread::interruption_point();
 	        }
-	        catch(const boost::thread_interrupted&)
-	        {
+	        catch(const boost::thread_interrupted&){
 	            break;
 	        }
 	    }
-
+	}
+	/**
+	 * Returns the frecuency of the Node
+	 */
+	double getFrecuency(){
+		return 1/pid_dt_;
 	}
 	
 };
@@ -182,7 +186,7 @@ public:
 int main(int argv, char** argc){
 	ros::init(argv, argc, "mr_camera_navigation");
 	cameraNavigation cn;
-	ros::Rate rate(30);
+	ros::Rate rate(cn.getFrecuency());
 	while (ros::ok()){
 		ros::spin();
 	}

@@ -1,0 +1,22 @@
+<!-- GPS launch file -->
+
+<launch>
+		<node pkg="mr_gps" name="mr_gps" type="mr_gps" output="screen">
+			<param name="ServerIP" value="10.115.253.233"/>  	
+			<param name="ServerPort" value="21212"/>  
+			<param name="requestMsg" value="Get position 5"/>  
+			<param name="stateSub" value="mrGPS/State"/>  
+			<param name="posePub" value="mrGPS/Pose"/>
+			 
+		</node>
+
+		<node pkg="tf" type="static_transform_publisher" name="gps_tranform_broadcaster" args="-0.416 -1.274 0 -3.631 0 0 map gpsCoord 100" />
+
+		<node pkg="mr_gps" name="GPSLocalisation" type="GPSLocalisation">
+			<param name="odomTopic" value="/fmKnowledge/poses"/>  
+			<param name="gpsPoseTopic" value="/mrGPS/Pose"/>  
+			<param name="filterResetTopic" value="/initialpose"/>  <!--/initialpose-->
+			<param name="gpsFrame" value="gpsCoord"/> 
+		</node>
+
+</launch>

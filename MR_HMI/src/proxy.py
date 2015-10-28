@@ -3,7 +3,7 @@
 import json
 import jsonlib
 import sys
-import time, threading
+import time, threading, datetime
 from autobahn.twisted.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
 from twisted.python import log
@@ -12,9 +12,9 @@ from twisted.internet import reactor
 import rospy
 from geometry_msgs.msg import Twist, TwistStamped
 from msgs.msg import BoolStamped
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool
 
-LOCATION_REQUEST = "location_request"
+STATUS_REQUEST = "status_request"
 REMOTE_UPDATE = "remote_update"
 
 MODE_UPDATE_PUB = "/mrHMI/start_stop"
@@ -30,6 +30,7 @@ address = ""
 direction = 0
 button = 0
 location = 0
+logMessages = "Message,12:32 28.10.15,Robot has entered the box,11,Message,28.10.15,Robot is charging,01,"
 
 pubModeUpdate = 0
 pubTipperUpdate = 0
@@ -62,6 +63,7 @@ class MyServerProtocol( WebSocketServerProtocol ):
         global actuationEna
         global linearVelocity
         global angularVelocity
+        global logMessages
 
         if isBinary:
             print( "Binary message received: {0} bytes".format( len( payload ) ) )
@@ -72,16 +74,21 @@ class MyServerProtocol( WebSocketServerProtocol ):
 
             messageIn = jsonlib.read( messageInRaw )
 
-            if messageIn["messageType"] == LOCATION_REQUEST:
+            if messageIn["messageType"] == STATUS_REQUEST:
 
                 massageOutRaw = {
-                    "messageType":"location_response",
-                    "data":str(location)
+                    "messageType":"status_response",
+                    "data":{
+                        "location":str(location),
+                        "log":[logMessages[:-1]]
+                    }
                 }
 
                 massageOut = json.dumps(massageOutRaw)
 
                 self.sendMessage( massageOut, isBinary )
+
+                logMessages = ""
 
             elif messageIn["messageType"] == REMOTE_UPDATE:
 
@@ -102,14 +109,14 @@ class MyServerProtocol( WebSocketServerProtocol ):
                 elif leftButton == u"l":
                     drive( 0.0, angularVelocity )
                 elif rightButton == u"x":
-                    tip( u"up" )
+                    tip( True )
                 elif rightButton == u"y":
-                    tip( u"down" )
+                    tip( False )
                 elif rightButton == u"a":
                     setManualMode( False )
-                    publishCommand( pubModeUpdate, u"run" )
+                    publishCommand( pubModeUpdate, u"start" )
                 elif rightButton == u"b":
-                    publishCommand( pubModeUpdate, u"idle" )
+                    publishCommand( pubModeUpdate, u"stop" )
 
     def onClose( self, wasClean, code, reason ):
         global actuationEna
@@ -206,10 +213,22 @@ def tip( direction ):
 
     publishCommand( pubTipperUpdate, direction )
 
-#def callback( data ):
-    #global location
-    #location = data.data
-    #rospy.loginfo( rospy.get_caller_id() + "I heard %s", location )
+def callback( data ):
+    global location
+    location = data.data
+    rospy.loginfo( rospy.get_caller_id() + "I heard %s", location )
+
+def logCallback( data ):
+    global logMessages
+
+    # TODO Adjust method to input
+
+    logType = data.type
+    logTimestamp = data.timestamp
+    logMessage = data.message
+    d = ","
+
+    logMessages = logMessages + logType + d + logTimestamp + d + logMessage + d
 
 def publishCommand( rosPublisher, command ):
     rosPublisher.publish( command )
@@ -234,7 +253,7 @@ def initProxy():
     # anonymous=True flag means that rospy will choose a unique
     # name for our 'talker' node so that multiple talkers can
     # run simultaneously.
-    rospy.init_node( 'MR_Proxy', anonymous = True )
+    rospy.init_node( 'proxy', anonymous = True )
 
     # Read parameters
 
@@ -245,12 +264,12 @@ def initProxy():
 
     # Register Publisers
     pubModeUpdate = rospy.Publisher( MODE_UPDATE_PUB, String, queue_size = 1 )
-    pubTipperUpdate = rospy.Publisher( TIPPER_UPDATE_PUB, String, queue_size = 1 )
+    pubTipperUpdate = rospy.Publisher( TIPPER_UPDATE_PUB, Bool, queue_size = 1 )
     pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 1 )
     pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
 
     # Register Listeners
-    #rospy.Subscriber( "hmi_mobile", String, callback )
+    rospy.Subscriber( "hmi_mobile", String, callback )
 
     # Start publishing the activationEna sygnal in a separate thread
     aThread = actuationThread( 1, "actuation_thread" )
@@ -267,13 +286,7 @@ def initProxy():
     reactor.run()
 
     # spin() simply keeps python from exiting until this node is stopped
-    #rospy.spin()
-
-    rate = rospy.Rate(10) # 10hz
-    while not rospy.is_shutdown():
-        rate.sleep()
-
-    # PUT SHUTDOWN CODE HERE
+    rospy.spin()
 
 if __name__ == '__main__':
     initProxy()

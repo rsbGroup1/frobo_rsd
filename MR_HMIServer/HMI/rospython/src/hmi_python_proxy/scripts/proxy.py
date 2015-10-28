@@ -3,7 +3,7 @@
 import json
 import jsonlib
 import sys
-import time, threading
+import time, threading, datetime
 from autobahn.twisted.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
 from twisted.python import log
@@ -14,7 +14,7 @@ from geometry_msgs.msg import Twist, TwistStamped
 from msgs.msg import BoolStamped
 from std_msgs.msg import String, Bool
 
-LOCATION_REQUEST = "location_request"
+STATUS_REQUEST = "status_request"
 REMOTE_UPDATE = "remote_update"
 
 MODE_UPDATE_PUB = "/mrHMI/start_stop"
@@ -30,6 +30,7 @@ address = ""
 direction = 0
 button = 0
 location = 0
+logMessages = "Message,12:32 28.10.15,Robot has entered the box,11,Message,28.10.15,Robot is charging,01,"
 
 pubModeUpdate = 0
 pubTipperUpdate = 0
@@ -62,6 +63,7 @@ class MyServerProtocol( WebSocketServerProtocol ):
         global actuationEna
         global linearVelocity
         global angularVelocity
+        global logMessages
 
         if isBinary:
             print( "Binary message received: {0} bytes".format( len( payload ) ) )
@@ -72,16 +74,21 @@ class MyServerProtocol( WebSocketServerProtocol ):
 
             messageIn = jsonlib.read( messageInRaw )
 
-            if messageIn["messageType"] == LOCATION_REQUEST:
+            if messageIn["messageType"] == STATUS_REQUEST:
 
                 massageOutRaw = {
-                    "messageType":"location_response",
-                    "data":str(location)
+                    "messageType":"status_response",
+                    "data":{
+                        "location":str(location),
+                        "log":[logMessages[:-1]]
+                    }
                 }
 
                 massageOut = json.dumps(massageOutRaw)
 
                 self.sendMessage( massageOut, isBinary )
+
+                logMessages = ""
 
             elif messageIn["messageType"] == REMOTE_UPDATE:
 
@@ -210,6 +217,18 @@ def callback( data ):
     global location
     location = data.data
     rospy.loginfo( rospy.get_caller_id() + "I heard %s", location )
+
+def logCallback( data ):
+    global logMessages
+
+    # TODO Adjust method to input
+
+    logType = data.type
+    logTimestamp = data.timestamp
+    logMessage = data.message
+    d = ","
+
+    logMessages = logMessages + logType + d + logTimestamp + d + logMessage + d
 
 def publishCommand( rosPublisher, command ):
     rosPublisher.publish( command )

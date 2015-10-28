@@ -9,6 +9,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread.hpp>
 #include "std_msgs/String.h"
+#include "mr_tip_controller/tip.h"
 
 // Defines
 #define SSTR(x)                 dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
@@ -72,9 +73,9 @@ SynchronisedQueue<std::string> _queue;
 boost::thread *_writeThread;
 
 // Functions
-void tipControlCallback(std_msgs::String msg)
+bool tipCallback(mr_tip_controller::tip::Request &req, mr_tip_controller::tip::Response &res)
 {
-    if(msg.data == "up" && _isDown == true)
+    if(req.direction && _isDown == true)
     {
         if(_debugMsg)
             ROS_INFO("Tipper goes UP");
@@ -82,7 +83,7 @@ void tipControlCallback(std_msgs::String msg)
         _queue.enqueue("u");
         _isDown = false;
     }
-    else if(msg.data == "down" && _isDown == false)
+    else if(req.direction == false && _isDown == false)
     {
         if(_debugMsg)
             ROS_INFO("Tipper goes DOWN");
@@ -96,7 +97,13 @@ void tipControlCallback(std_msgs::String msg)
             ROS_INFO("Tipper is DOWN!");
         else
             ROS_INFO("Tipper is UP!");
+
+        res.status = false;
+        return false;
     }
+
+    res.status = true;
+    return true;
 }
 
 void writeSerialThread()
@@ -197,16 +204,12 @@ int main()
     int argc = 0;
 
     // Init ROS Node
-    ros::init(argc, argv, "mr_tip_controller");
+    ros::init(argc, argv, "MR_Tip_Controller");
     ros::NodeHandle nh;
     ros::NodeHandle pNh(ros::this_node::getName() + "/");
 
-    // Topic names
-    std::string tipControlSub;
-    pNh.param<std::string>("mr_maincontroller_tipper_pub", tipControlSub, "/mrMainController/tipper");
-
     // Subscriber
-    ros::Subscriber subTipControl = nh.subscribe(tipControlSub, 10, tipControlCallback);
+    ros::ServiceServer tipServer = nh.advertiseService("mrTipController/tip", tipCallback);
 
     // Get serial data parameters
     int baudRate;    

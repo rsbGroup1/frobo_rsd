@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(mr_navigation_controller)
+project(mr_main)
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs geometry_msgs genmsg)
@@ -7,11 +7,8 @@ find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs geometry_msgs genm
 # Service files
 add_service_files(
 	FILES
+	tip.srv
 	performAction.srv
-	followLineToQR.srv
-	enable.srv
-	angularMove.srv
-	linearMove.srv
 )
 
 generate_messages(DEPENDENCIES std_msgs geometry_msgs)
@@ -20,7 +17,7 @@ catkin_package()
 
 include_directories(${catkin_INCLUDE_DIRS})
 
-SET(SrcFiles src/navigationControllerNode.cpp)
+SET(SrcFiles src/mainNode.cpp)
 
 add_executable(${PROJECT_NAME} ${SrcFiles})
 

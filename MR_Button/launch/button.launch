@@ -1,0 +1,10 @@
+<!-- Button launch file -->
+
+<launch>
+	<group ns="MR_Button">
+		<node pkg="mr_buttonr" name="mr_button" type="mr_button">
+			<param name="baud_rate" value="115200"/>
+			<param name="port" value="/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00"/>  	
+		</node>
+	</group>
+</launch>

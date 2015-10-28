@@ -30,6 +30,6 @@ SET(SrcFiles src/cameraProcessingNode.cpp)
 
 add_executable(${PROJECT_NAME} ${SrcFiles})
 
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${ZBAR_LIBRARIES} zbar)
 
 MESSAGE(${PROJECT_NAME} "Done!")

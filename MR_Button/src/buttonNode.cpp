@@ -190,7 +190,7 @@ void changeRunMode(MODES runMode)
     _modeMutex.unlock();
 }
 
-void collisionCallback(std_msgs::String msg)
+/*void collisionCallback(std_msgs::String msg)
 {
     static MODES oldMode = M_NORMAL;
     MODES newMode = M_NORMAL;
@@ -217,7 +217,7 @@ void startStopCallback(std_msgs::String msg)
         changeRunMode(M_IDLE);
     else if(msg.data == "manual")
         changeRunMode(M_MANUAL);
-}
+}*/
 
 bool compareMsg(char* msg, char* command)
 {
@@ -312,12 +312,12 @@ int main()
     int argc = 0;
 
     // Init ROS Node
-    ros::init(argc, argv, "mr_mission_planner");
+    ros::init(argc, argv, "MR_Button");
     ros::NodeHandle nh;
     ros::NodeHandle pNh(ros::this_node::getName() + "/");
 
     // Topic names
-    std::string obstaclePub, startStopSub, missionPlannerPub;
+    /*std::string obstaclePub, startStopSub, missionPlannerPub;
     pNh.param<std::string>("mr_collision_status_sub", obstaclePub, "/mrObstacleDetector/status");
     pNh.param<std::string>("mr_hmi_sub", startStopSub, "/mrHMI/start_stop");
     pNh.param<std::string>("mr_missionplanner_pub", missionPlannerPub, "/mrMissionPlanner/status");
@@ -327,7 +327,7 @@ int main()
 
     // Subscriber
     ros::Subscriber subCollision = nh.subscribe(obstaclePub, 1, collisionCallback);
-    ros::Subscriber subStartStop = nh.subscribe(startStopSub, 1, startStopCallback);
+    ros::Subscriber subStartStop = nh.subscribe(startStopSub, 1, startStopCallback);*/
 
     // Get serial data parameters
     int baudRate;
@@ -360,8 +360,7 @@ int main()
     changeRunMode(M_IDLE);
 
     // ROS Spin: Handle callbacks
-    while(ros::ok())
-	ros::spinOnce();
+    ros::spin();
 
     // Close connection
     changeRunMode(M_OFF);

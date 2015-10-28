@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>mr_mission_planner</name>
+  <name>mr_button</name>
   <version>0.0.0</version>
-  <description>The RSD MissionPlanner package</description>
+  <description>The RSD Button package</description>
   <maintainer email="yoali11@student.sdu.dk">Yonas Alizadeh</maintainer>
   <license>TODO</license>
 

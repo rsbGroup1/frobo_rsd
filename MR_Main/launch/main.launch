@@ -1,0 +1,10 @@
+<!-- Main launch file -->
+
+<launch>
+	<group ns="MR_Main">
+		<node pkg="mr_main" name="Main" type="mr_main">
+		</node>
+	</group>
+
+</launch>
+

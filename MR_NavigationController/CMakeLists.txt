@@ -9,8 +9,7 @@ add_service_files(
 	FILES
 	performAction.srv
 	enable.srv
-	angularMove.srv
-	linearMove.srv
+	move.srv
 )
 
 generate_messages(DEPENDENCIES std_msgs geometry_msgs)

@@ -4,7 +4,15 @@ project(mr_navigation_controller)
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs geometry_msgs genmsg)
 
-#generate_messages(DEPENDENCIES sensor_msgs)
+# Service files
+add_service_files(
+	FILES
+	performAction.srv
+	enable.srv
+	move.srv
+)
+
+generate_messages(DEPENDENCIES std_msgs geometry_msgs)
 
 catkin_package()
 

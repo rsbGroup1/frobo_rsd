@@ -19,7 +19,7 @@ rsdNamespace.box = 'box';
 rsdNamespace.zoneSelected = '0';
 
 // Connection parameters
-rsdNamespace.locationRequestScheduler;
+rsdNamespace.statusRequestScheduler;
 rsdNamespace.remoteUpdateScheduler;
 rsdNamespace.commAddr = 'localhost';
 rsdNamespace.commPort = 8888;

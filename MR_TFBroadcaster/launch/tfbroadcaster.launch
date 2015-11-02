@@ -1,4 +1,4 @@
-<!-- Tip Controller launch file -->
+<!-- TF Broadcaster launch file -->
 
 <launch>
 	<node pkg="mr_tfbroadcaster" name="mr_tfbroadcaster" type="mr_tfbroadcaster">

@@ -4,7 +4,18 @@ project(mr_tip_controller)
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs serial genmsg)
 
-#generate_messages(DEPENDENCIES sensor_msgs)
+## Generate services in the 'srv' folder
+add_service_files(
+	FILES
+	tip.srv
+)
+
+
+## Generate added messages and services with any dependencies listed here
+generate_messages(
+	DEPENDENCIES
+	std_msgs  # Or other packages containing msgs
+)
 
 catkin_package()
 

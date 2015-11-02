@@ -24,10 +24,10 @@ rsdNamespace.StartListening = function() {
     rsdNamespace.connection.onopen = function () {
 
         // Request information on the Mobile Platform's location in every second
-        rsdNamespace.locationRequestScheduler = setInterval( function () {
+        rsdNamespace.statusRequestScheduler = setInterval( function () {
 
             messageOut = {
-                "messageType":"location_request",
+                "messageType":"status_request",
                 "data": {}
             }
 
@@ -62,14 +62,39 @@ rsdNamespace.StartListening = function() {
         console.log( 'Server: ' + e.data );
 
         switch( messageIn.messageType ) {
-            case 'location_response':
-                if( rsdNamespace.zoneSelected != messageIn.data ) {
+            case 'status_response':
+                var location = messageIn.data.location;
+                if( location ) {
 
-                    rsdNamespace.ToggleHighlighting( rsdNamespace.zoneSelected );
-                    rsdNamespace.ToggleHighlighting( messageIn.data );
+                    if( rsdNamespace.zoneSelected != location ) {
+
+                        rsdNamespace.ToggleHighlighting( rsdNamespace.zoneSelected );
+                        rsdNamespace.ToggleHighlighting( location );
+
+                    }
 
                 }
+
+                var log = messageIn.data.log;
+                if( log ) {
+
+                    var messages = String( log ).split(",");
+
+                    if( messages.length > 3 ) {
+
+                        for( i = 0; i < messages.length; i += 4 ) {
+
+                            if( messages[i] === "Message" ) rsdNamespace.IndicateStatus( messages[i + 3] );
+                            rsdNamespace.UpdateLog( messages[i], messages[i + 1], messages[i + 2] );
+
+                        }
+
+                    }
+
+                }
+
                 break;
+
         }
 
     };
@@ -85,9 +110,9 @@ rsdNamespace.StartListening = function() {
     // Terminate schedulers upon exiting
     rsdNamespace.connection.onclose = function() {
 
-        if( rsdNamespace.locationRequestScheduler ) {
+        if( rsdNamespace.statusRequestScheduler ) {
 
-            clearInterval( rsdNamespace.locationRequestScheduler );
+            clearInterval( rsdNamespace.statusRequestScheduler );
             clearInterval( rsdNamespace.remoteUpdateScheduler );
 
         }

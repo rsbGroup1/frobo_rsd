@@ -18,27 +18,15 @@
 #include <zbar.h>
 
 class ImageConverter {
-private:
-	ros::NodeHandle nh_, _pNh;
-	image_transport::ImageTransport it_;
-	image_transport::Subscriber sub_image_;
-	image_transport::Publisher pub_image_;
-	ros::Publisher pub_line_;
-	ros::Publisher pub_qr_;
-	ros::Publisher pub_cross_;
-	std::string sub_image_name_;
-	std::string pub_cross_name_, pub_image_name_, pub_line_name_, pub_qr_name_;
-	
 public:
 	ImageConverter() : it_(nh_), _pNh(ros::this_node::getName() + "/"){
 		nh_.param<std::string>("sub_image", sub_image_name_, "/mr_camera/image");
-		nh_.param<std::string>("pub_cross", pub_cross_name_, "/mr_camera_processing/cross");
-		nh_.param<std::string>("pub_image", pub_image_name_, "/mr_camera_processing/output_image");
-		nh_.param<std::string>("pub_qr", pub_qr_name_, "/mr_camera_processing/qr");
-		nh_.param<std::string>("pub_line", pub_line_name_, "/mr_camera_processing/line");
+        nh_.param<std::string>("pub_cross", pub_cross_name_, "/mrCameraProcessing/cross");
+        nh_.param<std::string>("pub_image", pub_image_name_, "/mrCameraProcessing/output_image");
+        nh_.param<std::string>("pub_qr", pub_qr_name_, "/mrCameraProcessing/QR");
+        nh_.param<std::string>("pub_line", pub_line_name_, "/mrCameraProcessing/line");
 		
-		sub_image_ = it_.subscribe(sub_image_name_,1, &ImageConverter::imageCb,
-							 this, image_transport::TransportHints("compressed"));
+        sub_image_ = it_.subscribe(sub_image_name_,1, &ImageConverter::imageCb, this, image_transport::TransportHints("compressed"));
 		pub_line_ = nh_.advertise<geometry_msgs::Point>(pub_line_name_, 1);
 		pub_qr_ = nh_.advertise<std_msgs::String>(pub_qr_name_, 1);
 		pub_cross_ = nh_.advertise<std_msgs::Bool>(pub_cross_name_, 1);
@@ -149,14 +137,16 @@ public:
 		std::string data_type, data;
 		
 		// Read the image
-		for( zbar::Image::SymbolIterator symbol = image.symbol_begin(); symbol != image.symbol_end(); ++symbol)
+		for(zbar::Image::SymbolIterator symbol = image.symbol_begin(); symbol != image.symbol_end(); ++symbol)
 		{
 			std::vector<cv::Point> vp;
 			
-			// Write out the symbols and data
-			// type name equals type of code QR or Barcode...
-			// data equals the data that can be found in the QR or Barcode 
-			// cout << "decode" << symbol->get_type_name() << " symbol \"" << symbol->get_data() << '"' << " " << endl;
+			/* 
+			 * Write out the symbols and data type name equals type of code QR or Barcode...
+			 * data equals the data that can be found in the QR or Barcode 
+			 */
+			//std::cout << "decode" << symbol->get_type_name() << " symbol \"" 
+			//	<< symbol->get_data() << '"' << " " << std::endl;
 			
 			//data_type = symbol->get_type_name();
 			data = symbol->get_data();
@@ -185,12 +175,24 @@ public:
 	void crossDetector(cv::Mat image_original){
 		
 	}
+private:
+	ros::NodeHandle nh_, _pNh;
+	image_transport::ImageTransport it_;
+	image_transport::Subscriber sub_image_;
+	image_transport::Publisher pub_image_;
+	ros::Publisher pub_line_;
+	ros::Publisher pub_qr_;
+	ros::Publisher pub_cross_;
+	std::string sub_image_name_;
+	std::string pub_cross_name_, pub_image_name_, pub_line_name_, pub_qr_name_;
+	
 };
 
 int main ( int argc, char** argv )
 {
-	ros::init(argc, argv, "mr_camera_processing");
+    ros::init(argc, argv, "MR_Camera_Processing");
 	ImageConverter ic;
-	ros::spin();
+	while(ros::ok());
+		ros::spin();
 	return 0;
 }

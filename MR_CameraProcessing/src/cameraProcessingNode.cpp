@@ -23,10 +23,10 @@
 
 class ImageConverter {
 public:
-	ImageConverter() : it_(nh_), _pNh(ros::this_node::getName() + "/"){
+	ImageConverter() : it_(nh_) {
 		nh_.param<std::string>("sub_image", sub_image_name_, "/mr_camera/image");
         nh_.param<std::string>("pub_image", pub_image_name_, "/mrCameraProcessing/output_image");
-        nh_.param<std::string>("pub_qr", pub_qr_name_, "/mrCameraProcessing/QR");
+        nh_.param<std::string>("pub_qr", pub_qr_name_, "/mrCameraProcessing/qr");
         nh_.param<std::string>("pub_line", pub_line_name_, "/mrCameraProcessing/line");
 		nh_.param<std::string> ("srv_enable", srv_enable_name_, "/mrLineFollower/enable");
 		
@@ -50,7 +50,7 @@ public:
 	bool enableCallback(mr_camera_processing::enable::Request& req, 
 						mr_camera_processing::enable::Response& res)
 	{
-		if(req.enable == true)
+		if (req.enable == true)
 			sub_image_ = it_.subscribe(sub_image_name_,1, &ImageConverter::imageCb, this,
 									   image_transport::TransportHints("compressed"));
 		else
@@ -226,7 +226,7 @@ int main ( int argc, char** argv )
 {
     ros::init(argc, argv, "MR_Camera_Processing");
 	ImageConverter ic;
-	while(ros::ok());
+	while(ros::ok())
 		ros::spin();
 	return 0;
 }

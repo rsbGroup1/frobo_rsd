@@ -6,8 +6,7 @@
 #include <sstream>
 #include "mr_navigation_controller/performAction.h"
 #include "mr_navigation_controller/enable.h"
-#include "mr_navigation_controller/angularMove.h"
-#include "mr_navigation_controller/linearMove.h"
+#include "mr_navigation_controller/move.h"
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include "std_msgs/String.h"
@@ -26,7 +25,7 @@ struct Skill
 
 // Global var
 ros::Publisher _statusTopic;
-ros::ServiceClient _serviceLineFollow, _serviceAngularMove,_serviceLinearMove;
+ros::ServiceClient _serviceLineFollow, _serviceMove;
 
 // Skills
 bool lineUntilQR(int QR)
@@ -56,17 +55,17 @@ bool lineUntilQR(int QR)
 
 bool linearMove(double distance)
 {
-    mr_navigation_controller::linearMove obj;
-    obj.request.distance = distance;
-    _serviceLinearMove.call(obj);
+    mr_navigation_controller::move obj;
+    obj.request.linear = distance;
+    _serviceMove.call(obj);
     return obj.response.done;
 }
 
 bool angularMove(double distance)
 {
-    mr_navigation_controller::angularMove obj;
+    mr_navigation_controller::move obj;
     obj.request.angle = distance;
-    _serviceAngularMove.call(obj);
+    _serviceMove.call(obj);
     return obj.response.done;
 }
 
@@ -150,16 +149,14 @@ int main()
     ros::NodeHandle nh, pNh("~");
 
     // Get parameter names
-    std::string lineFollowEnableString, linearMoveString, angularMoveString, qrSub;
+    std::string lineFollowEnableString, moveString, qrSub;
     pNh.param<std::string>("lineFollowEnableService", lineFollowEnableString, "mrLineFollower/enable");
-    pNh.param<std::string>("linearMoveService", linearMoveString, "mrGo/linearMove");
-    pNh.param<std::string>("angularMoveService", angularMoveString, "mrGo/angularMove");
+    pNh.param<std::string>("moveService", moveString, "mrGo/move");
     pNh.param<std::string>("qrSub", qrSub, "/mrCameraProcessing/QR");
 
     // Service
     _serviceLineFollow = nh.serviceClient<mr_navigation_controller::enable>(lineFollowEnableString);
-    _serviceAngularMove = nh.serviceClient<mr_navigation_controller::angularMove>(angularMoveString);
-    _serviceLinearMove = nh.serviceClient<mr_navigation_controller::linearMove>(linearMoveString);
+    _serviceMove = nh.serviceClient<mr_navigation_controller::move>(moveString);
     ros::ServiceServer actionServer = nh.advertiseService("mrNavigationController/performAction", performActionCallback);
 
     // Subscriber

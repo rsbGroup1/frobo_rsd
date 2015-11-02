@@ -30,7 +30,7 @@ public:
         nh_.param<std::string>("odometry", sub_odom_name_, "/odom");
         nh_.param<std::string>("pub_twist", pub_twist_name_, "/fmCommand/cmd_vel");
         nh_.param<std::string>("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
-        nh_.param<std::string>("srv_linear", srv_move_name_, "mrGo/move");
+        nh_.param<std::string>("srv_move", srv_move_name_, "mrGo/move");
 
         // Publishers, subscribers, services
         nh_.subscribe<nav_msgs::Odometry>(sub_odom_name_, 1, &Go::odometryCallback, this);
@@ -72,23 +72,29 @@ public:
 		// Desired
 		odom_desired_ = odom_current_;
 		odom_desired_.twist.twist.linear.x += req.linear;
-		odom_desired_.twist.twist.angular.z += req.angular;
+        odom_desired_.twist.twist.angular.z += req.angle;
 		
 		// Linear movement
-		if (req.linear != 0){
+        if(req.linear != 0)
+        {
 			// Create the movement msg
-			if (req.linear < 0) {
+            if(req.linear < 0)
+            {
 				twist_msg_.twist.linear.x = linear_speed_;
 				twist_msg_.twist.angular.z = 0;
-			} else {
+            }
+            else
+            {
 				twist_msg_.twist.linear.x = -linear_speed_;
 				twist_msg_.twist.angular.z = 0;
 			}
+
 			// Move the robot
-			while(odom_current_.twist.twist.linear.x
-				< odom_desired_.twist.twist.linear.x) {
+            while(odom_current_.twist.twist.linear.x < odom_desired_.twist.twist.linear.x)
+            {
 				pub_twist_.publish(twist_msg_);
 			}
+
 			// Stop the robot
 			pub_twist_.publish(twist_stop_msg_);
 		}

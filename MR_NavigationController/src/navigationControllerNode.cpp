@@ -6,7 +6,6 @@
 #include <sstream>
 #include "mr_navigation_controller/performAction.h"
 #include "mr_navigation_controller/enable.h"
-#include "mr_navigation_controller/followLineToQR.h"
 #include "mr_navigation_controller/angularMove.h"
 #include "mr_navigation_controller/linearMove.h"
 #include <boost/thread.hpp>
@@ -32,12 +31,27 @@ ros::ServiceClient _serviceLineFollow, _serviceAngularMove,_serviceLinearMove;
 // Skills
 bool lineUntilQR(int QR)
 {
-    mr_navigation_controller::followLineToQR obj;
-    obj.request.QR = QR;
+    mr_navigation_controller::enable obj;
+    obj.request.enable = true;
     if(!_serviceLineFollow.call(obj))
-        return obj.response.status;
-    else
+    {
+        ROS_ERROR("Could not start line following!");
         return false;
+    }
+
+    while(true)
+    {
+        // WAIT TILL QR IS FOUND
+    }
+
+    obj.request.enable = false;
+    if(!_serviceLineFollow.call(obj))
+    {
+        ROS_ERROR("Could not stop line following!");
+        return false;
+    }
+
+    return true;
 }
 
 bool linearMove(double distance)
@@ -119,6 +133,11 @@ bool performActionCallback(mr_navigation_controller::performAction::Request &req
     return true;
 }
 
+void qrCallback(std_msgs::String msg)
+{
+
+}
+
 // Functions
 int main()
 {
@@ -131,16 +150,20 @@ int main()
     ros::NodeHandle nh, pNh("~");
 
     // Get parameter names
-    std::string lineFollowString, linearMoveString, angularMoveString;
-    pNh.param<std::string>("lineFollowService", lineFollowString, "mrLineFollower/followQR");
+    std::string lineFollowEnableString, linearMoveString, angularMoveString, qrSub;
+    pNh.param<std::string>("lineFollowEnableService", lineFollowEnableString, "mrLineFollower/enable");
     pNh.param<std::string>("linearMoveService", linearMoveString, "mrGo/linearMove");
     pNh.param<std::string>("angularMoveService", angularMoveString, "mrGo/angularMove");
+    pNh.param<std::string>("qrSub", qrSub, "/mrCameraProcessing/QR");
 
     // Service
-    _serviceLineFollow = nh.serviceClient<mr_navigation_controller::followLineToQR>(lineFollowString);
+    _serviceLineFollow = nh.serviceClient<mr_navigation_controller::enable>(lineFollowEnableString);
     _serviceAngularMove = nh.serviceClient<mr_navigation_controller::angularMove>(angularMoveString);
     _serviceLinearMove = nh.serviceClient<mr_navigation_controller::linearMove>(linearMoveString);
     ros::ServiceServer actionServer = nh.advertiseService("mrNavigationController/performAction", performActionCallback);
+
+    // Subscriber
+    ros::Subscriber qrSubscriber = nh.subscribe(qrSub, 10, qrCallback);
 
     // Publisher
     _statusTopic = nh.advertise<std_msgs::String>("mrNavigationController/status", 10);

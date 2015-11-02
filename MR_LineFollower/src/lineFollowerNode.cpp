@@ -11,7 +11,6 @@
 #include "msgs/BoolStamped.h"
 
 #include "mr_line_follower/enable.h"
-#include "mr_line_follower/followLineToQR.h"
 
 #include <iostream>
 #include <string>
@@ -41,14 +40,12 @@ public:
         nh_.param<std::string> ("pub_twist", pub_twist_name_, "/fmCommand/cmd_vel");
         nh_.param<std::string> ("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
         nh_.param<std::string> ("srv_enable", srv_enable_name_, "/mrLineFollower/enable");
-        nh_.param<std::string> ("srv_followlineqr", srv_follow_line_qr_name_, "/mrLineFollower/followQR");
 
         // Publishers, subscribers, services
         sub_line_ = nh_.subscribe<geometry_msgs::Point> (sub_line_name_, 1, &lineFollower::lineCallback, this);
         pub_twist_ = nh_.advertise<geometry_msgs::TwistStamped> (pub_twist_name_, 1);
         pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
         srv_enable_ = nh_.advertiseService(srv_enable_name_, &lineFollower::enableCallback, this);
-        srv_follow_line_qr_ = nh_.advertiseService(srv_follow_line_qr_name_, &lineFollower::followLineQRCallback, this);
 
         // Threads
         deadmanThread_ = new boost::thread(&lineFollower::enableDeadman, this);
@@ -184,14 +181,6 @@ public:
         return true;
     }
 
-    /**
-     * Follow line til qr
-     */
-    bool followLineQRCallback(mr_line_follower::followLineToQR::Request& req, mr_line_follower::followLineToQR::Response& res)
-    {
-        return true;
-    }
-
 private:
     // ROS
     ros::NodeHandle nh_;
@@ -199,7 +188,6 @@ private:
     ros::Publisher pub_twist_;
     ros::Publisher pub_deadman_;
     ros::ServiceServer srv_enable_;
-    ros::ServiceServer srv_follow_line_qr_;
     // Threads
     boost::thread* deadmanThread_;
     // PID
@@ -218,7 +206,6 @@ private:
     std::string sub_line_name_;
     std::string pub_deadman_name_, pub_twist_name_;
     std::string srv_enable_name_;
-    std::string srv_follow_line_qr_name_;
     // Enable
     bool enable_;
 };

@@ -21,13 +21,12 @@ class ImageConverter {
 public:
 	ImageConverter() : it_(nh_), _pNh(ros::this_node::getName() + "/"){
 		nh_.param<std::string>("sub_image", sub_image_name_, "/mr_camera/image");
-		nh_.param<std::string>("pub_cross", pub_cross_name_, "/mr_camera_processing/cross");
-		nh_.param<std::string>("pub_image", pub_image_name_, "/mr_camera_processing/output_image");
-		nh_.param<std::string>("pub_qr", pub_qr_name_, "/mr_camera_processing/qr");
-		nh_.param<std::string>("pub_line", pub_line_name_, "/mr_camera_processing/line");
+        nh_.param<std::string>("pub_cross", pub_cross_name_, "/mrCameraProcessing/cross");
+        nh_.param<std::string>("pub_image", pub_image_name_, "/mrCameraProcessing/output_image");
+        nh_.param<std::string>("pub_qr", pub_qr_name_, "/mrCameraProcessing/QR");
+        nh_.param<std::string>("pub_line", pub_line_name_, "/mrCameraProcessing/line");
 		
-		sub_image_ = it_.subscribe(sub_image_name_,1, &ImageConverter::imageCb,
-							 this, image_transport::TransportHints("compressed"));
+        sub_image_ = it_.subscribe(sub_image_name_,1, &ImageConverter::imageCb, this, image_transport::TransportHints("compressed"));
 		pub_line_ = nh_.advertise<geometry_msgs::Point>(pub_line_name_, 1);
 		pub_qr_ = nh_.advertise<std_msgs::String>(pub_qr_name_, 1);
 		pub_cross_ = nh_.advertise<std_msgs::Bool>(pub_cross_name_, 1);
@@ -191,7 +190,7 @@ private:
 
 int main ( int argc, char** argv )
 {
-	ros::init(argc, argv, "mr_camera_processing");
+    ros::init(argc, argv, "MR_Camera_Processing");
 	ImageConverter ic;
 	while(ros::ok());
 		ros::spin();

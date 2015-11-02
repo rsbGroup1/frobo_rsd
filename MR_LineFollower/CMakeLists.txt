@@ -20,7 +20,6 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 add_service_files(
 	FILES
 	enable.srv
-	followLineToQR.srv
 )
 
 

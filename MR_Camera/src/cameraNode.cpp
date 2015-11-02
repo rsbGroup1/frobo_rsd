@@ -25,14 +25,14 @@ int main()
     int argc = 0;
 
     // Init ROS Node
-    ros::init(argc, argv, "mr_camera");
+    ros::init(argc, argv, "MR_Camera");
     ros::NodeHandle nh;
     ros::NodeHandle pNh(ros::this_node::getName() + "/");
 
     std::string imagePub;
     int frameWidth, frameHeight, cameraFrequency, sharpness, brightness, whiteBalanceTemp;
     bool whiteBalanceAuto;
-    pNh.param<std::string>("image_pub", imagePub, "/mr_camera/image");
+    pNh.param<std::string>("image_pub", imagePub, "/mrCamera/image");
     pNh.param<int>("frameWidth", frameWidth, 640);
     pNh.param<int>("frameHeight", frameHeight, 480);
     pNh.param<int>("cameraFrequency", cameraFrequency, 15);

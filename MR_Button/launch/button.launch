@@ -2,9 +2,12 @@
 
 <launch>
 	<group ns="MR_Button">
-		<node pkg="mr_buttonr" name="mr_button" type="mr_button">
+		<node pkg="mr_button" name="Button" type="mr_button">
 			<param name="baud_rate" value="115200"/>
-			<param name="port" value="/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00"/>  	
+			<param name="port" value="/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00"/> 
+			<param name="mr_collision_sub" value="/mrObstacleDetector/status"/>
+			<param name="mr_hmi_sub" value="/mrHMI/run"/>
+			<param name="mr_button_pub" value="/mrButton/run"/> 	
 		</node>
 	</group>
 </launch>

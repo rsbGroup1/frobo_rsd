@@ -50,7 +50,7 @@ void getROSPoints(const geometry_msgs::PointConstPtr & point){
 int main(int argc, char **argv)
 {
 	ROS_INFO("Kalman Filter Started!");
-	ros::init(argc, argv, "kalman_filter_node");
+    ros::init(argc, argv, "MR_Kalman_Filter");
 
 	//ROS
 	ros::NodeHandle nh;
@@ -61,8 +61,8 @@ int main(int argc, char **argv)
 	//Parameters
 	bool debugging;
 	nh.param<bool>("debugging", debugging, true);
-	nh.param<std::string>("sub_point", sub_point_name, "/mr_camera_processing/line");
-	nh.param<std::string>("pub_point", pub_point_name, "/mr_kalman_filter/line");
+    nh.param<std::string>("sub_point", sub_point_name, "/mrCameraProcessing/line");
+    nh.param<std::string>("pub_point", pub_point_name, "/mrKalmanFilter/line");
 	int frame_rate = 1;
 
 	//Publishers and Subscribers

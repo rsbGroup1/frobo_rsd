@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs geometry_msgs genm
 add_service_files(
 	FILES
 	performAction.srv
-	followLineToQR.srv
 	enable.srv
 	angularMove.srv
 	linearMove.srv

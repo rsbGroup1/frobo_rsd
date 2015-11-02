@@ -11,6 +11,8 @@
 #include <boost/thread/mutex.hpp>
 #include "std_msgs/String.h"
 #include "std_msgs/Float64.h"
+#include "mr_line_follower/followUntilQR.h"
+
 // Defines
 #define M_PI                    3.14159265358979323846
 #define DEGREETORAD             (M_PI/180.0)
@@ -166,7 +168,7 @@ int main()
     _statusTopic = nh.advertise<std_msgs::String>("mrNavigationController/status", 10);
 
     // ROS Spin: Handle callbacks
-    while(ros::ok)
+    while(ros::ok())
         ros::spinOnce();
 
     // Return

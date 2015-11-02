@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
 	genmsg
 	msgs
 	message_generation
+	mr_camera_processing
 )
 
 set(CMAKE_CXX_FLAGS "-std=c++11")
@@ -19,14 +20,14 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 ## Generate services in the 'srv' folder
 add_service_files(
 	FILES
-	enable.srv
+	followUntilQR.srv
 )
-
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
 	DEPENDENCIES
 	std_msgs  # Or other packages containing msgs
+	mr_camera_processing
 )
 
 ## Specify additional locations of header files

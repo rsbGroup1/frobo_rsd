@@ -14,6 +14,19 @@ find_package(catkin REQUIRED COMPONENTS
 
 set(CMAKE_CXX_FLAGS "-std=c++11")
 
+## Generate services in the 'srv' folder
+add_service_files(
+	FILES
+	enable.srv
+)
+
+## Generate added messages and services with any dependencies listed here
+generate_messages(
+	DEPENDENCIES
+	std_msgs
+)
+
+
 catkin_package(
 	#INCLUDE_DIRS include
 	CATKIN_DEPENDS message_runtime std_msgs geometry_msgs
@@ -21,15 +34,15 @@ catkin_package(
 )
 
 # Use OpenCV
-INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
-LINK_DIRECTORIES(${OpenCV_LIB_DIR})
+include_directories(${OpenCV_INCLUDE_DIRS})
+link_directories(${OpenCV_LIB_DIR})
 
 include_directories(${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
-SET(SrcFiles src/cameraProcessingNode.cpp)
+set(SrcFiles src/cameraProcessingNode.cpp)
 
 add_executable(${PROJECT_NAME} ${SrcFiles})
 
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${ZBAR_LIBRARIES} zbar)
 
 MESSAGE(${PROJECT_NAME} "Done!")

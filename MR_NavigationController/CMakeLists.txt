@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs geometry_msgs genm
 
 # Service files
 add_service_files(
+	DIRECTORY srv
 	FILES
 	performAction.srv
 	enable.srv
@@ -24,5 +25,7 @@ add_executable(${PROJECT_NAME} ${SrcFiles})
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
-MESSAGE(${PROJECT_NAME} "Done!")
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp ${catkin_EXPORTED_TARGETS})
+
+MESSAGE(${PROJECT_NAME} " Done!")
 

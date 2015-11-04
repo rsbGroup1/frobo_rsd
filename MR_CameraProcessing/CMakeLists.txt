@@ -45,4 +45,6 @@ add_executable(${PROJECT_NAME} ${SrcFiles})
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${ZBAR_LIBRARIES} zbar)
 
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp ${catkin_EXPORTED_TARGETS})
+
 MESSAGE(${PROJECT_NAME} "Done!")

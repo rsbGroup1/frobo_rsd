@@ -43,3 +43,5 @@ add_executable(mr_line_follower src/lineFollowerNode.cpp)
 target_link_libraries(mr_line_follower
   ${catkin_LIBRARIES}
 )
+
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp ${catkin_EXPORTED_TARGETS})

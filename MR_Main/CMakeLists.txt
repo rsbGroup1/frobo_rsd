@@ -5,13 +5,17 @@ project(mr_main)
 find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs geometry_msgs message_generation genmsg)
 
 # Service files
-add_service_files(
-	FILES
-	tip.srv
-	performAction.srv
-)
+#add_service_files(
+	#FILES
+#)
 
-generate_messages(DEPENDENCIES std_msgs geometry_msgs)
+## Generate added messages and services with any dependencies listed here
+generate_messages(
+	DEPENDENCIES
+	std_msgs  # Or other packages containing msgs
+	mr_navigation_controller
+	mr_tip_controller
+)
 
 catkin_package()
 

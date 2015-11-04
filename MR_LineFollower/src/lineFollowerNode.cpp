@@ -37,10 +37,11 @@ public:
         nh_.param<double> ("robot_speed", robot_speed_, 0.1);
 
         // Get topics name
-        nh_.param<std::string> ("sub_line", sub_line_name_, "/mr_camera_processing/line");
+        nh_.param<std::string> ("sub_line", sub_line_name_, "/mrCameraProcessing/line");
+		nh_.param<std::string> ("sub_qr", sub_qr_name_, "/mrCameraProcessing/qr");
         nh_.param<std::string> ("pub_twist", pub_twist_name_, "/fmCommand/cmd_vel");
         nh_.param<std::string> ("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
-        nh_.param<std::string> ("srv_enable", srv_enable_name_, "/mrLineFollower/enable");
+        nh_.param<std::string> ("srv_lineQr", srv_lineUntilQR_name_, "/mrLineFollower/lineUntilQR");
 		nh_.param<std::string> (
 			"srv_mr_camera_processing_enable_name", 
 			srv_mr_camera_processing_enable_name_, 
@@ -56,7 +57,7 @@ public:
         pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
         
 		srv_enable_ = nh_.advertiseService(
-			srv_enable_name_, &lineFollower::enableCallback, this);
+			                       srv_lineUntilQR_name_, &lineFollower::lineUntilQRCallback, this);
 		
 		srv_mr_camera_processing_enable_ = nh_.serviceClient<mr_camera_processing::enable>(srv_mr_camera_processing_enable_name_);
 
@@ -186,13 +187,13 @@ public:
     /**
      * Enables or disables the line following
      */
-	bool enableCallback(mr_line_follower::followUntilQR::Request& req, mr_line_follower::followUntilQR::Response& res)
+	bool lineUntilQRCallback(mr_line_follower::followUntilQR::Request& req, mr_line_follower::followUntilQR::Response& res)
     {
 		// Start the camera processing
 		mr_camera_processing::enable enableCameraProcessing;
 		enableCameraProcessing.request.enable = true;
 		srv_mr_camera_processing_enable_.call(enableCameraProcessing);
-		while(enableCameraProcessing.response.status != true){
+		while (enableCameraProcessing.response.status != true) {
 			ROS_INFO("Not possible to start camera processing, trying againg");
 			enableCameraProcessing.request.enable = true;
 			srv_mr_camera_processing_enable_.call(enableCameraProcessing);
@@ -203,7 +204,7 @@ public:
 		// Enables deadman
 		deadmanThread_ = new boost::thread(&lineFollower::enableDeadman, this);
 		/*
-		 * Start the line line follower
+		 * Starts the line line follower
 		 */
 		// Starts the subscribers
 		sub_line_ = nh_.subscribe<geometry_msgs::Point> (
@@ -211,11 +212,12 @@ public:
 		sub_qr_ = nh_.subscribe<std_msgs::String> (
 			sub_qr_name_, 1, &lineFollower::qrCallback, this);
 		
-		// Wait until it finds it or the time is more than the limit
+		// Waits until it finds it or the time is more than the limit
 		ros::Time time_start;
 		time_start = ros::Time::now();
 		while (req.qr != qr_detected_ 
-			&& (ros::Time::now().toSec() - time_start.toSec() > req.time_limit))
+			&& (ros::Time::now().toSec() - time_start
+			.toSec() > req.time_limit))
 		{
 			// Nothing
 		}
@@ -228,6 +230,8 @@ public:
 		// Stops the subscribers
 		sub_line_.shutdown();
 		sub_qr_.shutdown();
+		// Disables the deadman
+		stopDeadman();
 		// Disables the camera processing
 		enableCameraProcessing.request.enable = false;
 		srv_mr_camera_processing_enable_.call(enableCameraProcessing);
@@ -267,13 +271,15 @@ private:
     // Topics name
     std::string sub_line_name_, sub_qr_name_;
     std::string pub_deadman_name_, pub_twist_name_;
-    std::string srv_enable_name_, srv_mr_camera_processing_enable_name_;
+    std::string srv_lineUntilQR_name_, srv_mr_camera_processing_enable_name_;
 	// QR
 	std::string qr_desired_;
 	std::string qr_detected_;
 };
 
-
+/**
+ * Main 
+ */
 int main(int argv, char** argc)
 {
     ros::init(argv, argc, "MR_Line_Follower");

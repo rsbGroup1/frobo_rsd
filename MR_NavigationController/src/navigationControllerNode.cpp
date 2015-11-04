@@ -61,7 +61,14 @@ public:
 	
 	
 	/**
+	 * 
 	 * Skills
+	 * 
+	 */
+	
+	/**
+	 * Follows the line with the camera until it finds the specified qr
+	 * @param qr the qr code to find
 	 */
 	bool lineUntilQR(std::string qr)
 	{
@@ -70,68 +77,102 @@ public:
 		lineFollowerCall.request.time_limit = 30;
 		return true;
 	}
-	
+	/**
+	 * Moves the robot for an specified distance
+	 * @param distance the distance to move straight. It can be positive or negative
+	 */
 	bool linearMove(double distance)
 	{
-		mr_navigation_controller::move obj;
-		obj.request.linear = distance;
-		      srv_move_.call(obj);
-		return obj.response.done;
+		move_call_.request.linear = distance;
+		move_call_.request.angle = 0;
+		srv_move_.call(move_call_);
+		return move_call_.response.done;
 	}
 	
-	bool angularMove(double distance)
+	/**
+	 * Turns a defined angle
+	 * @param angle The angle to turn. NEED to be in radians
+	 */
+	bool angularMove(double angle)
 	{
-		mr_navigation_controller::move obj;
-		obj.request.angle = distance;
-		      srv_move_.call(obj);
-		return obj.response.done;
-	}
+		move_call_.request.linear = 0;
+		move_call_.request.angle = angle;
+		srv_move_.call(move_call_);
+		return move_call_.response.done;	}
 	
+	/**
+	 *
+	 */
 	bool goToFreePosition(double x, double y)
 	{
 		
 	}
-	
+	/**
+	 * 
+	 */
 	bool moveToDispenser()
 	{
-		
+		linearMove(1.0);
+		angularMove(90*DEG_TO_RAD);
 	}
-	
+	/**
+	 * 
+	 */
 	bool moveToCharger()
 	{
-		
+		linearMove(1.0);
+		angularMove(90*DEG_TO_RAD);
 	}
-	
+	/**
+	 * 
+	 */
 	bool moveFromDispenser()
 	{
-		
+		linearMove(1.0);
+		angularMove(90*DEG_TO_RAD);
 	}
-	
+	/**
+	 * 
+	 */
 	bool moveFromCharger()
 	{
-		
+		linearMove(1.0);
+		angularMove(90*DEG_TO_RAD);
 	}
-	
+	/**
+	 * 
+	 */
 	bool changeLineWC1()
 	{
-		
+		linearMove(1.0);
+		angularMove(90*DEG_TO_RAD);
 	}
-	
+	/**
+	 * 
+	 */
 	bool changeLineWC2()
 	{
-		
+		linearMove(1.0);
+		angularMove(90*DEG_TO_RAD);
 	}
-	
+	/**
+	 * 
+	 */
 	bool changeLineWC3()
 	{
-		
+		linearMove(1.0);
+		angularMove(90*DEG_TO_RAD);
 	}
-	
+	/**
+	 *
+	 */
 	std::vector<Skill> graphSearch(int action)
 	{
 		return std::vector<Skill>();
 	}
-	
+	/**
+	 * 
+	 */
 	bool performActionCallback(mr_navigation_controller::performAction::Request &req,
 							   mr_navigation_controller::performAction::Response &res)
 	{
@@ -157,6 +198,8 @@ private:
 	ros::ServiceClient srv_lineUntilQR_, srv_move_;
 	ros::ServiceServer srv_action_;
 	std::string srv_lineUntilQR_name_, srv_move_name_, pub_status_name_, srv_action_name_;
+	
+	mr_navigation_controller::move move_call_;
 };
 
 

@@ -8,11 +8,15 @@ find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs geometry_msgs genm
 add_service_files(
 	FILES
 	performAction.srv
-	enable.srv
-	move.srv
 )
 
-generate_messages(DEPENDENCIES std_msgs geometry_msgs)
+## Generate added messages and services with any dependencies listed here
+generate_messages(
+	DEPENDENCIES
+	std_msgs  # Or other packages containing msgs
+	mr_line_follower
+	mr_go
+)
 
 catkin_package()
 

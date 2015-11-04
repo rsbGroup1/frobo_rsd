@@ -4,7 +4,8 @@
 #include <string>
 #include <iostream>
 #include <sstream>
-#include "mr_main/performAction.h"
+#include "mr_navigation_controller/performAction.h"
+#include "mr_tip_controller/tip.h"
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include "std_msgs/String.h"
@@ -57,7 +58,7 @@ int main()
     pNh.param<std::string>("hmi_sub", hmiSub, "mrHMI/run");
 
     // Service
-    _servicePerformAction = nh.serviceClient<mr_main::performAction>(performActionString);
+    _servicePerformAction = nh.serviceClient<mr_navigation_controller::performAction>(performActionString);
 
     // Topic
     ros::Subscriber buttonSubriber = nh.subscribe(buttonSub, 1, buttonCallback);

@@ -37,11 +37,11 @@ public:
         nh_.param<double> ("robot_speed", robot_speed_, 0.1);
 
         // Get topics name
-        nh_.param<std::string> ("sub_line", sub_line_name_, "/mrCamerProcessing/line");
+        nh_.param<std::string> ("sub_line", sub_line_name_, "/mrCameraProcessing/line");
 		nh_.param<std::string> ("sub_qr", sub_qr_name_, "/mrCameraProcessing/qr");
         nh_.param<std::string> ("pub_twist", pub_twist_name_, "/fmCommand/cmd_vel");
         nh_.param<std::string> ("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
-        nh_.param<std::string> ("srv_enable", srv_lineUntilQR_name_, "/mrLineFollower/lineUntilQR");
+        nh_.param<std::string> ("srv_lineQr", srv_lineUntilQR_name_, "/mrLineFollower/lineUntilQR");
 		nh_.param<std::string> (
 			"srv_mr_camera_processing_enable_name", 
 			srv_mr_camera_processing_enable_name_, 

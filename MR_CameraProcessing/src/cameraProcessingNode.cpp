@@ -23,21 +23,21 @@
 
 class ImageConverter {
 public:
-	ImageConverter() : it_(nh_) {
-		nh_.param<std::string>("sub_image", sub_image_name_, "/mr_camera/image");
-        nh_.param<std::string>("pub_image", pub_image_name_, "/mrCameraProcessing/output_image");
-        nh_.param<std::string>("pub_qr", pub_qr_name_, "/mrCameraProcessing/qr");
-        nh_.param<std::string>("pub_line", pub_line_name_, "/mrCameraProcessing/line");
-		nh_.param<std::string> ("srv_enable", srv_enable_name_, "/mrLineFollower/enable");
+	ImageConverter() : it_(nh_) 
+	{
+    		ros::NodeHandle pNh_("~");
+		pNh_.param<std::string>("sub_image", sub_image_name_, "/mrCamera/image");
+       	 	pNh_.param<std::string>("pub_image", pub_image_name_, "/mrCameraProcessing/output_image");
+        	pNh_.param<std::string>("pub_qr", pub_qr_name_, "/mrCameraProcessing/qr");
+       		pNh_.param<std::string>("pub_line", pub_line_name_, "/mrCameraProcessing/line");
+		pNh_.param<std::string>("srv_enable", srv_enable_name_, "/mrCameraProcessing/enable");
 		
-        sub_image_ = it_.subscribe(sub_image_name_,1, &ImageConverter::imageCb, this,
-								   image_transport::TransportHints("compressed"));
+        	//sub_image_ = it_.subscribe(sub_image_name_,1, &ImageConverter::imageCb, this, image_transport::TransportHints("compressed"));
 		pub_line_ = nh_.advertise<geometry_msgs::Point>(pub_line_name_, 1);
 		pub_qr_ = nh_.advertise<std_msgs::String>(pub_qr_name_, 1);
 		pub_image_ = it_.advertise(pub_image_name_, 1);
 		
-		srv_enable_ = nh_.advertiseService(srv_enable_name_,
-										   &ImageConverter::enableCallback, this);
+		srv_enable_ = nh_.advertiseService(srv_enable_name_, &ImageConverter::enableCallback, this);
 	}
 	
 	~ImageConverter() {

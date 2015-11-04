@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import rospy
 from std_msgs.msg import String
 from std_msgs.msg import Bool
@@ -14,6 +15,11 @@ class obs_detector():
 	def __init__(self):
 		# initialize stuff
 		rospy.init_node('obstacle_detector')
+
+		# deadman topic things
+		global pubActuationEna
+		ACTUATION_ENA_PUB = rospy.get_param( "~deadman_pub", "/fmSafe/deadman" )
+		pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
 
 		publishTopic = rospy.get_param("~publishTopic", "/mrObstacleDetector/status")
 		self.obstaclePub = rospy.Publisher(publishTopic, String, queue_size=1)

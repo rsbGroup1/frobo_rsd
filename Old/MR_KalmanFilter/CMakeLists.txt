@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(mr_kalman_filter)
 
 #set(OpenCV_DIR "/usr/share/OpenCV")
-find_package(OpenCV REQUIRED
+find_package(OpenCV REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS	roscpp rospy std_msgs message_generation)
 
@@ -25,4 +25,3 @@ add_executable(${PROJECT_NAME} src/kalmanFilterNode.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 MESSAGE(${PROJECT_NAME} "Done!")
-

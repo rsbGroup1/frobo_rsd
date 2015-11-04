@@ -64,10 +64,10 @@
 
 	<group ns="MR_HMI">
 		<node pkg="mr_hmi" name="proxy" type="proxy.py">
-			<param name="missionplanner_pub" value="/mrHMI/start_stop"/>
+			<param name="hmi_pub" value="/mrHMI/run"/>
 			<param name="deadman_pub" value="/fmSafe/deadman"/>
 			<param name="cmd_pub" value="/fmCommand/cmd_vel"/>
-			<param name="tipper_pub" value="/mrMainController/tipper"/>
+			<param name="tipper_srv" value="/mrMainController/tipper"/>
 		</node>			
 	</group>
 </launch>

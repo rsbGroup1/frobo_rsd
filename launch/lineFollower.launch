@@ -73,6 +73,7 @@
 		<param name="pub_qr" value="/mrCameraProcessing/QR" />
 		<param name="pub_line" value="/mrCameraProcessing/line" />
 		<param name="pub_image" value="/mrCameraProcessing/output_image" />
+		<param name="srv_enable" value="/mrCameraProcessing/enable" />
     </node>
 
 	<node pkg="mr_line_follower" name="LineFollower" type="mr_line_follower" output="screen">
@@ -84,8 +85,9 @@
 		<param name="pid_min" value="-320" />
 		<param name="reference_point_x" value="320" />
 		<param name="reference_point_y" value="240" />
-		<param name="robot_speed" value="0.1" />
+		<param name="robot_speed" value="0.3" />
 		
+		<param name="srv_mr_camera_processing_enable_name" value="/mrCameraProcessing/enable" />
 		<param name="sub_cross" value="/mrCameraProcessing/cross" />
 		<param name="sub_line" value="/mrCameraProcessing/line" />
 		<param name="sub_qr" value="/mrCameraProcessing/QR" />
@@ -93,11 +95,11 @@
 		<param name="pub_deadman" value="/fmSafe/deadman" />
     </node>
 	
-	<node pkg="mr_kalman_filter" name="Kalman" type="mr_kalman_filter_node" respawn="true" output="screen" >
+	<!--<node pkg="mr_kalman_filter" name="Kalman" type="mr_kalman_filter" respawn="true" output="screen" >
 		<param name="sub_point" value="/mrCameraProcessing/line" />
 		<param name="pub_point" value="/mrKalmanFilter/line" />
 		<param name="debugging" value="true" />
-	</node>
+	</node>-->
 	
 </launch>
 

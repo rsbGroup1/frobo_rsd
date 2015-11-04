@@ -145,7 +145,7 @@ int main(int argc, char** argv)
 
     ros::init(argc, argv, "mr_gps");
     ros::NodeHandle n;
-    ros::NodeHandle pNh(ros::this_node::getName() + "/");
+    ros::NodeHandle pNh("~");
 
     // Get parameters
     std::string stateSub, posePub;

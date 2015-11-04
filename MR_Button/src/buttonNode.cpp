@@ -260,12 +260,14 @@ void readSerialThread()
                         std_msgs::Bool msg;
                         msg.data = true;
                         _buttonPublisher.publish(msg);
+			ROS_INFO("btn run");
                     }
                     else if(compareMsg(msg, "idle\n"))
                     {
                         std_msgs::Bool msg;
                         msg.data = false;
                         _buttonPublisher.publish(msg);
+			ROS_INFO("btn idle");
                     }
 
                     // Clear data
@@ -305,7 +307,7 @@ int main()
     // Init ROS Node
     ros::init(argc, argv, "MR_Button");
     ros::NodeHandle nh;
-    ros::NodeHandle pNh(ros::this_node::getName() + "/");
+    ros::NodeHandle pNh("~");
 
     // Topic names
     std::string obstaclePub, hmiSub, buttonPub;

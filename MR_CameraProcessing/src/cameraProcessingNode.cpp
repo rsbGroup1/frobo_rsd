@@ -12,31 +12,57 @@
 #include <std_msgs/Bool.h>
 #include <std_msgs/String.h>
 
+#include "mr_camera_processing/enable.h"
+
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
 #include <zbar.h>
 
+#include <boost/thread.hpp>
+
 class ImageConverter {
 public:
-	ImageConverter() : it_(nh_), _pNh(ros::this_node::getName() + "/"){
-		nh_.param<std::string>("sub_image", sub_image_name_, "/mr_camera/image");
-		nh_.param<std::string>("pub_cross", pub_cross_name_, "/mr_camera_processing/cross");
-		nh_.param<std::string>("pub_image", pub_image_name_, "/mr_camera_processing/output_image");
-		nh_.param<std::string>("pub_qr", pub_qr_name_, "/mr_camera_processing/qr");
-		nh_.param<std::string>("pub_line", pub_line_name_, "/mr_camera_processing/line");
+	ImageConverter() : it_(nh_) 
+	{
+    		ros::NodeHandle pNh_("~");
+		pNh_.param<std::string>("sub_image", sub_image_name_, "/mrCamera/image");
+       	 	pNh_.param<std::string>("pub_image", pub_image_name_, "/mrCameraProcessing/output_image");
+        	pNh_.param<std::string>("pub_qr", pub_qr_name_, "/mrCameraProcessing/qr");
+       		pNh_.param<std::string>("pub_line", pub_line_name_, "/mrCameraProcessing/line");
+		pNh_.param<std::string>("srv_enable", srv_enable_name_, "/mrCameraProcessing/enable");
 		
-		sub_image_ = it_.subscribe(sub_image_name_,1, &ImageConverter::imageCb,
-							 this, image_transport::TransportHints("compressed"));
+        	//sub_image_ = it_.subscribe(sub_image_name_,1, &ImageConverter::imageCb, this, image_transport::TransportHints("compressed"));
 		pub_line_ = nh_.advertise<geometry_msgs::Point>(pub_line_name_, 1);
 		pub_qr_ = nh_.advertise<std_msgs::String>(pub_qr_name_, 1);
-		pub_cross_ = nh_.advertise<std_msgs::Bool>(pub_cross_name_, 1);
 		pub_image_ = it_.advertise(pub_image_name_, 1);
+		
+		srv_enable_ = nh_.advertiseService(srv_enable_name_, &ImageConverter::enableCallback, this);
 	}
 	
 	~ImageConverter() {
 	}
 	
+	/**
+	 * Enables or disables the image processing by subscribing or 
+	 * shutingdown the image subscriber
+	 */
+	bool enableCallback(mr_camera_processing::enable::Request& req, 
+						mr_camera_processing::enable::Response& res)
+	{
+		if (req.enable == true)
+			sub_image_ = it_.subscribe(sub_image_name_,1, &ImageConverter::imageCb, this,
+									   image_transport::TransportHints("compressed"));
+		else
+			sub_image_.shutdown();
+		
+		res.status = req.enable;
+		return true;
+	}
+	
+	/**
+	 * Receives the image and process it
+	 */
 	void imageCb(const sensor_msgs::ImageConstPtr& msg){
 		// Transform the message to an OpenCV image
 		cv_bridge::CvImagePtr image_ptr;
@@ -44,17 +70,19 @@ public:
 	
 		if (image_ptr->image.empty()){
 			ROS_INFO("No image being received");
-		} else { 
-	
-		// Flip
-		cv::flip(image_ptr->image, image_ptr->image, -1);
-		// Detection	
-		lineDetector(image_ptr->image);
-		//qrDetector(image_ptr->image);
-		//crossDetector(image_ptr->image);
+		} else {
+			// Flip
+			cv::flip(image_ptr->image, image_ptr->image, -1);
+			
+			// Detection	
+			lineDetector(image_ptr->image);
+			qrDetector(image_ptr->image);
 		}
 	}
 	
+	/**
+	 * Search for the lines
+	 */
 	void lineDetector(cv::Mat image_original){
 		/*
 		 * Image processing
@@ -69,7 +97,8 @@ public:
 		// Canny edge
 		unsigned char cannyMinThreshold = 50;
 		unsigned char cannyMaxThreshold = cannyMinThreshold * 2;
-		cv::Canny(image_filtered, image_filtered, cannyMinThreshold, cannyMaxThreshold, 3);
+		cv::Canny(image_filtered, image_filtered, 
+				  cannyMinThreshold, cannyMaxThreshold, 3);
 		
 		/*
 		 * Detect point
@@ -117,6 +146,9 @@ public:
 		pub_line_.publish(point_msg);
 	}
 	
+	/**
+	 * Search for the QR code and publish its content
+	 */
 	void qrDetector(cv::Mat image_original){
 		// Set up the scanner 
 		cv::Mat gray;
@@ -173,27 +205,28 @@ public:
 		pub_qr_.publish(data_msg);
 	}
 	
-	void crossDetector(cv::Mat image_original){
-		
-	}
 private:
 	ros::NodeHandle nh_, _pNh;
 	image_transport::ImageTransport it_;
 	image_transport::Subscriber sub_image_;
 	image_transport::Publisher pub_image_;
-	ros::Publisher pub_line_;
-	ros::Publisher pub_qr_;
-	ros::Publisher pub_cross_;
+	ros::Publisher pub_line_, pub_qr_;
+	ros::ServiceServer srv_enable_;
 	std::string sub_image_name_;
-	std::string pub_cross_name_, pub_image_name_, pub_line_name_, pub_qr_name_;
+	std::string pub_image_name_, pub_line_name_, pub_qr_name_;
+	std::string srv_enable_name_;
+	bool enabled_;
 	
 };
 
+/**
+ * Main
+ */
 int main ( int argc, char** argv )
 {
-	ros::init(argc, argv, "mr_camera_processing");
+    ros::init(argc, argv, "MR_Camera_Processing");
 	ImageConverter ic;
-	while(ros::ok());
+	while(ros::ok())
 		ros::spin();
 	return 0;
 }

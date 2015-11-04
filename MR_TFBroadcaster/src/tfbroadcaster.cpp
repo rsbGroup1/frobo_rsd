@@ -4,11 +4,11 @@
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "lidar_tf");
-    ros::NodeHandle node;
+    ros::NodeHandle node, pn("~");
 
     std::string lidarFrame, vehicleFrame;
-    node.param<std::string>("lidar_frame", lidarFrame, "lidar_frame");
-    node.param<std::string>("vehicle_frame", vehicleFrame, "base_footprint");
+    pn.param<std::string>("lidar_frame", lidarFrame, "lidar_frame");
+    pn.param<std::string>("vehicle_frame", vehicleFrame, "base_footprint");
 
     tf::TransformBroadcaster br;
     tf::Transform transform;

@@ -124,22 +124,17 @@ int main(int argc, char** argv)
     ROS_DEBUG("Init");
     ros::init(argc, argv, "gpsLocalisation");
     ROS_DEBUG("Node handle");
-    ros::NodeHandle n;
+    ros::NodeHandle n, pn("~");
 
     tfListener = new tf::TransformListener;
+    string odomTopic, gpsTopic, gpsPublishTopic;
 
-    string odomTopic = "odom";
-    string gpsTopic = "/mrGPS/Pose";
-    string gpsPublishTopic = "initialpose";
+    pn.param<std::string>("odomTopic", odomTopic, "odom");
+    pn.param<std::string>("gpsPoseTopic", gpsTopic, "/mrGPS/Pose");
+    pn.param<std::string>("filterResetTopic", gpsPublishTopic, "initialpose");
+    pn.param<std::string>("gpsFrame", gpsFrame, "gps_frame");
 
-
-    ROS_DEBUG("Parameters");
-    n.param<std::string>("odomTopic", odomTopic, "odom");
-    n.param<std::string>("gpsPoseTopic", gpsTopic, "/mrGPS/Pose");
-    n.param<std::string>("filterResetTopic", gpsPublishTopic, "initialpose");
-    n.param<std::string>("gpsFrame", gpsFrame, "gps_frame");
-
-    ROS_DEBUG("Subscrivber and publisher");
+    ROS_DEBUG("Subscriber and publisher");
     ros::Subscriber odomSubscriber = n.subscribe(odomTopic,20,odomCallback);
     ros::Subscriber gpsSubscriber = n.subscribe(gpsTopic,5,gpsFixCallBack);
     gpsOdomCombinedLocalisationPublisher = n.advertise<geometry_msgs::PoseWithCovarianceStamped>(gpsPublishTopic,10);

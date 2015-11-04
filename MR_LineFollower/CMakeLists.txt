@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
 	genmsg
 	msgs
 	message_generation
+	mr_camera_processing
 )
 
 set(CMAKE_CXX_FLAGS "-std=c++11")
@@ -19,15 +20,13 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 ## Generate services in the 'srv' folder
 add_service_files(
 	FILES
-	enable.srv
-	followLineToQR.srv
+	followUntilQR.srv
 )
-
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
 	DEPENDENCIES
-	std_msgs  # Or other packages containing msgs
+	std_msgs  
 )
 
 ## Specify additional locations of header files
@@ -43,3 +42,5 @@ add_executable(mr_line_follower src/lineFollowerNode.cpp)
 target_link_libraries(mr_line_follower
   ${catkin_LIBRARIES}
 )
+
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp ${catkin_EXPORTED_TARGETS})

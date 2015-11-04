@@ -63,7 +63,8 @@
     		<param name="critical_fault_enable" value="False" />
     		<param name="critical_fault_timeout" value="0.100" />
     		<param name="critical_fault_sub" value="/fmSafe/critical_fault" />
-		<param name="actuation_enable_pub" value="/fmSafe/actuation_enable" />
+    		<param name="critical_fault_sub" value="/fmSafe/critical_fault" />
+		<param name="obstacle_enable" value="False" />
 		</node>
 	</group>
 
@@ -191,19 +192,22 @@
 		</node-->
 
 	<node pkg="move_base" name="move_base" type="move_base" output="screen">
-		<remap from="/scan" to="/scan_filtered" />
+		<!--remap from="/scan" to="/scan_filtered" />
 		<param name="footprint_padding" value="0.01" />
 		<param name="controller_frequency" value="10.0" />
 		<param name="controller_patience" value="3.0" />
 		
 		<param name="oscillation_timeout" value="30.0" />
-		<param name="oscillation_distance" value="0.5" />
+		<param name="oscillation_distance" value="0.5" /-->
+		<rosparam file="../Navigation_Setup/move_base_config/move_base_params.yaml" command="load" />
+    		<param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS " />  
 
 		<rosparam file="../Navigation_Setup/move_base_config/costmap_common_params.yaml" command="load" ns="global_costmap"/>
 		<rosparam file="../Navigation_Setup/move_base_config/costmap_common_params.yaml" command="load" ns="local_costmap"/>
 		<rosparam file="../Navigation_Setup/move_base_config/local_costmap_params.yaml" command="load"/>
 		<rosparam file="../Navigation_Setup/move_base_config/global_costmap_params.yaml" command="load"/>
-		<rosparam file="../Navigation_Setup/move_base_config/base_local_planner_params.yaml" command="load"/>
+		<!--rosparam file="../Navigation_Setup/move_base_config/base_local_planner_params.yaml" command="load"/-->
+		<rosparam file="../Navigation_Setup/move_base_config/dwa_local_planner_params.yaml" command="load"/>
 	</node>
 
 
@@ -215,7 +219,10 @@
 	<node pkg="tf" type="static_transform_publisher" name="laser_transform" args="0.25 0 0 0 0 0 base_link laser_frame 50"  >
 	</node>
 
-    <node pkg="map_server" type="map_server" name="map_server" args="/home/frobit_pro_group1/roswork/src/frobo_rsd/other_files/frontal_map_big.yaml" output="screen"/>
+	<node pkg="tf" type="static_transform_publisher" name="imu_transform" args="0.10 0 0 0 0 0 base_link imu_link 50"  >
+	</node>
+
+    <node pkg="map_server" type="map_server" name="map_server" args="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/maps/frontal_map_big.yaml" output="screen"/>
 
     <node pkg="amcl" type="amcl" name="amcl" output="screen">
 		<param name="odom_alpha1" value="0.8"/>
@@ -299,7 +306,18 @@
 	</node>
 
 	<!-- Record Rosbag -->
-	<!--node pkg="rosbag" type="record" name="rosbag_record_all" args="-a"/-->
+	<node pkg="rosbag" type="record" name="rosbag_record_all" args="-a"/>
+
+	<!-- TIP CONTROLLER -->
+	<group ns="MR_TipController">
+		<node pkg="mr_tip_controller" name="TipController" type="mr_tip_controller">
+			<param name="baud_rate" value="115200"/>
+			<param name="port" value="/dev/serial/by-id/usb-Arduino_Srl_Arduino_Uno_7543932393535120F172-if00"/>  	
+			<param name="debug" value="true"/>  
+			<param name="mr_maincontroller_tipper_pub" value="/mrMainController/tipper"/>	   	
+		</node>
+	</group>
+
 
 </launch>
 

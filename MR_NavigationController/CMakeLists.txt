@@ -6,15 +6,18 @@ find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs geometry_msgs genm
 
 # Service files
 add_service_files(
+	DIRECTORY srv
 	FILES
 	performAction.srv
-	followLineToQR.srv
-	enable.srv
-	angularMove.srv
-	linearMove.srv
 )
 
-generate_messages(DEPENDENCIES std_msgs geometry_msgs)
+## Generate added messages and services with any dependencies listed here
+generate_messages(
+	DEPENDENCIES
+	std_msgs  # Or other packages containing msgs
+	mr_line_follower
+	mr_go
+)
 
 catkin_package()
 
@@ -26,5 +29,7 @@ add_executable(${PROJECT_NAME} ${SrcFiles})
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
-MESSAGE(${PROJECT_NAME} "Done!")
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp ${catkin_EXPORTED_TARGETS})
+
+MESSAGE(${PROJECT_NAME} " Done!")
 

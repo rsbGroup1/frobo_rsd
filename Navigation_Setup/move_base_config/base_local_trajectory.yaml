@@ -1,31 +1,25 @@
 #For full documentation of the parameters in this file, and a list of all the
 #parameters available for TrajectoryPlannerROS, please see
-# http://wiki.ros.org/dwa_local_planner
+# http://wiki.ros.org/base_local_planner#TrajectoryPlannerROS
 
-DWAPlannerROS:
+TrajectoryPlannerROS:
 
 ## Robot Configuration Parameters
-  prune_plan: true
-    
-#Acceleration limits
+  #Acceleration limits
   acc_lim_x: 16.2
-  acc_lim_y: 16.2
+  acc_lim_y: 0.0
   acc_lim_theta: 16.0 
-  acc_limit_trans: 16.0
   #Velocity limits
-
-  max_trans_vel: 0.5
-  min_trans_vel: 0.0
-  max_vel_x: 0.5
+  max_vel_x: 0.5 # max = 1.2
   min_vel_x: 0.0
-  max_vel_y: 0.0
-  min_vel_y: 0.0
 
-  max_rot_vel: 1.0
-  min_rot_vel: -1.0
+  max_vel_theta: 1.0
+  min_vel_theta: -1.0
+  min_in_place_vel_theta: 0.0
 
   holonomic_robot: false
-
+  escape_vel: -0.1
+  holonomic_robot: false
 ## Goal Tolerance Parameters
   #Set the tolerance on achieving a goal
   xy_goal_tolerance: 0.05
@@ -33,25 +27,28 @@ DWAPlannerROS:
   latch_xy_goal_tolerance: false 
 
 #Forward simulate trajectories
-  sim_time: 1.7
-  sim_granularity: 0.05
-  vx_samples: 50
-  vy_samples: 20
-  vtheta_samples: 50
-  
+  sim_time: 1.0
+  sim_granularity: 0.025
+  angular_sim_granularity: 0.025
+  vx_samples: 20
+  vy_samples: 0
+  vtheta_samples: 20
 
 ##Parameters for scoring trajectories
-  path_distance_bias: 10.0
-  goal_distance_bias: 1.0
-  occdist_scale : 0.1
-  forward_point_distance: 0.325
-  stop_time_buffer: 0.2
-  scaling_speed: 0.25
-  max_scaling_factor: 0.3
-  
+  meter_scoring: true
+  pdist_scale: 0.6
+  gdist_scale: 0.08
+  occdist_scale : 0.01
+  heading_lookahead : 0.325
+  #heading_scoring : true
+  #heading_scoring_timestep: 0.8
+  dwa: true
+
   global_frame_id: odom
 
+
+  prune_plan: true
   oscillation_reset_dist: 0.05
-  oscillation_reset_angle: 3.14
+
   publish_traj_pc: true
   publish_cost_grid_pc: true

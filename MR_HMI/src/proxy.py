@@ -22,8 +22,8 @@ ACTUATION_ENA_PUB = "/fmSafe/deadman" # a BoolStamped msg. deadman_msg.data = Tr
 CMD_VEL_UPDATE_PUB = "/fmCommand/cmd_vel"
 TIPPER_UPDATE_PUB = "/mrMainController/tipper"
 
-WEB_SOCKET_HOSTNAME = "localhost"
-#WEB_SOCKET_HOSTNAME = "10.125.11.201"
+#WEB_SOCKET_HOSTNAME = "localhost"
+WEB_SOCKET_HOSTNAME = "10.125.9.236"
 WEB_SOCKET_PORT = "8888"
 address = ""
 
@@ -257,7 +257,7 @@ def initProxy():
 
     # Read parameters
 
-    MODE_UPDATE_PUB = rospy.get_param( "~missionplanner_pub", MODE_UPDATE_PUB )
+    MODE_UPDATE_PUB = rospy.get_param( "~hmi_pub", MODE_UPDATE_PUB )
     TIPPER_UPDATE_PUB = rospy.get_param( "~tipper_pub", TIPPER_UPDATE_PUB )
     CMD_VEL_UPDATE_PUB = rospy.get_param( "~cmd_pub", CMD_VEL_UPDATE_PUB )
     ACTUATION_ENA_PUB = rospy.get_param( "~deadman_pub", ACTUATION_ENA_PUB )

@@ -29,6 +29,8 @@ rsdNamespace.commState = 3;
 rsdNamespace.activeButtonLeft = 'n';
 rsdNamespace.activeButtonRight = 'n';
 rsdNamespace.actuationEnable = false;
+rsdNamespace.availability = true;
+rsdNamespace.resumeSignal = false;
 
 // Safety
 rsdNamespace.watchdog;
@@ -121,9 +123,12 @@ rsdNamespace.ToggleHighlighting = function( selector ) {
 
 };
 
-rsdNamespace.WindowResizeHandler = function( event ) {
+rsdNamespace.WindowResizeHandler = function() {
 
     $('#remoteBottomContent').css( 'left', '50%' ).css( 'left', '-=200px' );
+
+    var dialogWidth = ( $('#dialog_box').width() / 2 );
+    $('#dialog_box').css( 'left', '50%' ).css( 'left', '-=' + dialogWidth + 'px' );
 
 };
 
@@ -304,21 +309,68 @@ rsdNamespace.RegisterTouchSurfaces = function() {
 
 };
 
-rsdNamespace.CallDashboard = function( event ) {
+rsdNamespace.ToggleAvailabilityState = function() {
 
-    rsdNamespace.actuationEnable = true
+    if( rsdNamespace.commState == 1 ) {
+
+        if( rsdNamespace.availability ) rsdNamespace.SetAvailabilitySwitch( false );
+        else rsdNamespace.SetAvailabilitySwitch( true );
+
+    }
+
+};
+
+rsdNamespace.SetAvailabilitySwitch = function( state ) {
+
+    if( state != rsdNamespace.availability ) {
+
+        rsdNamespace.availability = state;
+
+        if( state && !$("#availability").hasClass("available") ) {
+
+            $("#availability").addClass("available");
+            rsdNamespace.resumeSignal = true;
+
+        } else if( !state && $("#availability").hasClass("available") ) $("#availability").removeClass("available");
+
+    }
+
+    console.log( 'Should resume operation: ' + rsdNamespace.availability );
+
+};
+
+rsdNamespace.RequestConfirmation = function() {
+
+    $('#dialog_mask').css('display', 'block');
+    $('#dialog_box').css('display', 'block');
+
+    var dialogWidth = ( $('#dialog_box').width() / 2 );
+    console.log( dialogWidth );
+    $('#dialog_box').css( 'left', '50%' ).css( 'left', '-=' + dialogWidth + 'px' );
+
+}
+
+rsdNamespace.DismissDialog = function() {
+
+    $('#dialog_mask').css('display', 'none');
+    $('#dialog_box').css('display', 'none');
+
+}
+
+rsdNamespace.CallDashboard = function() {
+
+    rsdNamespace.DismissDialog();
+
+    rsdNamespace.actuationEnable = true;
 
     // Displaying dashboard
     $('#remote').css( 'z-index', '10' );
     $('.touchSurface').css( 'z-index', '11' );
     $('#remote').animate( {opacity: '1'}, 50 );
 
-
-    event.stopPropagation();
-
 };
 
-rsdNamespace.ReleaseDashboard = function( event ) {
+rsdNamespace.ReleaseDashboard = function() {
 
     // Fade out dashboard
     $('#remote').animate( {opacity: '0'}, 50 );
@@ -335,12 +387,9 @@ rsdNamespace.ReleaseDashboard = function( event ) {
 
     // $('#remoteLeftLayer1')
 
-
-    event.stopPropagation();
-
 };
 
-rsdNamespace.SetWatchdog = function( event ) {
+rsdNamespace.SetWatchdog = function() {
 
     rsdNamespace.watchdog = setInterval( function () {
 
@@ -359,7 +408,7 @@ rsdNamespace.SetWatchdog = function( event ) {
                 $('#upperGlobe').attr( 'style', tmp1 );
                 $('#lowerGlobe').attr( 'style', tmp2 );
 
-                $('#availability').css( 'background-color', 'red' );
+                $('#controls').css( 'box-shadow', '0px 0px 15px red' );
 
             } else {
 
@@ -370,7 +419,7 @@ rsdNamespace.SetWatchdog = function( event ) {
                 $('#upperGlobe').attr( 'style', tmp1 );
                 $('#lowerGlobe').attr( 'style', tmp2 );
 
-                $('#availability').css( 'background-color', 'green' );
+                $('#controls').css( 'box-shadow', '0px 0px 15px green' );
 
             }
 

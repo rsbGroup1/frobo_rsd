@@ -28,10 +28,14 @@ rsdNamespace.StartListening = function() {
 
             messageOut = {
                 "messageType":"status_request",
-                "data": {}
+                "data": {
+                    "resume": rsdNamespace.resumeSignal
+                }
             }
 
             rsdNamespace.connection.send( JSON.stringify( messageOut ) );
+
+            rsdNamespace.resumeSignal = false;
 
         }, 1000);
 
@@ -85,6 +89,7 @@ rsdNamespace.StartListening = function() {
                         for( i = 0; i < messages.length; i += 4 ) {
 
                             if( messages[i] === "Message" ) rsdNamespace.IndicateStatus( messages[i + 3] );
+                            else if( messages[i] === "Error" ) rsdNamespace.SetAvailabilitySwitch( false );
                             rsdNamespace.UpdateLog( messages[i], messages[i + 1], messages[i + 2] );
 
                         }

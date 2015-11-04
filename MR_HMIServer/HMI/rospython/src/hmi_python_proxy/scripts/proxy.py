@@ -30,7 +30,7 @@ address = ""
 direction = 0
 button = 0
 location = 0
-logMessages = "Message,12:32 28.10.15,Robot has entered the box,11,Message,28.10.15,Robot is charging,01,"
+logMessages = "Message,12:32 28.10.15,Robot has entered the box,11,Message,12:33 28.10.15,Robot is charging,01,Error,12:33 28.10.15,Robot is burning,01,"
 
 pubModeUpdate = 0
 pubTipperUpdate = 0

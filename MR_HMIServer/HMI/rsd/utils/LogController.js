@@ -7,8 +7,8 @@ rsdNamespace.UpdateLog = function( type, timestamp, message ) {
 
     var highlighting = "";
 
-    if( type === "error" ) highlighting = " error_message";
-    else if( type === "warning" ) highlighting = " warning_message";
+    if( type === "Error" ) highlighting = " error_message";
+    else if( type === "Warning" ) highlighting = " warning_message";
 
     var entry = '<div class="log_entry' + highlighting + '">' +
         '<span class="log_title"><h5 class="log_title">' + type + '</h5> - ' + timestamp + '</span>' +

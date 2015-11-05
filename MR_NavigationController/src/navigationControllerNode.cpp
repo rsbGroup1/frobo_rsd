@@ -8,11 +8,16 @@
 #include "mr_navigation_controller/performAction.h"
 #include "mr_line_follower/followUntilQR.h"
 #include "mr_go/move.h"
+
 #include "std_msgs/String.h"
 #include "std_msgs/Float64.h"
 
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
+
+#include "skills.h"
+#include "graph.h"
+
 
 // Defines
 #define M_PI		3.14159265358979323846
@@ -36,7 +41,8 @@ public:
 	 * Constructors
 	 */
 	NavigationController() :
-		      pNh_("~")
+		      pNh_("~"),
+		      skills_(&srv_lineUntilQR_, &srv_move_)
 	{	
 		// Get parameter names
 		
@@ -46,12 +52,22 @@ public:
 		pNh_.param<std::string>("status", pub_status_name_, "mrNavigationController/status");
 		
 		// Service
-        srv_lineUntilQR_ = nh_.serviceClient<mr_line_follower::followUntilQR>(srv_lineUntilQR_name_);
+        srv_lineUntilQR_ = 
+        nh_.serviceClient<mr_line_follower::followUntilQR>(srv_lineUntilQR_name_);
         srv_move_ = nh_.serviceClient<mr_go::move>(srv_move_name_);
         srv_action_ = nh_.advertiseService(srv_action_name_, &NavigationController::performActionCallback, this);
 		
 		// Publisher
 		pub_status_ = nh_.advertise<std_msgs::String>(pub_status_name_, 10);
+		
+		// Graph
+		graph_.createNode((char*)"start_line");
+		graph_.createNode((char*)"worcell_1");
+		std::vector<Skills> a;
+		graph_.createConnection((char*)"start_line", (char*)"workcell_1", 1, a);
+		
+		
+		
 	}
 	
 	~NavigationController(){
@@ -59,117 +75,6 @@ public:
 	}
 	
 	
-	/**
-	 * 
-	 * Skills
-	 * 
-	 */
-	
-	/**
-	 * Follows the line with the camera until it finds the specified qr
-	 * @param qr the qr code to find
-	 */
-	bool lineUntilQR(std::string qr)
-	{
-		mr_line_follower::followUntilQR lineFollowerCall;
-		lineFollowerCall.request.qr = qr;
-		lineFollowerCall.request.time_limit = 30;
-		return true;
-	}
-
-	/**
-	 * Moves the robot for an specified distance
-	 * @param distance the distance to move straight. It can be positive or negative
-	 */
-	bool linearMove(double distance)
-	{
-		move_call_.request.linear = distance;
-        move_call_.request.angular = 0;
-		srv_move_.call(move_call_);
-		return move_call_.response.done;
-	}
-	
-	/**
-	 * Turns a defined angle
-	 * @param angle The angle to turn. NEED to be in radians
-	 */
-	bool angularMove(double angle)
-	{
-		move_call_.request.linear = 0;
-        move_call_.request.angular = angle;
-		srv_move_.call(move_call_);
-		return move_call_.response.done;	}
-	
-	/**
-	 *
-	 */
-	bool goToFreePosition(double x, double y)
-	{
-		
-	}
-
-	/**
-	 * 
-	 */
-	bool moveToDispenser()
-	{
-		linearMove(1.0);
-		angularMove(90*DEG_TO_RAD);
-	}
-
-	/**
-	 * 
-	 */
-	bool moveToCharger()
-	{
-		linearMove(1.0);
-		angularMove(90*DEG_TO_RAD);
-	}
-
-	/**
-	 * 
-	 */
-	bool moveFromDispenser()
-	{
-		linearMove(1.0);
-		angularMove(90*DEG_TO_RAD);
-	}
-
-	/**
-	 * 
-	 */
-	bool moveFromCharger()
-	{
-		linearMove(1.0);
-		angularMove(90*DEG_TO_RAD);
-	}
-
-	/**
-	 * 
-	 */
-	bool changeLineWC1()
-	{
-		linearMove(1.0);
-		angularMove(90*DEG_TO_RAD);
-	}
-
-	/**
-	 * 
-	 */
-	bool changeLineWC2()
-	{
-		linearMove(1.0);
-		angularMove(90*DEG_TO_RAD);
-	}
-
-	/**
-	 * 
-	 */
-	bool changeLineWC3()
-	{
-		linearMove(1.0);
-		angularMove(90*DEG_TO_RAD);
-	}
 
 	/**
 	 *
@@ -207,8 +112,9 @@ private:
 	ros::ServiceClient srv_lineUntilQR_, srv_move_;
 	ros::ServiceServer srv_action_;
 	std::string srv_lineUntilQR_name_, srv_move_name_, pub_status_name_, srv_action_name_;
-	
-    mr_go::move move_call_;
+	Skills skills_;
+	Graph graph_;
+    
 };
 
 

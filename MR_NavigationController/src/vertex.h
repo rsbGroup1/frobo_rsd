@@ -13,7 +13,7 @@ class Vertex
 {
 public:
     Vertex(Node* node_start, Node* node_end, unsigned char weight,
-		   std::vector<std::function<void()>> skill_vector)
+		   std::vector<std::function<void()>>& skill_vector)
     {
         node_start_ = node_start;
         node_end_ = node_end;
@@ -24,6 +24,10 @@ public:
     ~Vertex(){
 		// Nothing
 	};
+	
+	std::vector<std::function<void()>>* getSkills(){
+		return skill_vector_;
+	}
 
 private:
     Node* node_start_;

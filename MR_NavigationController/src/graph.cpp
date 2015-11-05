@@ -28,7 +28,7 @@ void Graph::addVertex(char* node_start_name, char* node_end_name,
 	Node* node_start = findNode(node_start_name);
 	Node* node_end = findNode(node_end_name);
 	
-	vertex_.push_back( Vertex(node_start, node_end, weight, skills_vector) );
+	verteces_.push_back( Vertex(node_start, node_end, weight, skills_vector) );
 	
 }
 
@@ -66,4 +66,6 @@ void Graph::setCurrentNode(char* name_of_current_node)
 
 std::vector<std::function<void()>> Graph::bfs(const char* node_end_name)
 {
+	//This is bad!
+	return verteces_[0].getSkills();
 }

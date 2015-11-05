@@ -73,17 +73,10 @@ public:
 	
 
 	/**
-	 * Creates the graph
+	 * Creates the graph with std::function and std::bind
+	 * Explanation: http://oopscenities.net/2012/02/24/c11-stdfunction-and-stdbind/
 	 */
 	void createGraph(){
-		
-		/*
-		 * 
-		 * READ: http://oopscenities.net/2012/02/24/c11-stdfunction-and-stdbind/
-		 * 
-		 */
-		
-		// Graph
 		graph_.addNode((char*)"start_line");
 		graph_.addNode((char*)"worcell_1");
 		std::vector<std::function<void()>> vertex_1;
@@ -103,11 +96,11 @@ public:
 		solution_ = graph_.bfs(req.action.c_str());
 		
 		// Execute skills
-		for(auto& skill : solution_){
+		for(auto& skill : solution_)
 			skill();
-		}
 		
 		// Return status
+		res.success = true;
 		return true;
 	}
 	

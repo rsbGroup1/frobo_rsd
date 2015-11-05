@@ -68,7 +68,7 @@ public:
 	
 private:
 	std::vector<Node> nodes_;
-	std::vector<Vertex> vertex_;
+	std::vector<Vertex> verteces_;
 	char* current_node_;
 };
 

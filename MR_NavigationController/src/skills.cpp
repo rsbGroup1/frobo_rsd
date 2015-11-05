@@ -19,22 +19,26 @@ Skills::~Skills()
 
 bool Skills::lineUntilQR(std::string qr)
 {
-	lineFollowerCall.request.qr = qr;
-	lineFollowerCall.request.time_limit = 30;
-	srv_lineUntilQR_->call(lineFollowerCall);
-	
+	std::cout << "Skill: Line until QR: " << qr << std::cout;
+	//lineFollowerCall.request.qr = qr;
+	//lineFollowerCall.request.time_limit = 30;
+	//srv_lineUntilQR_->call(lineFollowerCall);
+	return true;
 }
 
 bool Skills::linearMove(double distance)
 {
-	move_call_.request.linear = distance;
-	move_call_.request.angular = 0;
-	srv_move_->call(move_call_);
-	return move_call_.response.done;
+	std::cout << "Skill: Linear move for: " << distance << " m"<< std::cout;
+	//move_call_.request.linear = distance;
+	//move_call_.request.angular = 0;
+	//srv_move_->call(move_call_);
+	//return move_call_.response.done;
+	return true;
 }
 
 bool Skills::angularMove(double angle)
 {
+	std::cout << "Skill: Angular move for: " << angle << " degrees"<< std::cout;
 	move_call_.request.linear = 0;
 	move_call_.request.angular = angle;
 	srv_move_->call(move_call_);
@@ -43,11 +47,13 @@ bool Skills::angularMove(double angle)
 
 bool Skills::changeLineWC1()
 {
+	std::cout << "Skill: Change to workcell 1 robot line"<< std::cout;
 	return true;
 }
 
 bool Skills::changeLineWC2()
 {
+	std::cout << "Skill: Change to workcell 2 robot line"<< std::cout;
 	return true;
 }
 

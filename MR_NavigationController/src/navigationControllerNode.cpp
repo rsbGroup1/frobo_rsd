@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <functional>
 
 #include <ros/ros.h>
 #include "mr_navigation_controller/performAction.h"
@@ -60,20 +61,36 @@ public:
 		// Publisher
 		pub_status_ = nh_.advertise<std_msgs::String>(pub_status_name_, 10);
 		
-		// Graph
-		graph_.createNode((char*)"start_line");
-		graph_.createNode((char*)"worcell_1");
-		std::vector<Skills> a;
-		graph_.createConnection((char*)"start_line", (char*)"workcell_1", 1, a);
-		
-		
-		
+		// Create the graph
+		createGraph();
 	}
 	
 	~NavigationController(){
 		//
 	}
 	
+
+	/**
+	 * Creates the graph
+	 */
+	void createGraph(){
+		
+		/*
+		 * 
+		 * READ: http://oopscenities.net/2012/02/24/c11-stdfunction-and-stdbind/
+		 * 
+		 */
+		
+		// Graph
+		graph_.createNode((char*)"start_line");
+		graph_.createNode((char*)"worcell_1");
+		std::function <void ()> a2 = std::bind(&Skills::lineUntilQR, skills_, "workcell_1");
+		std::function <void ()> a1 = std::bind(&Skills::angularMove, skills_, 90);
+		std::vector<std::function<void()>> vec_fun_temp_1;
+		vec_fun_temp_1.push_back(a1);
+		vec_fun_temp_1.push_back(a2);
+		graph_.createConnection((char*)"start_line", (char*)"workcell_1", 1, a);
+	}
 	
 
 	/**
@@ -114,6 +131,7 @@ private:
 	std::string srv_lineUntilQR_name_, srv_move_name_, pub_status_name_, srv_action_name_;
 	Skills skills_;
 	Graph graph_;
+	std::vector<std::function<void ()> > solution_;
     
 };
 

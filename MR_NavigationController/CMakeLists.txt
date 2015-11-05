@@ -25,14 +25,21 @@ catkin_package()
 
 include_directories(${catkin_INCLUDE_DIRS})
 
-SET(SrcFiles 
+set(
+SOURCES 
 	src/navigationControllerNode.cpp
-	src/graph.cpp
 	src/node.h
 	src/vertex.h
+	src/graph.cpp
+	src/skills.cpp
 )
 
-add_executable(${PROJECT_NAME} ${SrcFiles})
+set(
+HEADERS
+	src/skills.h
+)
+
+add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 

@@ -84,12 +84,10 @@ public:
 		// Graph
 		graph_.createNode((char*)"start_line");
 		graph_.createNode((char*)"worcell_1");
-		std::function <void ()> a2 = std::bind(&Skills::lineUntilQR, skills_, "workcell_1");
-		std::function <void ()> a1 = std::bind(&Skills::angularMove, skills_, 90);
-		std::vector<std::function<void()>> vec_fun_temp_1;
-		vec_fun_temp_1.push_back(a1);
-		vec_fun_temp_1.push_back(a2);
-		graph_.createConnection((char*)"start_line", (char*)"workcell_1", 1, a);
+		std::vector<std::function<void()>> vertex_1;
+		vertex_1.push_back(std::bind(&Skills::lineUntilQR, skills_, "workcell_1"));
+		vertex_1.push_back(std::bind(&Skills::angularMove, skills_, 90));
+		graph_.createConnection((char*)"start_line", (char*)"workcell_1", 1, vertex_1);
 	}
 	
 

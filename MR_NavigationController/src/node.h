@@ -36,16 +36,25 @@ public:
 	
 	/**
 	 * Returns the name
-	 * @param name_ the name of the node
+	 * @return name_ the name of the node
 	 */
 	std::string getName(){
 		return name_;
+	}
+	
+	/**
+	 * Returns the vector of connected nodes
+	 * @return nodes_connected_ the nodes connected
+	 */
+	std::vector<Node> getConnectionsName(){
+		return nodes_connected_;
 	}
 	
 	
 private:
 	char* name_;
 	std::vector<Vertex> connections_;
+	std::vector<Node> nodes_connected_;
 };
 
 #endif // NODE_H

@@ -63,6 +63,8 @@ public:
 		
 		// Create the graph
 		createGraph();
+		graph_.showGraph();
+		
 	}
 	
 	~NavigationController(){
@@ -82,23 +84,15 @@ public:
 		 */
 		
 		// Graph
-		graph_.createNode((char*)"start_line");
-		graph_.createNode((char*)"worcell_1");
+		graph_.addNode((char*)"start_line");
+		graph_.addNode((char*)"worcell_1");
 		std::vector<std::function<void()>> vertex_1;
 		vertex_1.push_back(std::bind(&Skills::lineUntilQR, skills_, "workcell_1"));
 		vertex_1.push_back(std::bind(&Skills::angularMove, skills_, 90));
-		graph_.createConnection((char*)"start_line", (char*)"workcell_1", 1, vertex_1);
+		vertex_1.push_back(std::bind(&Skills::changeLineWC1, skills_));
+		graph_.addVertex((char*)"start_line", (char*)"workcell_1", 1, vertex_1);
 	}
 	
-
-	/**
-	 *
-	 */
-	std::vector<Skill> graphSearch(int action)
-	{
-		return std::vector<Skill>();
-	}
-
 	/**
 	 * 
 	 */
@@ -106,15 +100,11 @@ public:
 							   mr_navigation_controller::performAction::Response &res)
 	{
 		// Search in graph how to perform action
-		std::vector<Skill> skillVec = graphSearch(req.action);
+		solution_ = graph_.bfs(req.action.c_str());
 		
 		// Execute skills
-		for(unsigned int i = 0; i<skillVec.size(); i++)
-		{
-			//
-			std_msgs::String msg;
-			msg.data = "Blabla";
-			         pub_status_.publish(msg);
+		for(auto& skill : solution_){
+			skill();
 		}
 		
 		// Return status

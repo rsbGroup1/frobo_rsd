@@ -65,6 +65,16 @@ public:
 		createGraph();
 		graph_.showGraph();
 		
+		// Debug
+		// Search in graph how to perform action
+		solution_ = graph_.bfs("workcell_1");
+		
+		// Execute skills
+		for(auto& skill : solution_){
+			std::cout << "   ";
+			skill();
+		}
+		
 	}
 	
 	~NavigationController(){
@@ -78,7 +88,7 @@ public:
 	 */
 	void createGraph(){
 		graph_.addNode((char*)"start_line");
-		graph_.addNode((char*)"worcell_1");
+		graph_.addNode((char*)"workcell_1");
 		std::vector<std::function<void()>> vertex_1;
 		vertex_1.push_back(std::bind(&Skills::lineUntilQR, skills_, "workcell_1"));
 		vertex_1.push_back(std::bind(&Skills::angularMove, skills_, 90));
@@ -112,7 +122,7 @@ private:
 	std::string srv_lineUntilQR_name_, srv_move_name_, pub_status_name_, srv_action_name_;
 	Skills skills_;
 	Graph graph_;
-	std::vector<std::function<void ()> > solution_;
+	std::vector<std::function<void()>> solution_;
     
 };
 

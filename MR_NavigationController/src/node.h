@@ -30,8 +30,9 @@ public:
 	 * Add a vertex to the node
 	 * @param vertex the vertex to add
 	 */
-	void setConnection(Vertex& vertex){
+	void setVertex(Vertex* vertex){
 		connections_.push_back(vertex);
+		nodes_connected_.push_back(vertex->getNodeEnd());
 	};
 	
 	/**
@@ -46,15 +47,15 @@ public:
 	 * Returns the vector of connected nodes
 	 * @return nodes_connected_ the nodes connected
 	 */
-	std::vector<Node> getConnectionsName(){
+	std::vector<Node*> getConnectionsName(){
 		return nodes_connected_;
 	}
 	
 	
 private:
 	char* name_;
-	std::vector<Vertex> connections_;
-	std::vector<Node> nodes_connected_;
+	std::vector<Vertex*> connections_;
+	std::vector<Node*> nodes_connected_;
 };
 
 #endif // NODE_H

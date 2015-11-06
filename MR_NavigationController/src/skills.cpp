@@ -19,7 +19,7 @@ Skills::~Skills()
 
 bool Skills::lineUntilQR(std::string qr)
 {
-	std::cout << "Skill: Line until QR: " << qr << std::cout;
+	std::cout << "Skill: Line until QR: " << qr << std::endl;
 	//lineFollowerCall.request.qr = qr;
 	//lineFollowerCall.request.time_limit = 30;
 	//srv_lineUntilQR_->call(lineFollowerCall);
@@ -28,7 +28,7 @@ bool Skills::lineUntilQR(std::string qr)
 
 bool Skills::linearMove(double distance)
 {
-	std::cout << "Skill: Linear move for: " << distance << " m"<< std::cout;
+	std::cout << "Skill: Linear move for: " << distance << " m"<< std::endl;
 	//move_call_.request.linear = distance;
 	//move_call_.request.angular = 0;
 	//srv_move_->call(move_call_);
@@ -38,7 +38,7 @@ bool Skills::linearMove(double distance)
 
 bool Skills::angularMove(double angle)
 {
-	std::cout << "Skill: Angular move for: " << angle << " degrees"<< std::cout;
+	std::cout << "Skill: Angular move for: " << angle << " degrees"<< std::endl;
 	move_call_.request.linear = 0;
 	move_call_.request.angular = angle;
 	srv_move_->call(move_call_);
@@ -47,7 +47,7 @@ bool Skills::angularMove(double angle)
 
 bool Skills::changeLineWC1()
 {
-	std::cout << "Skill: Change to workcell 1 robot line"<< std::cout;
+	std::cout << "Skill: Change to workcell 1 robot line"<< std::endl;
 	return true;
 }
 

@@ -39,7 +39,7 @@ public:
 	 * Returns the name
 	 * @return name_ the name of the node
 	 */
-	std::string getName(){
+	char* getName(){
 		return name_;
 	}
 	
@@ -47,7 +47,7 @@ public:
 	 * Returns the vector of connected nodes
 	 * @return nodes_connected_ the nodes connected
 	 */
-	std::vector<Node*> getConnectionsName(){
+	std::vector<Node*> getNodesConnected(){
 		return nodes_connected_;
 	}
 	

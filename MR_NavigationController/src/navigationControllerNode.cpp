@@ -67,7 +67,8 @@ public:
 		
 		// Debug
 		// Search in graph how to perform action
-		solution_ = graph_.bfs("workcell_1");
+		graph_.setCurrentNode((char*)"start_line");
+		solution_ = graph_.bfs((char*)"workcell_1");
 		
 		// Execute skills
 		for(auto& skill : solution_){

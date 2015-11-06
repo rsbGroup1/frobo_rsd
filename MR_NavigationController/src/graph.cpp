@@ -69,20 +69,30 @@ std::vector<std::function<void()>> Graph::bfs(const char* node_end_name)
 {
 	std::vector<std::function<void()>> solution;
 	std::vector<Node*> open_list;
+	
+	
 	Node* current_node;
+			
 	
 	// Add the current node to the open list
 	open_list.push_back(findNode(current_node_));
 	current_node = open_list.front();
 	
 	// BFS
+	
+	/**
+	 * 
+	 * FINISH!!
+	 * 
+	 */
 	while(!open_list.empty()){
 		// Dequeue
 		open_list.erase(open_list.begin());
 		
 		for(auto node_connected : current_node->getNodesConnected()){
 			if (node_connected->getName() == node_end_name)
-					
+				
+				;;
 			
 		}
 	}
@@ -90,7 +100,7 @@ std::vector<std::function<void()>> Graph::bfs(const char* node_end_name)
 	for (auto& vertix : verteces_) {
 		for (auto& skill : *vertix.getSkills() )
 			solution.push_back(skill);
+	}
 	
-	//This is bad!
 	return solution;
 }

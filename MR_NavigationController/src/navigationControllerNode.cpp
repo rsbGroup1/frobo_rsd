@@ -86,15 +86,25 @@ public:
 	/**
 	 * Creates the graph with std::function and std::bind
 	 * Explanation: http://oopscenities.net/2012/02/24/c11-stdfunction-and-stdbind/
+	 * 
+	 * CREATE GRAPH HERE
+	 * 
+	 * 
 	 */
 	void createGraph(){
+		// Nodes
 		graph_.addNode((char*)"start_line");
 		graph_.addNode((char*)"workcell_1");
+		
+		// Skills
 		std::vector<std::function<void()>> vertex_1;
 		vertex_1.push_back(std::bind(&Skills::lineUntilQR, skills_, "workcell_1"));
 		vertex_1.push_back(std::bind(&Skills::angularMove, skills_, 90));
 		vertex_1.push_back(std::bind(&Skills::changeLineWC1, skills_));
+		
+		// Vertices 
 		graph_.addVertex((char*)"start_line", (char*)"workcell_1", 1, vertex_1);
+		
 	}
 	
 	/**

@@ -4,6 +4,8 @@ project(mr_navigation_controller)
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs geometry_msgs genmsg)
 
+set(CMAKE_CXX_FLAGS "-std=c++11")
+
 # Service files
 add_service_files(
 	DIRECTORY srv
@@ -23,9 +25,21 @@ catkin_package()
 
 include_directories(${catkin_INCLUDE_DIRS})
 
-SET(SrcFiles src/navigationControllerNode.cpp)
+set(
+SOURCES 
+	src/navigationControllerNode.cpp
+	src/node.h
+	src/vertex.h
+	src/graph.cpp
+	src/skills.cpp
+)
 
-add_executable(${PROJECT_NAME} ${SrcFiles})
+set(
+HEADERS
+	src/skills.h
+)
+
+add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 

@@ -3,16 +3,22 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <functional>
 
 #include <ros/ros.h>
 #include "mr_navigation_controller/performAction.h"
 #include "mr_line_follower/followUntilQR.h"
 #include "mr_go/move.h"
+
 #include "std_msgs/String.h"
 #include "std_msgs/Float64.h"
 
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
+
+#include "skills.h"
+#include "graph.h"
+
 
 // Defines
 #define M_PI		3.14159265358979323846
@@ -36,7 +42,8 @@ public:
 	 * Constructors
 	 */
 	NavigationController() :
-		      pNh_("~")
+		      pNh_("~"),
+		      skills_(&srv_lineUntilQR_, &srv_move_)
 	{	
 		// Get parameter names
 		
@@ -46,139 +53,50 @@ public:
 		pNh_.param<std::string>("status", pub_status_name_, "mrNavigationController/status");
 		
 		// Service
-        srv_lineUntilQR_ = nh_.serviceClient<mr_line_follower::followUntilQR>(srv_lineUntilQR_name_);
+        srv_lineUntilQR_ = 
+        nh_.serviceClient<mr_line_follower::followUntilQR>(srv_lineUntilQR_name_);
         srv_move_ = nh_.serviceClient<mr_go::move>(srv_move_name_);
         srv_action_ = nh_.advertiseService(srv_action_name_, &NavigationController::performActionCallback, this);
 		
 		// Publisher
 		pub_status_ = nh_.advertise<std_msgs::String>(pub_status_name_, 10);
+		
+		// Create the graph
+		createGraph();
+		graph_.showGraph();
+		
+		// Debug
+		// Search in graph how to perform action
+		graph_.setCurrentNode((char*)"start_line");
+		solution_ = graph_.bfs((char*)"workcell_1");
+		
+		// Execute skills
+		for(auto& skill : solution_){
+			std::cout << "   ";
+			skill();
+		}
+		
 	}
 	
 	~NavigationController(){
 		//
 	}
 	
-	
-	/**
-	 * 
-	 * Skills
-	 * 
-	 */
-	
-	/**
-	 * Follows the line with the camera until it finds the specified qr
-	 * @param qr the qr code to find
-	 */
-	bool lineUntilQR(std::string qr)
-	{
-		mr_line_follower::followUntilQR lineFollowerCall;
-		lineFollowerCall.request.qr = qr;
-		lineFollowerCall.request.time_limit = 30;
-		return true;
-	}
 
 	/**
-	 * Moves the robot for an specified distance
-	 * @param distance the distance to move straight. It can be positive or negative
+	 * Creates the graph with std::function and std::bind
+	 * Explanation: http://oopscenities.net/2012/02/24/c11-stdfunction-and-stdbind/
 	 */
-	bool linearMove(double distance)
-	{
-		move_call_.request.linear = distance;
-        move_call_.request.angular = 0;
-		srv_move_.call(move_call_);
-		return move_call_.response.done;
+	void createGraph(){
+		graph_.addNode((char*)"start_line");
+		graph_.addNode((char*)"workcell_1");
+		std::vector<std::function<void()>> vertex_1;
+		vertex_1.push_back(std::bind(&Skills::lineUntilQR, skills_, "workcell_1"));
+		vertex_1.push_back(std::bind(&Skills::angularMove, skills_, 90));
+		vertex_1.push_back(std::bind(&Skills::changeLineWC1, skills_));
+		graph_.addVertex((char*)"start_line", (char*)"workcell_1", 1, vertex_1);
 	}
 	
-	/**
-	 * Turns a defined angle
-	 * @param angle The angle to turn. NEED to be in radians
-	 */
-	bool angularMove(double angle)
-	{
-		move_call_.request.linear = 0;
-        move_call_.request.angular = angle;
-		srv_move_.call(move_call_);
-		return move_call_.response.done;	}
-	
-	/**
-	 *
-	 */
-	bool goToFreePosition(double x, double y)
-	{
-		
-	}
-
-	/**
-	 * 
-	 */
-	bool moveToDispenser()
-	{
-		linearMove(1.0);
-		angularMove(90*DEG_TO_RAD);
-	}
-
-	/**
-	 * 
-	 */
-	bool moveToCharger()
-	{
-		linearMove(1.0);
-		angularMove(90*DEG_TO_RAD);
-	}
-
-	/**
-	 * 
-	 */
-	bool moveFromDispenser()
-	{
-		linearMove(1.0);
-		angularMove(90*DEG_TO_RAD);
-	}
-
-	/**
-	 * 
-	 */
-	bool moveFromCharger()
-	{
-		linearMove(1.0);
-		angularMove(90*DEG_TO_RAD);
-	}
-
-	/**
-	 * 
-	 */
-	bool changeLineWC1()
-	{
-		linearMove(1.0);
-		angularMove(90*DEG_TO_RAD);
-	}
-
-	/**
-	 * 
-	 */
-	bool changeLineWC2()
-	{
-		linearMove(1.0);
-		angularMove(90*DEG_TO_RAD);
-	}
-
-	/**
-	 * 
-	 */
-	bool changeLineWC3()
-	{
-		linearMove(1.0);
-		angularMove(90*DEG_TO_RAD);
-	}
-
-	/**
-	 *
-	 */
-	std::vector<Skill> graphSearch(int action)
-	{
-		return std::vector<Skill>();
-	}
-
 	/**
 	 * 
 	 */
@@ -186,18 +104,14 @@ public:
 							   mr_navigation_controller::performAction::Response &res)
 	{
 		// Search in graph how to perform action
-		std::vector<Skill> skillVec = graphSearch(req.action);
+		solution_ = graph_.bfs(req.action.c_str());
 		
 		// Execute skills
-		for(unsigned int i = 0; i<skillVec.size(); i++)
-		{
-			//
-			std_msgs::String msg;
-			msg.data = "Blabla";
-			         pub_status_.publish(msg);
-		}
+		for(auto& skill : solution_)
+			skill();
 		
 		// Return status
+		res.success = true;
 		return true;
 	}
 	
@@ -207,8 +121,10 @@ private:
 	ros::ServiceClient srv_lineUntilQR_, srv_move_;
 	ros::ServiceServer srv_action_;
 	std::string srv_lineUntilQR_name_, srv_move_name_, pub_status_name_, srv_action_name_;
-	
-    mr_go::move move_call_;
+	Skills skills_;
+	Graph graph_;
+	std::vector<std::function<void()>> solution_;
+    
 };
 
 

@@ -68,32 +68,18 @@ public:
 		createGraph();
 		//graph_->showGraph();
 		
-		// Debug
-		// Search in graph how to perform action
-		graph_->setCurrentNode("wc1");
-		solution_ = graph_->bfs("charge", search_limit_);
-		
-		// Execute skills
-		for(auto& skill : solution_){
-			std::cout << "   ";
-			skill();
-		}
-		
-		solution_ = graph_->bfs("box", search_limit_);
-		
-		// Execute skills
-		for(auto& skill : solution_){
-			std::cout << "   ";
-			skill();
-		}
-		
-		solution_ = graph_->bfs("pre_bricks", search_limit_);
-		
-		// Execute skills
-		for(auto& skill : solution_){
-			std::cout << "   ";
-			skill();
-		}
+		/*
+		 * Debug
+		 */
+// 		graph_->setCurrentNode("wc1");
+// 		solution_ = graph_->bfs("charge", search_limit_);
+// 		executeSkills();
+// 		
+// 		solution_ = graph_->bfs("box", search_limit_);
+// 		executeSkills();
+// 
+// 		solution_ = graph_->bfs("bricks", search_limit_);
+// 		executeSkills();
 		
 	}
 	
@@ -117,6 +103,14 @@ public:
 		// Return status
 		res.success = true;
 		return true;
+	}
+	
+	void executeSkills(){
+		// Execute skills
+		for(auto& skill : solution_){
+			std::cout << "   ";
+			skill();
+		}
 	}
 	
 	/**
@@ -325,7 +319,7 @@ int main(int argc, char** argv)
 	ros::Rate rate(30);
     
 	// ROS Spin: Handle callbacks
-    while(ros::isShuttingDown())
+    while(!ros::isShuttingDown())
     {
         ros::spinOnce();
 		rate.sleep();

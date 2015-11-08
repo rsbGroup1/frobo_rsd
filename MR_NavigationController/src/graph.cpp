@@ -7,6 +7,7 @@
 Graph::Graph(ros::Publisher* pub_current_node)
 {
 	pub_current_node_ = pub_current_node;
+	current_node_ = "wc1"; // Default position
 }
 
 Graph::~Graph()
@@ -146,10 +147,6 @@ std::vector<std::function<void()>> Graph::bfs(const std::string node_end_name, i
 				}
             }
         }
-//         std::cout << "Open: " << open_list.size() << " | Closed: " << closed_list.size() << std::endl;
-// 		
-// 		for (auto& node : open_list)
-// 			std::cout << node->getName() << std::endl;
     }
 
     // Solution not found message

@@ -7,8 +7,9 @@
 
 #include "ros/ros.h"
 
-class Node;
-class Vertex;
+#include "node.h"
+#include "skills.h"
+#include "vertex.h"
 
 class Graph
 {

@@ -4,10 +4,6 @@
 
 #include "std_msgs/String.h"
 
-#include "node.h"
-#include "skills.h"
-#include "vertex.h"
-
 Graph::Graph(ros::Publisher* pub_current_node)
 {
 	pub_current_node_ = pub_current_node;
@@ -77,6 +73,7 @@ std::string Graph::getCurrentNode()
 void Graph::setCurrentNode(std::string name_of_current_node)
 {
     current_node_ = name_of_current_node;
+	std::cout << "Current node: " << current_node_ << std::endl;
 	std_msgs::String msg;
 	msg.data = (std::string)(name_of_current_node);
 	pub_current_node_->publish(msg);

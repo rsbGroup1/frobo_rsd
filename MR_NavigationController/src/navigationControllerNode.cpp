@@ -128,60 +128,65 @@ public:
 		graph_.addNode((char*)"pre_charge");
 		graph_.addNode((char*)"charge");
 		
-		// Skills
+		/*
+		 * 
+		 * Skills
+		 * 
+		 */
 		std::vector<std::function<void()>> line_start_TO_wc1;
-		line_start_TO_wc1.push_back(std::bind(&Skills::lineUntilQR, skills_, "workcell_1"));
-		
-		std::vector<std::function<void()>> wc1_TO_wc2;
-		wc1_TO_wc2.push_back(std::bind(&Skills::lineUntilQR, skills_, "workcell_2"));
-		
-		std::vector<std::function<void()>> wc2_TO_wc3;
-		wc2_TO_wc3.push_back(std::bind(&Skills::lineUntilQR, skills_, "workcell_3"));
-		
-		
+		line_start_TO_wc1.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_1_entrance"));
 		
 		std::vector<std::function<void()>> wc1_TO_wc1_conveyor;
 		wc1_TO_wc1_conveyor.push_back(std::bind(&Skills::angularMove, skills_, 90));
-		wc1_TO_wc1_conveyor.push_back(std::bind(&Skills::lineUntilQR, skills_, "conveyor_stop"));
+		wc1_TO_wc1_conveyor.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_1_conveyor"));
 		
 		std::vector<std::function<void()>> wc1_conveyor_TO_wc1_robot;
 		wc1_conveyor_TO_wc1_robot.push_back(std::bind(&Skills::angularMove, skills_, 90));
+		wc1_conveyor_TO_wc1_robot.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_1_load"));
 		
 		std::vector<std::function<void()>> wc1_robot_TO_wc_exit;
 		wc1_robot_TO_wc_exit.push_back(std::bind(&Skills::angularMove, skills_, -180));
-		wc1_robot_TO_wc_exit.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_exit"));
+		wc1_robot_TO_wc_exit.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_1_exit"));
 		
 		
+		
+		std::vector<std::function<void()>> wc1_TO_wc2;
+		wc1_TO_wc2.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_2_entrance"));
 		
 		std::vector<std::function<void()>> wc2_TO_wc2_conveyor;
 		wc2_TO_wc2_conveyor.push_back(std::bind(&Skills::angularMove, skills_, 90));
-		wc2_TO_wc2_conveyor.push_back(std::bind(&Skills::lineUntilQR, skills_, "conveyor_stop"));
+		wc2_TO_wc2_conveyor.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_2_conveyor"));
 		
 		std::vector<std::function<void()>> wc2_conveyor_TO_wc2_robot;
 		wc2_conveyor_TO_wc2_robot.push_back(std::bind(&Skills::angularMove, skills_, 90));
+		wc2_conveyor_TO_wc2_robot.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_2_load"));
 		
 		std::vector<std::function<void()>> wc2_robot_TO_wc_exit;
 		wc2_robot_TO_wc_exit.push_back(std::bind(&Skills::angularMove, skills_, -180));
-		wc2_robot_TO_wc_exit.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_exit"));
+		wc2_robot_TO_wc_exit.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_2_exit"));
 		
+
 		
+		std::vector<std::function<void()>> wc2_TO_wc3;
+		wc2_TO_wc3.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_3_entrance"));
 		
 		std::vector<std::function<void()>> wc3_TO_wc3_conveyor;
 		wc3_TO_wc3_conveyor.push_back(std::bind(&Skills::angularMove, skills_, 90));
-		wc3_TO_wc3_conveyor.push_back(std::bind(&Skills::lineUntilQR, skills_, "conveyor_stop"));
+		wc3_TO_wc3_conveyor.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_3_conveyor"));
 		
 		std::vector<std::function<void()>> wc3_conveyor_TO_wc3_robot;
 		wc3_conveyor_TO_wc3_robot.push_back(std::bind(&Skills::angularMove, skills_, 90));
+		wc3_conveyor_TO_wc3_robot.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_3_load"));
 		
 		std::vector<std::function<void()>> wc3_robot_TO_wc_exit;
 		wc3_robot_TO_wc_exit.push_back(std::bind(&Skills::angularMove, skills_, -180));
-		wc3_robot_TO_wc_exit.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_exit"));
+		wc3_robot_TO_wc_exit.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_3_exit"));
 		
 		
 		
 		std::vector<std::function<void()>> wc_exit_TO_line_end;
 		wc_exit_TO_line_end.push_back(std::bind(&Skills::angularMove, skills_, -90));
-		wc_exit_TO_line_end.push_back(std::bind(&Skills::lineUntilQR, skills_, "line_end"));
+		wc_exit_TO_line_end.push_back(std::bind(&Skills::lineUntilQR, skills_, "line_out"));
 		
 		
 		

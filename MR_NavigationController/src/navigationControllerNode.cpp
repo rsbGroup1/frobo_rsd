@@ -51,6 +51,7 @@ public:
 		pNh_.param<std::string>("moveService", srv_move_name_, "mrGo/move");
 		pNh_.param<std::string>("performAction", srv_action_name_, "mrNavigationController/performAction");
 		pNh_.param<std::string>("status", pub_status_name_, "mrNavigationController/status");
+		pNh_.param<int>("searchLimit", search_limit_, 50);
 		
 		// Service
         srv_lineUntilQR_ = 
@@ -68,7 +69,7 @@ public:
 		// Debug
 		// Search in graph how to perform action
 		graph_.setCurrentNode((char*)"start_line");
-		solution_ = graph_.bfs((char*)"conveyor_workcell_1");
+		solution_ = graph_.bfs((char*)"conveyor_workcell_1", search_limit_);
 		
 		// Execute skills
 		for(auto& skill : solution_){
@@ -119,7 +120,7 @@ public:
 							   mr_navigation_controller::performAction::Response &res)
 	{
 		// Search in graph how to perform action
-		solution_ = graph_.bfs(req.action.c_str());
+		solution_ = graph_.bfs(req.action.c_str(), search_limit_);
 		
 		// Execute skills
 		for(auto& skill : solution_)
@@ -139,6 +140,7 @@ private:
 	Skills skills_;
 	Graph graph_;
 	std::vector<std::function<void()>> solution_;
+	int search_limit_;
     
 };
 

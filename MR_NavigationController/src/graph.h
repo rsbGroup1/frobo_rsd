@@ -51,7 +51,7 @@ public:
 	 * of skills to achieve it
 	 * @param node_end_name the node to search
 	 */
-	std::vector<std::function<void()>> bfs(const char* node_end_name);
+	std::vector<std::function<void()>> bfs(const char* node_end_name, int number_limit);
 	
 	/**
 	 * Sets the current node in which the robot is located

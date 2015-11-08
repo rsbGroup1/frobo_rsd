@@ -2,12 +2,15 @@
 
 #include <iostream>
 
+#include "std_msgs/String.h"
+
 #include "node.h"
 #include "skills.h"
 #include "vertex.h"
 
-Graph::Graph()
+Graph::Graph(ros::Publisher* pub_current_node)
 {
+	pub_current_node_ = pub_current_node;
 }
 
 Graph::~Graph()
@@ -74,7 +77,11 @@ char * Graph::getCurrentNode()
 void Graph::setCurrentNode(char* name_of_current_node)
 {
     current_node_ = name_of_current_node;
+	std_msgs::String msg;
+	msg.data = (std::string)(name_of_current_node);
+	pub_current_node_->publish(msg);
 }
+
 
 std::vector<std::function<void()>> Graph::bfs(const char* node_end_name, int number_limit)
 {
@@ -95,7 +102,7 @@ std::vector<std::function<void()>> Graph::bfs(const char* node_end_name, int num
     open_list.push_back(findNode(current_node_));
 
     // BFS
-	while(!open_list.empty() && ++counter!=number_limit && solution.empty()) {
+    while(!open_list.empty() && ++counter!=number_limit && solution.empty()) {
         // Choose a new node
         current_node = open_list.front(); // Updates the current node
         closed_list.push_back(current_node); // Put it in the closed list
@@ -108,9 +115,8 @@ std::vector<std::function<void()>> Graph::bfs(const char* node_end_name, int num
                     if (vertex.getNodeEnd() == current_node &&
                             vertex.getNodeStart() == current_node->getParent())
                     {
-                        for (unsigned char i=vertex.getSkills()->size(); i>0; i--){
+                        for (unsigned char i=vertex.getSkills()->size(); i>0; i--)
                             solution.insert(solution.begin(), vertex.getSkills()->at(i-1));
-						}
                     }
                 }
                 current_node = current_node->getParent();
@@ -133,8 +139,8 @@ std::vector<std::function<void()>> Graph::bfs(const char* node_end_name, int num
     // Solution not found message
     if (solution.empty())
         std::cout << "Solution NOT found" << std::endl;
-	if (counter == number_limit)
-		std::cout << "Search limit reached" << std::endl;
+    if (counter == number_limit)
+        std::cout << "Search limit reached" << std::endl;
 
     return solution;
 }

@@ -4,13 +4,18 @@
 #include <vector>
 #include <functional>
 
+#include "ros/ros.h"
+
 class Node;
 class Vertex;
 
 class Graph
 {
 public:
-	Graph();
+	/**
+	 * Initialize the graph given a publisher for the current node
+	 */
+	Graph(ros::Publisher * pub_current_node);
 	
 	~Graph();
 	
@@ -54,7 +59,7 @@ public:
 	std::vector<std::function<void()>> bfs(const char* node_end_name, int number_limit);
 	
 	/**
-	 * Sets the current node in which the robot is located
+	 * Sets the current node in which the robot is located and publish it
 	 * @param name_of_current_node the name of the current node
 	 */
 	void setCurrentNode(char* name_of_current_node);
@@ -68,6 +73,7 @@ private:
 	std::vector<Node> nodes_;
 	std::vector<Vertex> verteces_;
 	char* current_node_;
+	ros::Publisher * pub_current_node_;
 };
 
 #endif // GRAPH_H

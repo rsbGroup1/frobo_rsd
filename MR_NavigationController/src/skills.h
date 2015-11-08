@@ -11,7 +11,8 @@ public:
 	/**
 	 * 
 	 */
-	Skills(ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move);
+	Skills(ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move, 
+		   ros::Publisher * pub_status);
 	
 	/**
 	 * 
@@ -80,6 +81,7 @@ public:
 private:
 	ros::ServiceClient* srv_lineUntilQR_;
 	ros::ServiceClient* srv_move_;
+	ros::Publisher* pub_status_;
 	mr_go::move move_call_;
 	mr_line_follower::followUntilQR lineFollowerCall;
 };

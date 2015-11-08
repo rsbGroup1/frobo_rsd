@@ -1,6 +1,7 @@
 #ifndef NODE_H
 #define NODE_H
 
+#include <string>
 #include <vector>
 
 class Vertex;
@@ -11,7 +12,7 @@ public:
 	/**
 	 * Initialize a node with a name
 	 */
-	Node(char* name);
+	Node(std::string name);
 	
 	/**
 	 * Destructs the node
@@ -28,7 +29,7 @@ public:
 	 * Returns the name
 	 * @return name_ the name of the node
 	 */
-	char* getName();
+	std::string getName();
 	
 	/**
 	 * Return the parent of the node
@@ -59,7 +60,7 @@ public:
 	
 	
 private:
-	char* name_;
+	std::string name_;
 	std::vector<Vertex*> verteces_;
 	std::vector<Node*> parent_of_;
 	std::vector<Node*> children_of_;

@@ -2,6 +2,7 @@
 #define GRAPH_H
 
 #include <vector>
+#include <string>
 #include <functional>
 
 #include "ros/ros.h"
@@ -23,7 +24,7 @@ public:
 	 * Adds a node to the graph given a name
 	 * @param name the name of the node. This is used as an identifier
 	 */
-	void addNode(char* name);
+	void addNode(std::string name);
 	
 	/**
 	 * Adds a vertex to the node given two nodes and adds a weight
@@ -35,7 +36,7 @@ public:
 	 * calculate the optimal path given two nodes
 	 * @param skills_vector the vector of skills that join both nodes
 	 */
-	void addVertex(char* node_start_name, char* node_end_name, 
+	void addVertex(std::string node_start_name, std::string node_end_name, 
 						  unsigned char weight, 
 				std::vector<std::function<void()>>& skills_vector);
 	
@@ -44,7 +45,7 @@ public:
 	 * that name
 	 * @param name the name of the node to search
 	 */
-	Node* findNode(char* name);
+	Node* findNode(std::string name);
 	
 	/**
 	 * Shows a representation of the graph
@@ -56,23 +57,23 @@ public:
 	 * of skills to achieve it
 	 * @param node_end_name the node to search
 	 */
-	std::vector<std::function<void()>> bfs(const char* node_end_name, int number_limit);
+	std::vector<std::function<void()>> bfs(const std::string node_end_name, int number_limit);
 	
 	/**
 	 * Sets the current node in which the robot is located and publish it
 	 * @param name_of_current_node the name of the current node
 	 */
-	void setCurrentNode(char* name_of_current_node);
+	void setCurrentNode(std::string name_of_current_node);
 	
 	/**
 	 * Gets the current node in which the robot is located
 	 */
-	char* getCurrentNode();
+	std::string getCurrentNode();
 	
 private:
 	std::vector<Node> nodes_;
 	std::vector<Vertex> verteces_;
-	char* current_node_;
+	std::string current_node_;
 	ros::Publisher * pub_current_node_;
 };
 

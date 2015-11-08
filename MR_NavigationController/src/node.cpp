@@ -3,7 +3,7 @@
 #include "node.h"
 #include "vertex.h"
 
-Node::Node::Node(char* name)
+Node::Node(std::string name)
 {
     name_ = name;
     parent_ = NULL;
@@ -25,7 +25,7 @@ void Node::setVertex(Vertex* vertex)
 }
 
 
-char * Node::getName()
+std::string Node::getName()
 {
     return name_;
 }

@@ -19,14 +19,14 @@ Graph::~Graph()
 }
 
 
-void Graph::addNode(char* name)
+void Graph::addNode(std::string name)
 {
     nodes_.push_back(Node(name));
 }
 
 
-void Graph::addVertex(char* node_start_name,
-                      char* node_end_name,
+void Graph::addVertex(std::string node_start_name,
+                      std::string node_end_name,
                       unsigned char weight,
                       std::vector<std::function<void()>>& skills_vector)
 {
@@ -37,7 +37,7 @@ void Graph::addVertex(char* node_start_name,
 }
 
 
-Node* Graph::findNode(char* name)
+Node* Graph::findNode(std::string name)
 {
     for (auto& node : nodes_)
         if (node.getName() == name)
@@ -68,13 +68,13 @@ void Graph::showGraph()
 }
 
 
-char * Graph::getCurrentNode()
+std::string Graph::getCurrentNode()
 {
     return current_node_;
 }
 
 
-void Graph::setCurrentNode(char* name_of_current_node)
+void Graph::setCurrentNode(std::string name_of_current_node)
 {
     current_node_ = name_of_current_node;
 	std_msgs::String msg;
@@ -83,7 +83,7 @@ void Graph::setCurrentNode(char* name_of_current_node)
 }
 
 
-std::vector<std::function<void()>> Graph::bfs(const char* node_end_name, int number_limit)
+std::vector<std::function<void()>> Graph::bfs(const std::string node_end_name, int number_limit)
 {
     std::cout << "BFS Search from \"" << current_node_ <<"\" to \"" << node_end_name << "\"" << std::endl;
 

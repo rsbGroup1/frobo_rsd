@@ -19,8 +19,6 @@
 #include "skills.h"
 #include "graph.h"
 
-
-class pre_bric;
 // Defines
 #define M_PI		3.14159265358979323846
 #define DEG_TO_RAD	(M_PI/180.0)
@@ -72,8 +70,24 @@ public:
 		
 		// Debug
 		// Search in graph how to perform action
-		graph_.setCurrentNode((char*)"line_start");
-		solution_ = graph_.bfs((char*)"wc3_conveyor", search_limit_);
+		graph_.setCurrentNode("line_start");
+		solution_ = graph_.bfs("wc3_conveyor", search_limit_);
+		
+		// Execute skills
+		for(auto& skill : solution_){
+			std::cout << "   ";
+			skill();
+		}
+		
+		solution_ = graph_.bfs("charge", search_limit_);
+		
+		// Execute skills
+		for(auto& skill : solution_){
+			std::cout << "   ";
+			skill();
+		}
+		
+		solution_ = graph_.bfs("wc2_robot", search_limit_);
 		
 		// Execute skills
 		for(auto& skill : solution_){
@@ -110,23 +124,23 @@ public:
 	 */
 	void createGraph(){
 		// Nodes
-		graph_.addNode((char*)"line_start");
-		graph_.addNode((char*)"line_end");
-		graph_.addNode((char*)"wc1");
-		graph_.addNode((char*)"wc1_conveyor");
-		graph_.addNode((char*)"wc1_robot");
-		graph_.addNode((char*)"wc2");
-		graph_.addNode((char*)"wc2_conveyor");
-		graph_.addNode((char*)"wc2_robot");
-		graph_.addNode((char*)"wc3");
-		graph_.addNode((char*)"wc3_conveyor");
-		graph_.addNode((char*)"wc3_robot");
-		graph_.addNode((char*)"wc_exit");
-		graph_.addNode((char*)"box");
-		graph_.addNode((char*)"pre_bricks");
-		graph_.addNode((char*)"bricks");
-		graph_.addNode((char*)"pre_charge");
-		graph_.addNode((char*)"charge");
+		graph_.addNode("line_start");
+		graph_.addNode("line_end");
+		graph_.addNode("wc1");
+		graph_.addNode("wc1_conveyor");
+		graph_.addNode("wc1_robot");
+		graph_.addNode("wc2");
+		graph_.addNode("wc2_conveyor");
+		graph_.addNode("wc2_robot");
+		graph_.addNode("wc3");
+		graph_.addNode("wc3_conveyor");
+		graph_.addNode("wc3_robot");
+		graph_.addNode("wc_exit");
+		graph_.addNode("box");
+		graph_.addNode("pre_bricks");
+		graph_.addNode("bricks");
+		graph_.addNode("pre_charge");
+		graph_.addNode("charge");
 		
 		/*
 		 * 
@@ -135,130 +149,153 @@ public:
 		 */
 		std::vector<std::function<void()>> line_start_TO_wc1;
 		line_start_TO_wc1.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_1_entrance"));
+		//line_start_TO_wc1.push_back(std::bind(&Graph::setCurrentNode, graph_, "wc1"));
 		
 		std::vector<std::function<void()>> wc1_TO_wc1_conveyor;
 		wc1_TO_wc1_conveyor.push_back(std::bind(&Skills::angularMove, skills_, 90));
 		wc1_TO_wc1_conveyor.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_1_conveyor"));
+		//wc1_TO_wc1_conveyor.push_back(std::bind(&Graph::setCurrentNode, graph_, "wc1_conveyor"));
 		
 		std::vector<std::function<void()>> wc1_conveyor_TO_wc1_robot;
 		wc1_conveyor_TO_wc1_robot.push_back(std::bind(&Skills::angularMove, skills_, 90));
 		wc1_conveyor_TO_wc1_robot.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_1_load"));
+		//wc1_conveyor_TO_wc1_robot.push_back(std::bind(&Graph::setCurrentNode, graph_, "wc1_robot"));
 		
 		std::vector<std::function<void()>> wc1_robot_TO_wc_exit;
 		wc1_robot_TO_wc_exit.push_back(std::bind(&Skills::angularMove, skills_, -180));
 		wc1_robot_TO_wc_exit.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_1_exit"));
+		//wc1_robot_TO_wc_exit.push_back(std::bind(&Graph::setCurrentNode, graph_, "wc1_exit"));
 		
 		
 		
 		std::vector<std::function<void()>> wc1_TO_wc2;
 		wc1_TO_wc2.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_2_entrance"));
+		//wc1_TO_wc2.push_back(std::bind(&Graph::setCurrentNode, graph_, "wc2"));
 		
 		std::vector<std::function<void()>> wc2_TO_wc2_conveyor;
 		wc2_TO_wc2_conveyor.push_back(std::bind(&Skills::angularMove, skills_, 90));
 		wc2_TO_wc2_conveyor.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_2_conveyor"));
+		//wc2_TO_wc2_conveyor.push_back(std::bind(&Graph::setCurrentNode, graph_, "wc2_conveyor"));
 		
 		std::vector<std::function<void()>> wc2_conveyor_TO_wc2_robot;
 		wc2_conveyor_TO_wc2_robot.push_back(std::bind(&Skills::angularMove, skills_, 90));
 		wc2_conveyor_TO_wc2_robot.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_2_load"));
+		//wc2_conveyor_TO_wc2_robot.push_back(std::bind(&Graph::setCurrentNode, graph_, "wc2_robot"));
 		
 		std::vector<std::function<void()>> wc2_robot_TO_wc_exit;
 		wc2_robot_TO_wc_exit.push_back(std::bind(&Skills::angularMove, skills_, -180));
 		wc2_robot_TO_wc_exit.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_2_exit"));
+		//wc2_robot_TO_wc_exit.push_back(std::bind(&Graph::setCurrentNode, graph_, "wc2_exit"));
 		
 
 		
 		std::vector<std::function<void()>> wc2_TO_wc3;
 		wc2_TO_wc3.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_3_entrance"));
+		//wc2_TO_wc3.push_back(std::bind(&Graph::setCurrentNode, graph_, "wc3"));
 		
 		std::vector<std::function<void()>> wc3_TO_wc3_conveyor;
 		wc3_TO_wc3_conveyor.push_back(std::bind(&Skills::angularMove, skills_, 90));
 		wc3_TO_wc3_conveyor.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_3_conveyor"));
+		//wc3_TO_wc3_conveyor.push_back(std::bind(&Graph::setCurrentNode, graph_, "wc3_conveyor"));
 		
 		std::vector<std::function<void()>> wc3_conveyor_TO_wc3_robot;
 		wc3_conveyor_TO_wc3_robot.push_back(std::bind(&Skills::angularMove, skills_, 90));
 		wc3_conveyor_TO_wc3_robot.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_3_load"));
+		//wc3_conveyor_TO_wc3_robot.push_back(std::bind(&Graph::setCurrentNode, graph_, "wc3_robot"));
 		
 		std::vector<std::function<void()>> wc3_robot_TO_wc_exit;
 		wc3_robot_TO_wc_exit.push_back(std::bind(&Skills::angularMove, skills_, -180));
 		wc3_robot_TO_wc_exit.push_back(std::bind(&Skills::lineUntilQR, skills_, "wc_3_exit"));
+		//wc3_robot_TO_wc_exit.push_back(std::bind(&Graph::setCurrentNode, graph_, "wc3_exit"));
 		
 		
 		
 		std::vector<std::function<void()>> wc_exit_TO_line_end;
 		wc_exit_TO_line_end.push_back(std::bind(&Skills::angularMove, skills_, -90));
 		wc_exit_TO_line_end.push_back(std::bind(&Skills::lineUntilQR, skills_, "line_out"));
+		//wc_exit_TO_line_end.push_back(std::bind(&Graph::setCurrentNode, graph_, "line_end"));
 		
 		
 		
 		std::vector<std::function<void()>> line_end_TO_box;
 		line_end_TO_box.push_back(std::bind(&Skills::goToFreePosition, skills_, 2, 3));
+		//line_end_TO_box.push_back(std::bind(&Graph::setCurrentNode, graph_, "box"));
 		
 		std::vector<std::function<void()>> box_TO_line_start;
 		box_TO_line_start.push_back(std::bind(&Skills::goToFreePosition, skills_, 1, 2));
+		//box_TO_line_start.push_back(std::bind(&Graph::setCurrentNode, graph_, "line_start"));
 		
 		
 		
 		std::vector<std::function<void()>> box_TO_pre_bricks;
 		box_TO_pre_bricks.push_back(std::bind(&Skills::angularMove, skills_, -90));
+		//box_TO_pre_bricks.push_back(std::bind(&Graph::setCurrentNode, graph_, "pre_bricks"));
 		
 		std::vector<std::function<void()>> pre_bricks_TO_box;
 		pre_bricks_TO_box.push_back(std::bind(&Skills::angularMove, skills_, -90));
+		//pre_bricks_TO_box.push_back(std::bind(&Graph::setCurrentNode, graph_, "box"));
 		
 		
 		std::vector<std::function<void()>> pre_bricks_TO_bricks;
 		pre_bricks_TO_bricks.push_back(std::bind(&Skills::angularMove, skills_, -90));
+		//pre_bricks_TO_bricks.push_back(std::bind(&Graph::setCurrentNode, graph_, "bricks"));
 		
 		std::vector<std::function<void()>> bricks_TO_pre_bricks;
 		bricks_TO_pre_bricks.push_back(std::bind(&Skills::angularMove, skills_, -90));
+		//bricks_TO_pre_bricks.push_back(std::bind(&Graph::setCurrentNode, graph_, "pre_bricks"));
 		
 		
 		std::vector<std::function<void()>> box_TO_pre_charge;
 		box_TO_pre_charge.push_back(std::bind(&Skills::angularMove, skills_, -90));
+		//box_TO_pre_charge.push_back(std::bind(&Graph::setCurrentNode, graph_, "pre_charge"));
 		
 		std::vector<std::function<void()>> pre_charge_TO_box;
 		pre_charge_TO_box.push_back(std::bind(&Skills::angularMove, skills_, -90));
+		//pre_charge_TO_box.push_back(std::bind(&Graph::setCurrentNode, graph_, "box"));
 		
 		
 		std::vector<std::function<void()>> pre_charge_TO_charge;
 		pre_charge_TO_charge.push_back(std::bind(&Skills::angularMove, skills_, -90));
+		//pre_charge_TO_charge.push_back(std::bind(&Graph::setCurrentNode, graph_, "charge"));
 		
 		std::vector<std::function<void()>> charge_TO_pre_charge;
 		charge_TO_pre_charge.push_back(std::bind(&Skills::angularMove, skills_, -90));
+		//charge_TO_pre_charge.push_back(std::bind(&Graph::setCurrentNode, graph_, "pre_charge"));
 		
 		
 		
 		// Vertices 
-		graph_.addVertex((char*)"line_start", (char*)"wc1", 1, line_start_TO_wc1);
-		graph_.addVertex((char*)"wc1", (char*)"wc2", 1, wc1_TO_wc2);
-		graph_.addVertex((char*)"wc2", (char*)"wc3", 1, wc2_TO_wc3);
-		graph_.addVertex((char*)"wc_exit", (char*)"line_end", 1, wc_exit_TO_line_end);
+		graph_.addVertex("line_start", "wc1", 1, line_start_TO_wc1);
+		graph_.addVertex("wc1", "wc2", 1, wc1_TO_wc2);
+		graph_.addVertex("wc2", "wc3", 1, wc2_TO_wc3);
+		graph_.addVertex("wc_exit", "line_end", 1, wc_exit_TO_line_end);
 		
-		graph_.addVertex((char*)"wc1", (char*)"wc1_conveyor", 1, wc1_TO_wc1_conveyor);
-		graph_.addVertex((char*)"wc1_conveyor", (char*)"wc1_robot", 1, wc1_conveyor_TO_wc1_robot);
-		graph_.addVertex((char*)"wc1_robot", (char*)"wc_exit", 1, wc1_robot_TO_wc_exit);
+		graph_.addVertex("wc1", "wc1_conveyor", 1, wc1_TO_wc1_conveyor);
+		graph_.addVertex("wc1_conveyor", "wc1_robot", 1, wc1_conveyor_TO_wc1_robot);
+		graph_.addVertex("wc1_robot", "wc_exit", 1, wc1_robot_TO_wc_exit);
 		
-		graph_.addVertex((char*)"wc2", (char*)"wc2_conveyor", 1, wc2_TO_wc2_conveyor);
-		graph_.addVertex((char*)"wc2_conveyor", (char*)"wc2_robot", 1, wc2_conveyor_TO_wc2_robot);
-		graph_.addVertex((char*)"wc2_robot", (char*)"wc_exit", 1, wc2_robot_TO_wc_exit);
+		graph_.addVertex("wc2", "wc2_conveyor", 1, wc2_TO_wc2_conveyor);
+		graph_.addVertex("wc2_conveyor", "wc2_robot", 1, wc2_conveyor_TO_wc2_robot);
+		graph_.addVertex("wc2_robot", "wc_exit", 1, wc2_robot_TO_wc_exit);
 		
-		graph_.addVertex((char*)"wc3", (char*)"wc3_conveyor", 1, wc3_TO_wc3_conveyor);
-		graph_.addVertex((char*)"wc3_conveyor", (char*)"wc3_robot", 1, wc3_conveyor_TO_wc3_robot);
-		graph_.addVertex((char*)"wc3_robot", (char*)"wc_exit", 1, wc3_robot_TO_wc_exit);
+		graph_.addVertex("wc3", "wc3_conveyor", 1, wc3_TO_wc3_conveyor);
+		graph_.addVertex("wc3_conveyor", "wc3_robot", 1, wc3_conveyor_TO_wc3_robot);
+		graph_.addVertex("wc3_robot", "wc_exit", 1, wc3_robot_TO_wc_exit);
 		
-		graph_.addVertex((char*)"line_end", (char*)"box", 1, line_end_TO_box);
-		graph_.addVertex((char*)"box", (char*)"line_start", 1, box_TO_line_start);
+		graph_.addVertex("line_end", "box", 1, line_end_TO_box);
+		graph_.addVertex("box", "line_start", 1, box_TO_line_start);
 		
-		graph_.addVertex((char*)"box", (char*)"pre_charge", 1, box_TO_pre_charge);
-		graph_.addVertex((char*)"pre_charge", (char*)"box", 1, pre_charge_TO_box);
+		graph_.addVertex("box", "pre_charge", 1, box_TO_pre_charge);
+		graph_.addVertex("pre_charge", "box", 1, pre_charge_TO_box);
 		
-		graph_.addVertex((char*)"box", (char*)"pre_bricks", 1, box_TO_pre_bricks);
-		graph_.addVertex((char*)"pre_bricks", (char*)"box", 1, pre_bricks_TO_box);
+		graph_.addVertex("box", "pre_bricks", 1, box_TO_pre_bricks);
+		graph_.addVertex("pre_bricks", "box", 1, pre_bricks_TO_box);
 		
-		graph_.addVertex((char*)"pre_charge", (char*)"charge", 1, pre_charge_TO_charge);
-		graph_.addVertex((char*)"charge", (char*)"pre_charge", 1, charge_TO_pre_charge);
+		graph_.addVertex("pre_charge", "charge", 1, pre_charge_TO_charge);
+		graph_.addVertex("charge", "pre_charge", 1, charge_TO_pre_charge);
 		
-		graph_.addVertex((char*)"pre_bricks", (char*)"bricks", 1, pre_bricks_TO_bricks);
-		graph_.addVertex((char*)"bricks", (char*)"pre_bricks", 1, bricks_TO_pre_bricks);
+		graph_.addVertex("pre_bricks", "bricks", 1, pre_bricks_TO_bricks);
+		graph_.addVertex("bricks", "pre_bricks", 1, bricks_TO_pre_bricks);
 	}
 
 	

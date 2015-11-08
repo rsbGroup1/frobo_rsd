@@ -28,14 +28,16 @@ include_directories(${catkin_INCLUDE_DIRS})
 set(
 SOURCES 
 	src/navigationControllerNode.cpp
-	src/node.h
-	src/vertex.h
+	src/node.cpp
+	src/vertex.cpp
 	src/graph.cpp
 	src/skills.cpp
 )
 
 set(
 HEADERS
+	src/node.h
+	src/vertex.h
 	src/skills.h
 )
 

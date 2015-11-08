@@ -1,13 +1,11 @@
 #ifndef VERTEX_H
 #define VERTEX_H
 
-#include <iostream>
-#include <string>
 #include <vector>
 #include <functional>
 
-#include "node.h"
-#include "skills.h"
+class Node;
+class Skills;
 
 class Vertex
 {
@@ -20,48 +18,32 @@ public:
 	 * @param skill_vector the skills to do from going to one node to the other
 	 */
     Vertex(Node* node_start, Node* node_end, unsigned char weight,
-		   std::vector<std::function<void()>>& skill_vector)
-    {
-        node_start_ = node_start;
-        node_end_ = node_end;
-        weight_ = weight;
-        skill_vector_ = skill_vector;
-    }
+		   std::vector<std::function<void()>>& skill_vector);
     
     /**
 	 * Destructor
 	 */
-    ~Vertex(){
-		// Nothing
-	};
+    ~Vertex();
 	
 	/**
 	 * Returns the vector of skills
 	 */
-	std::vector<std::function<void()>>* getSkills(){
-		return &skill_vector_;
-	}
+	std::vector<std::function<void()>>* getSkills();
 	
 	/**
 	 * Returns the start node
 	 */
-	Node* getNodeStart(){
-		return node_start_;
-	}
+	Node* getNodeStart();
 	
 	/**
 	 * Returns the end node
 	 */
-	Node* getNodeEnd(){
-		return node_end_;
-	}
+	Node* getNodeEnd();
 	
 	/**
 	 * Returns the weight
 	 */
-	unsigned char getWeight(){
-		return weight_;
-	}
+	unsigned char getWeight();
 
 private:
     Node* node_start_;

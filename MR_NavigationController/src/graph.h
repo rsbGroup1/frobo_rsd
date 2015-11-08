@@ -1,11 +1,9 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
-#include <iostream>
 #include <vector>
 #include <functional>
 
-class Skills;
 class Node;
 class Vertex;
 

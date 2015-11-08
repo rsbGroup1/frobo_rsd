@@ -1,9 +1,10 @@
 #include "graph.h"
 
+#include <iostream>
+
 #include "node.h"
 #include "skills.h"
 #include "vertex.h"
-
 
 Graph::Graph()
 {
@@ -30,7 +31,6 @@ void Graph::addVertex(char* node_start_name,
 	Node* node_end = findNode(node_end_name);
 	
 	verteces_.push_back( Vertex(node_start, node_end, weight, skills_vector) );
-	node_start->setVertex(&verteces_.back());
 }
 
 
@@ -46,10 +46,21 @@ Node* Graph::findNode(char* name)
 
 void Graph::showGraph()
 {
-	for (auto& node : nodes_){	
-		std::cout << "Node \"" << node.getName() << "\" connected to:" << std::endl;
-		for (auto& connected_node : node.getNodesConnected())
-			std::cout << "   " << connected_node->getName() << std::endl;
+	for (auto& node : nodes_){
+		std::cout << "Node \"" << node.getName() << "\""<< std::endl;
+		if (node.getParentsNodes().empty() && node.getChildrenNodes().empty()) {
+			std::cout << "    NOT connected" << std::endl;
+		}
+		if (!node.getChildrenNodes().empty()) {
+			std::cout << "    Parent of: " << std::endl;
+			for (auto& connected_node : node.getChildrenNodes())
+				std::cout << "       " << connected_node->getName() << std::endl;
+		} 
+		if (!node.getParentsNodes().empty()) {
+			std::cout << "    Children of: " << std::endl;
+			for (auto& connected_node : node.getParentsNodes())
+				std::cout << "       " << connected_node->getName() << std::endl;
+		}
 	}
 }
 
@@ -69,38 +80,47 @@ std::vector<std::function<void()>> Graph::bfs(const char* node_end_name)
 {
 	std::vector<std::function<void()>> solution;
 	std::vector<Node*> open_list;
-	
-	
+	std::vector<Node*> closed_list;
 	Node* current_node;
-			
+	
+	
+	// Clean the parents
+	for (auto& node_to_clean : nodes_)
+		node_to_clean.setParent(NULL);
 	
 	// Add the current node to the open list
 	open_list.push_back(findNode(current_node_));
-	current_node = open_list.front();
 	
 	// BFS
-	
-	/**
-	 * 
-	 * FINISH!!
-	 * 
-	 */
 	while(!open_list.empty()){
-		// Dequeue
-		open_list.erase(open_list.begin());
+		// Choose a new node
+		current_node = open_list.front(); // Updates the current node
+		closed_list.push_back(current_node); // Put it in the closed list
+		open_list.erase(open_list.begin()); // Dequeue in the open list
 		
-		for(auto node_connected : current_node->getNodesConnected()){
-			if (node_connected->getName() == node_end_name)
-				
-				;;
-			
+		//Check if the node is the end
+		if (current_node->getName() == node_end_name) {
+			// Until the original node is not reached
+			do {
+				for (auto& vertex : verteces_){
+					if (vertex.getNodeEnd() == current_node &&
+						vertex.getNodeStart() == current_node->getParent())
+					{
+						for (auto& skill : *vertex.getSkills()){
+							std::cout << "new skill" << std::endl;
+							solution.insert(solution.begin(), skill);
+						}
+					}
+				}
+				current_node = current_node->getParent();
+			} while (current_node->getParent() != NULL); // The parent of the first node is NULL
+		} else {
+			// Add children
+			for(auto node_connected : current_node->getChildrenNodes()) {
+				node_connected->setParent(current_node);
+				open_list.push_back(node_connected);
+			}
 		}
 	}
-	
-	for (auto& vertix : verteces_) {
-		for (auto& skill : *vertix.getSkills() )
-			solution.push_back(skill);
-	}
-	
 	return solution;
 }

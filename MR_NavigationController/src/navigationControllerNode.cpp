@@ -63,12 +63,12 @@ public:
 		
 		// Create the graph
 		createGraph();
-		graph_.showGraph();
+		//graph_.showGraph();
 		
 		// Debug
 		// Search in graph how to perform action
 		graph_.setCurrentNode((char*)"start_line");
-		solution_ = graph_.bfs((char*)"workcell_1");
+		solution_ = graph_.bfs((char*)"conveyor_workcell_1");
 		
 		// Execute skills
 		for(auto& skill : solution_){
@@ -95,15 +95,20 @@ public:
 		// Nodes
 		graph_.addNode((char*)"start_line");
 		graph_.addNode((char*)"workcell_1");
+		graph_.addNode((char*)"conveyor_workcell_1");
 		
 		// Skills
 		std::vector<std::function<void()>> vertex_1;
 		vertex_1.push_back(std::bind(&Skills::lineUntilQR, skills_, "workcell_1"));
-		vertex_1.push_back(std::bind(&Skills::angularMove, skills_, 90));
-		vertex_1.push_back(std::bind(&Skills::changeLineWC1, skills_));
+		
+		std::vector<std::function<void()>> vertex_2;
+		vertex_2.push_back(std::bind(&Skills::angularMove, skills_, 90));
+		vertex_2.push_back(std::bind(&Skills::changeLineWC1, skills_));
+		
 		
 		// Vertices 
 		graph_.addVertex((char*)"start_line", (char*)"workcell_1", 1, vertex_1);
+		graph_.addVertex((char*)"workcell_1", (char*)"conveyor_workcell_1", 1, vertex_2);
 		
 	}
 	

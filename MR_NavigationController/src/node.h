@@ -1,61 +1,69 @@
 #ifndef NODE_H
 #define NODE_H
 
-#include <iostream>
-#include <string>
 #include <vector>
 
-#include "vertex.h"
+class Vertex;
 
 class Node
 {
-	
 public:
 	/**
 	 * Initialize a node with a name
 	 */
-	Node(char* name)
-	{
-		name_ = name;
-	};
+	Node(char* name);
 	
 	/**
 	 * Destructs the node
 	 */
-	~Node(){
-		// Nothing
-	};
+	~Node();
 	
 	/**
 	 * Add a vertex to the node
 	 * @param vertex the vertex to add
 	 */
-	void setVertex(Vertex* vertex){
-		connections_.push_back(vertex);
-		nodes_connected_.push_back(vertex->getNodeEnd());
-	};
+	void setVertex(Vertex* vertex);
 	
 	/**
 	 * Returns the name
 	 * @return name_ the name of the node
 	 */
-	char* getName(){
-		return name_;
-	}
+	char* getName();
 	
 	/**
-	 * Returns the vector of connected nodes
-	 * @return nodes_connected_ the nodes connected
+	 * Return the parent of the node
 	 */
-	std::vector<Node*> getNodesConnected(){
-		return nodes_connected_;
-	}
+	Node* getParent();
+	
+	/**
+	 * Set the parent of the node
+	 */
+	void setParent(Node* parent);
+	
+	/**
+	 * Given a node, return the skill vector to it
+	 */
+	Vertex* getVertexFrom(Node* node);
+	
+	/**
+	 * Returns a vector with all the nodes that are the children of
+	 * the node
+	 */
+	std::vector<Node*> getChildrenNodes();
+	
+	/**
+	 * Returns a vector with all the nodes that are the parent
+	 * of node
+	 */
+	std::vector<Node*> getParentsNodes();
 	
 	
 private:
 	char* name_;
-	std::vector<Vertex*> connections_;
-	std::vector<Node*> nodes_connected_;
+	std::vector<Vertex*> verteces_;
+	std::vector<Node*> parent_of_;
+	std::vector<Node*> children_of_;
+	Node* parent_;
 };
 
 #endif // NODE_H

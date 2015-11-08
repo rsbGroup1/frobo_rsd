@@ -66,26 +66,6 @@ bool Skills::angularMove(double angle)
     return move_call_.response.done;
 }
 
-bool Skills::changeLineWC1()
-{
-    std::cout << "Skill: Change to workcell 1 robot line"<< std::endl;
-
-    return true;
-}
-
-bool Skills::changeLineWC2()
-{
-    std::cout << "Skill: Change to workcell 2 robot line"<< std::cout;
-
-    return true;
-}
-
-bool Skills::changeLineWC3()
-{
-
-    return true;
-}
-
 bool Skills::goToFreePosition(double x, double y)
 {
 
@@ -95,23 +75,5 @@ bool Skills::goToFreePosition(double x, double y)
     return true;
 }
 
-bool Skills::moveFromCharger()
-{
-    return true;
-}
 
-bool Skills::moveFromDispenser()
-{
-    return true;
-}
-
-bool Skills::moveToCharger()
-{
-    return true;
-}
-
-bool Skills::moveToDispenser()
-{
-    return true;
-}
 

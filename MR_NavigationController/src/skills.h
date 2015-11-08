@@ -43,41 +43,6 @@ public:
      */
     bool goToFreePosition(double x, double y);
 
-    /**
-     *
-     */
-    bool moveToDispenser();
-
-    /**
-     *
-     */
-    bool moveToCharger();
-
-    /**
-     *
-     */
-    bool moveFromDispenser();
-
-    /**
-     *
-     */
-    bool moveFromCharger();
-
-    /**
-     *
-     */
-    bool changeLineWC1();
-
-    /**
-     *
-     */
-    bool changeLineWC2();
-
-    /**
-     *
-     */
-    bool changeLineWC3();
-
 private:
 	ros::ServiceClient* srv_lineUntilQR_;
 	ros::ServiceClient* srv_move_;

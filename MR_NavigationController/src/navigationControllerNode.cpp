@@ -20,6 +20,7 @@
 #include "graph.h"
 
 
+class pre_bric;
 // Defines
 #define M_PI		3.14159265358979323846
 #define DEG_TO_RAD	(M_PI/180.0)
@@ -122,10 +123,10 @@ public:
 		graph_.addNode((char*)"wc3_robot");
 		graph_.addNode((char*)"wc_exit");
 		graph_.addNode((char*)"box");
-		graph_.addNode((char*)"bricks_pre");
+		graph_.addNode((char*)"pre_bricks");
 		graph_.addNode((char*)"bricks");
-		graph_.addNode((char*)"charging_pre");
-		graph_.addNode((char*)"charging");
+		graph_.addNode((char*)"pre_charge");
+		graph_.addNode((char*)"charge");
 		
 		// Skills
 		std::vector<std::function<void()>> line_start_TO_wc1;
@@ -144,7 +145,7 @@ public:
 		wc1_TO_wc1_conveyor.push_back(std::bind(&Skills::lineUntilQR, skills_, "conveyor_stop"));
 		
 		std::vector<std::function<void()>> wc1_conveyor_TO_wc1_robot;
-		wc1_conveyor_TO_wc1_robot.push_back(std::bind(&Skills::changeLineWC1, skills_));
+		wc1_conveyor_TO_wc1_robot.push_back(std::bind(&Skills::angularMove, skills_, 90));
 		
 		std::vector<std::function<void()>> wc1_robot_TO_wc_exit;
 		wc1_robot_TO_wc_exit.push_back(std::bind(&Skills::angularMove, skills_, -180));
@@ -157,7 +158,7 @@ public:
 		wc2_TO_wc2_conveyor.push_back(std::bind(&Skills::lineUntilQR, skills_, "conveyor_stop"));
 		
 		std::vector<std::function<void()>> wc2_conveyor_TO_wc2_robot;
-		wc2_conveyor_TO_wc2_robot.push_back(std::bind(&Skills::changeLineWC2, skills_));
+		wc2_conveyor_TO_wc2_robot.push_back(std::bind(&Skills::angularMove, skills_, 90));
 		
 		std::vector<std::function<void()>> wc2_robot_TO_wc_exit;
 		wc2_robot_TO_wc_exit.push_back(std::bind(&Skills::angularMove, skills_, -180));
@@ -170,7 +171,7 @@ public:
 		wc3_TO_wc3_conveyor.push_back(std::bind(&Skills::lineUntilQR, skills_, "conveyor_stop"));
 		
 		std::vector<std::function<void()>> wc3_conveyor_TO_wc3_robot;
-		wc3_conveyor_TO_wc3_robot.push_back(std::bind(&Skills::changeLineWC3, skills_));
+		wc3_conveyor_TO_wc3_robot.push_back(std::bind(&Skills::angularMove, skills_, 90));
 		
 		std::vector<std::function<void()>> wc3_robot_TO_wc_exit;
 		wc3_robot_TO_wc_exit.push_back(std::bind(&Skills::angularMove, skills_, -180));
@@ -190,9 +191,35 @@ public:
 		std::vector<std::function<void()>> box_TO_line_start;
 		box_TO_line_start.push_back(std::bind(&Skills::goToFreePosition, skills_, 1, 2));
 		
-		/*
-		 * TODO Changer and bricks
-		 */
+		
+		
+		std::vector<std::function<void()>> box_TO_pre_bricks;
+		box_TO_pre_bricks.push_back(std::bind(&Skills::angularMove, skills_, -90));
+		
+		std::vector<std::function<void()>> pre_bricks_TO_box;
+		pre_bricks_TO_box.push_back(std::bind(&Skills::angularMove, skills_, -90));
+		
+		
+		std::vector<std::function<void()>> pre_bricks_TO_bricks;
+		pre_bricks_TO_bricks.push_back(std::bind(&Skills::angularMove, skills_, -90));
+		
+		std::vector<std::function<void()>> bricks_TO_pre_bricks;
+		bricks_TO_pre_bricks.push_back(std::bind(&Skills::angularMove, skills_, -90));
+		
+		
+		std::vector<std::function<void()>> box_TO_pre_charge;
+		box_TO_pre_charge.push_back(std::bind(&Skills::angularMove, skills_, -90));
+		
+		std::vector<std::function<void()>> pre_charge_TO_box;
+		pre_charge_TO_box.push_back(std::bind(&Skills::angularMove, skills_, -90));
+		
+		
+		std::vector<std::function<void()>> pre_charge_TO_charge;
+		pre_charge_TO_charge.push_back(std::bind(&Skills::angularMove, skills_, -90));
+		
+		std::vector<std::function<void()>> charge_TO_pre_charge;
+		charge_TO_pre_charge.push_back(std::bind(&Skills::angularMove, skills_, -90));
+		
 		
 		
 		// Vertices 
@@ -213,9 +240,20 @@ public:
 		graph_.addVertex((char*)"wc3_conveyor", (char*)"wc3_robot", 1, wc3_conveyor_TO_wc3_robot);
 		graph_.addVertex((char*)"wc3_robot", (char*)"wc_exit", 1, wc3_robot_TO_wc_exit);
 		
-		
 		graph_.addVertex((char*)"line_end", (char*)"box", 1, line_end_TO_box);
 		graph_.addVertex((char*)"box", (char*)"line_start", 1, box_TO_line_start);
+		
+		graph_.addVertex((char*)"box", (char*)"pre_charge", 1, box_TO_pre_charge);
+		graph_.addVertex((char*)"pre_charge", (char*)"box", 1, pre_charge_TO_box);
+		
+		graph_.addVertex((char*)"box", (char*)"pre_bricks", 1, box_TO_pre_bricks);
+		graph_.addVertex((char*)"pre_bricks", (char*)"box", 1, pre_bricks_TO_box);
+		
+		graph_.addVertex((char*)"pre_charge", (char*)"charge", 1, pre_charge_TO_charge);
+		graph_.addVertex((char*)"charge", (char*)"pre_charge", 1, charge_TO_pre_charge);
+		
+		graph_.addVertex((char*)"pre_bricks", (char*)"bricks", 1, pre_bricks_TO_bricks);
+		graph_.addVertex((char*)"bricks", (char*)"pre_bricks", 1, bricks_TO_pre_bricks);
 	}
 
 	

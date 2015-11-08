@@ -88,12 +88,23 @@ std::vector<std::function<void()>> Graph::bfs(const std::string node_end_name, i
     std::vector<Node*> open_list;
     std::vector<Node*> closed_list;
     Node* current_node;
-    unsigned char counter = 0;
+    int counter;
 
 
-    // Clean the parents
+    // Clear the BFS
     for (auto& node_to_clean : nodes_)
         node_to_clean.setParent(NULL);
+	open_list.clear();
+	closed_list.clear();
+	solution.clear();
+	current_node = NULL;
+	counter = 0;
+	
+	// Check if it is a illegal movement
+	if (node_end_name == current_node_) {
+		ROS_INFO("You are already there!");
+		return solution;
+	}
 
     // Add the current node to the open list
     open_list.push_back(findNode(current_node_));
@@ -121,16 +132,24 @@ std::vector<std::function<void()>> Graph::bfs(const std::string node_end_name, i
         } else {
             // Add children
             for(auto node_connected : current_node->getChildrenNodes()) {
+				bool new_node = true;
                 // Check if it exists in the closed list
                 for (auto& node_in_closed_list : closed_list) {
-                    if (node_in_closed_list != node_connected) {
-                        // If it is not, set the parent and put it in the open list
-                        node_connected->setParent(current_node);
-                        open_list.push_back(node_connected);
-                    }
+					if (node_in_closed_list->getName() == node_connected->getName()) {
+						new_node = false;
+					}
                 }
+				// If it is not, set the parent and put it in the open list
+				if (new_node == true) {
+					node_connected->setParent(current_node);
+					open_list.push_back(node_connected);
+				}
             }
         }
+//         std::cout << "Open: " << open_list.size() << " | Closed: " << closed_list.size() << std::endl;
+// 		
+// 		for (auto& node : open_list)
+// 			std::cout << node->getName() << std::endl;
     }
 
     // Solution not found message

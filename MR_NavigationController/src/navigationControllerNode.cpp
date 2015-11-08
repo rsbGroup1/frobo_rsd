@@ -51,7 +51,7 @@ public:
 		pNh_.param<std::string>("performAction", srv_action_name_, "mrNavigationController/performAction");
 		pNh_.param<std::string>("status", pub_status_name_, "mrNavigationController/status");
 		pNh_.param<std::string>("currentNode", pub_current_node_name_, "mrNavigationController/currentNode");
-		pNh_.param<int>("searchLimit", search_limit_, 50);
+		pNh_.param<int>("searchLimit", search_limit_, 100);
 		
 		// Service
         srv_lineUntilQR_ = 
@@ -70,15 +70,7 @@ public:
 		
 		// Debug
 		// Search in graph how to perform action
-		graph_->setCurrentNode("line_start");
-		solution_ = graph_->bfs("wc3_conveyor", search_limit_);
-		
-		// Execute skills
-		for(auto& skill : solution_){
-			std::cout << "   ";
-			skill();
-		}
-		
+		graph_->setCurrentNode("wc1");
 		solution_ = graph_->bfs("charge", search_limit_);
 		
 		// Execute skills
@@ -87,7 +79,15 @@ public:
 			skill();
 		}
 		
-		solution_ = graph_->bfs("wc2_robot", search_limit_);
+		solution_ = graph_->bfs("box", search_limit_);
+		
+		// Execute skills
+		for(auto& skill : solution_){
+			std::cout << "   ";
+			skill();
+		}
+		
+		solution_ = graph_->bfs("pre_bricks", search_limit_);
 		
 		// Execute skills
 		for(auto& skill : solution_){

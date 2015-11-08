@@ -42,11 +42,6 @@ public:
 	void setParent(Node* parent);
 	
 	/**
-	 * Given a node, return the skill vector to it
-	 */
-	Vertex* getVertexFrom(Node* node);
-	
-	/**
 	 * Returns a vector with all the nodes that are the children of
 	 * the node
 	 */
@@ -62,8 +57,8 @@ public:
 private:
 	std::string name_;
 	std::vector<Vertex*> verteces_;
-	std::vector<Node*> parent_of_;
-	std::vector<Node*> children_of_;
+	std::vector<Node*> parents_;
+	std::vector<Node*> childrens_;
 	Node* parent_;
 };
 

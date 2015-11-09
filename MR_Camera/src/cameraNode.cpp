@@ -35,7 +35,7 @@ int main()
     pNh.param<std::string>("image_pub", imagePub, "/mrCamera/image");
     pNh.param<int>("frameWidth", frameWidth, 640);
     pNh.param<int>("frameHeight", frameHeight, 480);
-    pNh.param<int>("cameraFrequency", cameraFrequency, 15);
+    pNh.param<int>("cameraFrequency", cameraFrequency, 30);
     pNh.param<int>("sharpness", sharpness, 2);
     pNh.param<int>("brightness", brightness, 2);
     pNh.param<int>("whiteBalanceTemp", whiteBalanceTemp, 4600);

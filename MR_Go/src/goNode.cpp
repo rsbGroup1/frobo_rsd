@@ -32,7 +32,7 @@ public:
         pNh_.param<double>("linear_speed", linear_speed_, 0.1);
         pNh_.param<double>("angular_speed", angular_speed_, 0.1);
         pNh_.param<double>("linear_precision", linear_precision_, 0.005);
-        pNh_.param<double>("angular_precision", angular_precision_, 2.000);
+        pNh_.param<double>("angular_precision", angular_precision_, 0.500);
         
 
         // Get topics name
@@ -112,6 +112,8 @@ public:
 
         // ONLY Angular movement
         else if (req.angular != 0) {
+            // Change the sign
+            req.angular = -req.angular;
             // Deadman thread
             deadmanThread_->start_thread();
             // Desired
@@ -119,7 +121,7 @@ public:
             while(std::abs(angle_desired - angular_pos_current_) > angular_precision_)
             {
                 // Move the robot
-                std::cout << "Angular distance: " << (angle_desired - angular_pos_current_) << std::endl;
+                std::cout << "Angular distance: " << (angular_pos_current_ - angle_desired) << std::endl;
                 if (req.angular > 0)
                     twist_msg_.twist.angular.z = angular_speed_;
                 else

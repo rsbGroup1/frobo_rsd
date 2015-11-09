@@ -27,14 +27,16 @@ public:
 	{
 		ros::NodeHandle pNh_("~");
 		pNh_.param<std::string>("sub_image", sub_image_name_, "/mrCamera/image");
-       	pNh_.param<std::string>("pub_image", pub_image_name_, "/mrCameraProcessing/output_image");
+       	pNh_.param<std::string>("pub_image_line", pub_image_line_name_, "/mrCameraProcessing/line_image");
+       	pNh_.param<std::string>("pub_image_qr", pub_image_qr_name_, "/mrCameraProcessing/qr_image");
         pNh_.param<std::string>("pub_qr", pub_qr_name_, "/mrCameraProcessing/qr");
        	pNh_.param<std::string>("pub_line", pub_line_name_, "/mrCameraProcessing/line");
 		pNh_.param<std::string>("srv_enable", srv_enable_name_, "/mrCameraProcessing/enable");
 		
 		pub_line_ = nh_.advertise<geometry_msgs::Point>(pub_line_name_, 1);
 		pub_qr_ = nh_.advertise<std_msgs::String>(pub_qr_name_, 1);
-		pub_image_ = it_.advertise(pub_image_name_, 1);
+		pub_image_line_ = it_.advertise(pub_image_line_name_, 1);
+		pub_image_qr_ = it_.advertise(pub_image_qr_name_, 1);
 		
 		srv_enable_ = nh_.advertiseService(srv_enable_name_, &ImageConverter::enableCallback, this);
 	}
@@ -74,8 +76,8 @@ public:
 			cv::flip(image_ptr->image, image_ptr->image, -1);
 			
 			// Detection
-			qrThread_ = new boost::thread(&ImageConverter::qrDetector, this, image_ptr->image);
 			lineThread_ = new boost::thread(&ImageConverter::lineDetector, this, image_ptr->image);
+			qrThread_ = new boost::thread(&ImageConverter::qrDetector, this, image_ptr->image);
 		}
 	}
 	
@@ -138,12 +140,12 @@ public:
 		/*
 		 * Publish
 		 */
-		//Image
+		// Image
 		sensor_msgs::ImagePtr image_msg;
 		image_msg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", image_cropped).toImageMsg();
-		pub_image_.publish(image_msg);
+		pub_image_line_.publish(image_msg);
 		
-		//Point
+		// Point
 		geometry_msgs::Point point_msg;
 		point_msg.x = detected_point.x;
 		point_msg.y = detected_point.y;
@@ -158,53 +160,43 @@ public:
 	 */
 	void qrDetector(cv::Mat image_original){
 		// Set up the scanner 
-		//cv::Mat gray;
 		zbar::ImageScanner scanner;
 		scanner.set_config(zbar::ZBAR_NONE, zbar::ZBAR_CFG_ENABLE, 1);
 		
+		// Filter
+		cv::Mat image_filtered;
+		//cv::bilateralFilter(image_original, image_filtered, 15, 300, 300);
+
 		// Convert image to grayscale
-		//cv::cvtColor(image_original, image_original, CV_RGB2GRAY);
-		cv::inRange(image_original, cv::Scalar(0, 0, 0), cv::Scalar(30, 30, 30), image_original);
+		cv::cvtColor(image_original, image_filtered, CV_RGB2GRAY);
+		//cv::inRange(image_original, cv::Scalar(0, 0, 0), cv::Scalar(40, 40, 40), image_filtered);
+		
 		
 		// Prepare the image for reading
-		//uchar *raw = (uchar*)image_original.data;
-		zbar::Image zbar_image(image_original.cols, image_original.rows, "Y800",
-						  (uchar*)image_original.data , image_original.cols * image_original.rows);
+		zbar::Image zbar_image(image_filtered.cols, image_filtered.rows, "Y800",
+								(uchar*)image_filtered.data , image_filtered.cols * image_filtered.rows);
 		
 		// Scan the image to find QR code
-		int n = scanner.scan(zbar_image);
+		scanner.scan(zbar_image);
 		
 		// String used for telling what the QR or barcode says.
-		std::string data_type, data;
+		std::string data;
 		
 		// Read the image
-		for(zbar::Image::SymbolIterator symbol = zbar_image.symbol_begin(); symbol != zbar_image.symbol_end(); ++symbol)
-		{			
-			/* 
-			 * Write out the symbols and data type name equals type of code QR or Barcode...
-			 * data equals the data that can be found in the QR or Barcode 
-			 */
-			std::vector<cv::Point> vp;
+		for(zbar::Image::SymbolIterator symbol = zbar_image.symbol_begin(); 
+			symbol != zbar_image.symbol_end(); ++symbol)
 			data = symbol->get_data();
-			
-			// Draw in the image. Get the point for the QR code to show where they are. 
-			/*
-			for(int i = 0; i < n; i++)
-				vp.push_back(cv::Point(symbol->get_location_x(i), symbol->get_location_y(i)));
-			
-			cv::RotatedRect r = cv::minAreaRect(vp);
-			cv::Point2f pts[4];
-			r.points(pts); 
-			
-			// draw the lines around the QR code. not working fully yet.
-			for(int i = 0; i < 4; i++)
-				cv::line(image_original, pts[i], pts[i+1], cv::Scalar(255,0,0), 3);
-			*/
-		}
-		// Show the image with the QR code + lines around. 
-		//cv::namedWindow("decoded image", cv::WINDOW_AUTOSIZE);
-		//cv::imshow("decoded image", image_original);
+
 		
+		/*
+		 * Publish
+		 */
+		// Image
+		sensor_msgs::ImagePtr image_msg;
+		image_msg = cv_bridge::CvImage(std_msgs::Header(), "mono8", image_filtered).toImageMsg();
+		pub_image_qr_.publish(image_msg);
+		
+		// Data
 		std_msgs::String msg;
 		msg.data = data;
 		pub_qr_.publish(msg);
@@ -218,11 +210,12 @@ private:
 	ros::NodeHandle nh_, _pNh;
 	image_transport::ImageTransport it_;
 	image_transport::Subscriber sub_image_;
-	image_transport::Publisher pub_image_;
+	image_transport::Publisher pub_image_line_;
+	image_transport::Publisher pub_image_qr_;
 	ros::Publisher pub_line_, pub_qr_;
 	ros::ServiceServer srv_enable_;
 	std::string sub_image_name_;
-	std::string pub_image_name_, pub_line_name_, pub_qr_name_;
+	std::string pub_image_qr_name_, pub_image_line_name_, pub_line_name_, pub_qr_name_;
 	std::string srv_enable_name_;
 	
 	// Threads

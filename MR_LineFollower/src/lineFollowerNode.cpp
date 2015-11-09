@@ -36,14 +36,15 @@ public:
 		pNh_.param<int> ("reference_point_x", reference_point_x_, 320);
 		pNh_.param<int> ("reference_point_y", reference_point_y_, 240);
 		pNh_.param<double> ("robot_speed", robot_speed_, 0.1);
+		pNh_.param<bool> ("move", move_, true);
 		
 		// Get topics name
-		nh_.param<std::string> ("sub_line", sub_line_name_, "/mrCameraProcessing/line");
-		nh_.param<std::string> ("sub_qr", sub_qr_name_, "/mrCameraProcessing/qr");
-		nh_.param<std::string> ("pub_twist", pub_twist_name_, "/fmCommand/cmd_vel");
-		nh_.param<std::string> ("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
-		nh_.param<std::string> ("srv_lineQr", srv_lineUntilQR_name_, "/mrLineFollower/lineUntilQR");
-		nh_.param<std::string> ("srv_mr_camera_processing_enable_name", srv_mr_camera_processing_enable_name_, "/mrCameraProcessing/enable");
+		pNh_.param<std::string> ("sub_line", sub_line_name_, "/mrCameraProcessing/line");
+		pNh_.param<std::string> ("sub_qr", sub_qr_name_, "/mrCameraProcessing/QR");
+		pNh_.param<std::string> ("pub_twist", pub_twist_name_, "/fmCommand/cmd_vel");
+		pNh_.param<std::string> ("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
+		pNh_.param<std::string> ("srv_lineQr", srv_lineUntilQR_name_, "/mrLineFollower/lineUntilQR");
+		pNh_.param<std::string> ("srv_mr_camera_processing_enable_name", srv_mr_camera_processing_enable_name_, "/mrCameraProcessing/enable");
 		
 		// Publishers, subscribers, services
 		sub_line_ = nh_.subscribe<geometry_msgs::Point>(sub_line_name_, 1, &lineFollower::lineCallback, this);
@@ -129,7 +130,7 @@ public:
 		twistStamp_msg.twist.angular.z = theta;
 		pub_twist_.publish(twistStamp_msg);
 		
-		std::cout << "Speed: " << robot_speed_ << " | Theta: " << theta << std::endl;
+		//std::cout << "Speed: " << robot_speed_ << " | Theta: " << theta << std::endl;
 	}
 	
 	/**
@@ -155,7 +156,7 @@ public:
 				pub_deadman_.publish(deadman);
 				
 				// Sleep for 50 ms = 20Hz
-				boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
+				boost::this_thread::sleep_for(boost::chrono::milliseconds(75));
 				
 				// Signal interrupt point
 				boost::this_thread::interruption_point();
@@ -203,7 +204,8 @@ public:
 		pre_error_ = 0;
 		
 		// Enables deadman
-		deadmanThread_ = new boost::thread(&lineFollower::enableDeadman, this);
+		if (move_)
+			deadmanThread_ = new boost::thread(&lineFollower::enableDeadman, this);
 		
 		/*
 		 * Starts the line line follower
@@ -214,6 +216,7 @@ public:
 		sub_qr_ = nh_.subscribe<std_msgs::String>(sub_qr_name_, 1, &lineFollower::qrCallback, this);
 		
 		// Waits until it finds it or the time is more than the limit
+		qr_detected_ = "";
 		ros::Time time_start;
 		time_start = ros::Time::now();
 		while (req.qr != qr_detected_ && 
@@ -224,7 +227,7 @@ public:
 		
 		if (req.qr == qr_detected_) 
 		{
-			std::cout << "QR " << qr_detected_ << "detected!" << std::endl;
+			std::cout << "QR " << qr_detected_ << " detected!" << std::endl;
 			res.success = true;
 		} else {
 			res.success = false;
@@ -283,6 +286,8 @@ private:
 	// QR
 	std::string qr_desired_;
 	std::string qr_detected_;
+	// Debug
+	bool move_;
 };
 
 /**

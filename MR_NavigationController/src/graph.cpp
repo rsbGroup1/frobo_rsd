@@ -7,7 +7,7 @@
 Graph::Graph(ros::Publisher* pub_current_node)
 {
 	pub_current_node_ = pub_current_node;
-	current_node_ = "wc1"; // Default position
+	current_node_ = "line_start"; // Default position
 }
 
 Graph::~Graph()

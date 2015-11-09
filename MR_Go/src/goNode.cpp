@@ -100,7 +100,7 @@ public:
             // Move the robot
             while(std::abs(linear_desired - linear_pos_current_) > linear_precision_) {
                 // Create the movement msg
-                std::cout << "Linear distance: " << linear_desired - linear_pos_current_ << std::endl;
+                //std::cout << "Linear distance: " << linear_desired - linear_pos_current_ << std::endl;
                 if (req.linear > 0)
                     twist_msg_.twist.linear.x = linear_speed_;
                 else
@@ -121,7 +121,7 @@ public:
             while(std::abs(angle_desired - angular_pos_current_) > angular_precision_)
             {
                 // Move the robot
-                std::cout << "Angular distance: " << (angular_pos_current_ - angle_desired) << std::endl;
+                //std::cout << "Angular distance: " << (angular_pos_current_ - angle_desired) << std::endl;
                 if (req.angular > 0)
                     twist_msg_.twist.angular.z = angular_speed_;
                 else
@@ -153,7 +153,7 @@ public:
                 deadman.header.stamp = ros::Time::now();
                 pub_deadman_.publish(deadman);
 				// Sleep for 50 ms = 20Hz
-				boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
+				boost::this_thread::sleep_for(boost::chrono::milliseconds(75));
                 // Signal interrupt point
                 boost::this_thread::interruption_point();
             }

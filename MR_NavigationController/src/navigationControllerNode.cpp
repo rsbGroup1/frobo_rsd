@@ -48,7 +48,7 @@ public:
 	{	
 		// Get parameter names
         pNh_.param<std::string>("lineFollowEnableService", srv_lineUntilQR_name_, "mrLineFollower/lineUntilQR");
-		pNh_.param<std::string>("moveService", srv_move_name_, "mrGo/move");
+		pNh_.param<std::string>("moveService", srv_move_name_, "mr_go/move");
 		pNh_.param<std::string>("performAction", srv_action_name_, "mrNavigationController/performAction");
 		pNh_.param<std::string>("status", pub_status_name_, "mrNavigationController/status");
 		pNh_.param<std::string>("currentNode", pub_current_node_name_, "mrNavigationController/currentNode");
@@ -120,9 +120,6 @@ public:
 	 * Creates the graph with std::function and std::bind
 	 */
 	void createGraph(){
-
-
-
 		// Nodes
 		graph_->addNode("line_start");
 		graph_->addNode("line_end");
@@ -154,6 +151,7 @@ public:
 		line_start_TO_wc1.push_back(std::bind(&Graph::setCurrentNode, graph_, "wc1"));
 		
 		std::vector<std::function<void()>> wc1_TO_wc1_conveyor;
+		wc1_TO_wc1_conveyor.push_back(std::bind(&Skills::linearMove, &skills_, 0.6));
         wc1_TO_wc1_conveyor.push_back(std::bind(&Skills::angularMove, &skills_, 90));
         wc1_TO_wc1_conveyor.push_back(std::bind(&Skills::lineUntilQR, &skills_, "wc_1_conveyor"));
 		wc1_TO_wc1_conveyor.push_back(std::bind(&Graph::setCurrentNode, graph_, "wc1_conveyor"));

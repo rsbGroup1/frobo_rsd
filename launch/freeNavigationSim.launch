@@ -1,10 +1,53 @@
 <launch>
-	<!-- FROBIT PARAMETERS --> 
+<!-- FROBIT PARAMETERS --> 
 	<param name="diff_steer_wheel_distance" value="0.375"/>
 	<param name="ticks_per_meter_left" value="677" />
 	<param name="ticks_per_meter_right" value="677" />
 
-	<group ns="fmDecisionMakers">
+	<node pkg="stage_ros" type="stageros" name="simulator" args="/home/martin/roswork/src/frobo_rsd/Navigation_Setup/maps/boxSimTest.world"/>
+		<remap from="/fmKnowledge/pose" to="/odom" />	
+		<remap from="/scan" to="/base_scan" />
+
+	<!-- FROBIT INTERFACE -->
+	<group ns="fmControllers">
+		<node pkg="sdu_frobit_v2" name="frobit" type="frobit_interface_node.py" output="screen" >
+			<param name="actuation_enable_sub" value="/fmSafe/actuation_enable" />
+			<param name="cmd_vel_sub" value="/fmCommand/cmd_vel" />
+			<param name="enc_left_pub" value="/fmInformation/encoder_left" />
+			<param name="enc_right_pub" value="/fmInformation/encoder_right" />
+			<param name="wheel_status_left_pub" value="/fmInformation/wheel_status_left" />
+			<param name="wheel_status_right_pub" value="/fmInformation/wheel_status_right" />
+			<param name="wheel_feedback_left_pub" value="/fmInformation/wheel_feedback_left" />
+			<param name="wheel_feedback_right_pub" value="/fmInformation/wheel_feedback_right" />
+			<param name="wheel_pid_left_pub" value="/fmInformation/wheel_pid_left" />
+			<param name="wheel_pid_right_pub" value="/fmInformation/wheel_pid_right" />
+			<param name="nmea_from_frobit_sub" value="/fmSignal/nmea_from_frobit" />	 
+			<param name="nmea_to_frobit_pub" value="/fmSignal/nmea_to_frobit" />	 
+			<param name="publish_wheel_status_rate" value="10" />
+			<param name="publish_wheel_feedback_rate" value="10" />
+			<param name="publish_wheel_pid_rate" value="10" />
+			<param name="castor_front" value="true"/>
+		        <param name="max_linear_acceleration" value="16.2"/>
+         		<param name="max_angular_acceleration" value="16.0"/>
+			<param name="wheel_drive_feed_forward" value="85" /> 
+			<param name="wheel_drive_kp" value="5" /> 
+			<param name="wheel_drive_ki" value="10" /> 
+			<param name="wheel_drive_kd" value="5" /> 
+			<param name="wheel_drive_max_integral_output" value="300" /> 
+			<param name="wheel_turn_feed_forward" value="110" /> 
+			<param name="wheel_turn_kp" value="10" /> 
+			<param name="wheel_turn_ki" value="20" /> 
+			<param name="wheel_turn_kd" value="3" /> 
+			<param name="wheel_turn_max_integral_output" value="300" /> 
+			<param name="supply_voltage_scale_factor" value="0.03747" /> 
+			<param name="min_supply_voltage" value="12.1" /> 
+			<param name="show_voltage_interval" value="300" /> 
+		</node>
+	</group>
+
+	<!--node pkg="mr_navigation_controller" name="navigation_controller" type="mr_navigation_controller" output="screen"/-->
+
+	<!--group ns="fmDecisionMakers">
 		<node pkg="frobit_demo" name="mission" type="keyboard_mission_node.py" output="screen">
 			<param name="keyboard_sub" value="/fmHMI/keyboard" />
 			<param name="automode_pub" value="/fmPlan/automode" />
@@ -15,23 +58,123 @@
             <param name="linear_velocity_step" value="0.1"/>
             <param name="angular_velocity_step" value="0.2"/>
 		</node>
+	</group-->
+
+	<!-- SAFETY MODULE -->
+	<group ns="fmSafety">
+		<node pkg="basic_incident_handler" name="incident_handler" type="basic_incident_handler_node.py" output="screen">
+    		<param name="deadman_enable" value="True" />
+    		<param name="deadman_timeout" value="0.100" />
+    		<param name="deadman_sub" value="/fmSafe/deadman" />
+    		<param name="critical_fault_enable" value="False" />
+    		<param name="critical_fault_timeout" value="0.100" />
+    		<param name="critical_fault_sub" value="/fmSafe/critical_fault" />
+    		<param name="critical_fault_sub" value="/fmSafe/critical_fault" />
+		<param name="obstacle_enable" value="False" />
+		</node>
 	</group>
+
+	<!-- FROBIT SERIAL DEVICE AND PROTOCOL -->
+	<!--node pkg="serial_nmea" name="frobit_nmea" type="serial_nmea_node" respawn="true" output="screen">
+		<param name="nmea_from_device_pub" value="/fmSignal/nmea_from_frobit"/>
+		<param name="nmea_to_device_sub" value="/fmSignal/nmea_to_frobit"/>
+		<param name="serial_device" value="/dev/frobit"/>
+		<param name="serial_baudrate" value="57600"/>
+		<param name="use_nmea_checksum" value="true"/>
+        </node-->
+
+<!-- IMU SERIAL COMMUNICATION -->
+	<!--node pkg="serial_string" name="imu_serial" type="serial_string_node" respawn="true" output="screen">
+		<param name="publisher_topic" value="/fmData/imu_rx" />	 
+		<param name="subscriber_topic" value="/fmData/imu_tx" />
+		<param name="device" value="/dev/imu" />	
+		<param name="baudrate" value="115200" />
+		<param name="termination_character" value="10"/>
+	</node--> 
+
+<!-- Extract data from messages transmitted by the VectorNav VN-100 IMU -->
+	<node pkg="vectornav_vn100" name="imu_node"  type="vectornav_vn100_node" output="screen"  respawn="true">
+		<param name="vectornav_vn100_sub" value="/fmData/imu_rx"/>
+		<param name="imu_pub" value="/fmInformation/imu"/>
+		<param name="frame_id" value="imu_link"/>
+		<param name="use_enu" value="true"/>
+		<param name="covariance_x" value="0.001"/>
+		<param name="covariance_y" value="0.001"/>
+		<param name="covariance_z" value="0.001"/>
+	 </node>
+
+	<!-- TWIST CONVERTER -->
+	<!--group ns="fmLib">
+		<node pkg="twist_stamped_to_twist" name="converter" type="cmd_vel_converter.py">	
+			<param name="cmd_vel_sub" value="/fmCommand/cmd_vel" />
+			<param name="cmd_vel_pub" value="/cmd_vel" />
+		</node>
+	</group-->
+
+	<node pkg="twist_to_twist_stamped" name="converter_stamped" type="cmd_vel_converter.py">	
+		<param name="cmd_vel_sub" value="/cmd_vel" />
+		<param name="cmd_vel_pub" value="/fmCommand/cmd_vel" />
+	</node>
+
+	<!-- CALCULATE ODOMETRY (Based on wheel encoders and IMU yaw axis orientation) -->
+	<!--group ns="fmProcessors">
+		<node pkg="differential_odometry" name="differential_odometry" type="differential_odometry_node" output="screen" >
+			<param name="enc_left_sub" value="/fmInformation/encoder_left" />
+			<param name="enc_right_sub" value="/fmInformation/encoder_right" />
+			<param name="imu_sub" value="/fmInformation/imu" />
+			<param name="odom_reset_sub" value="/fmInformation/odom_reset" />
+			<param name="odom_pub" value="/fmKnowledge/pose" />
+			<param name="odom_estimate_frame" value="/odom" />
+			<param name="vehicle_frame" value="base_link" />
+			<param name="encoder_output" value="absolute" />
+			<param name="max_ticks_per_update" value="200" />
+			<param name="yaw_angle_source" value="22imu_angular_velocity" />
+			<param name="imu_angular_velocity_yaw_axis" value="z" />
+		</node>
+	</group-->
+
+	<!-- LIDAR -->
+	<!--node name="sick_tim310s01" pkg="sick_tim" type="sick_tim310s01" respawn="false" output="screen">
+	    #< This is where we set the min max angle values to ignore the backwards scans
+	    #<param name="min_ang" type="double" value="-2.35619449019" />
+	    #<param name="max_ang" type="double" value="2.35619449019" />
+	    <param name="min_ang" type="double" value="-1.6" />
+	    <param name="max_ang" type="double" value="1.6" />
+	    <param name="intensity" type="bool" value="True" />
+	    <param name="skip" type="int" value="0" />
+	    <param name="frame_id" type="str" value="laser_frame" />
+	    <param name="time_offset" type="double" value="-0.001" />
+	    <param name="publish_datagram" type="bool" value="False" />
+	    <param name="port" type="str" value="/dev/lidar" />
+	</node-->
+	<node pkg="laser_filters" type="scan_to_scan_filter_chain" name="laser_filter">
+		<rosparam command="load" file="../Navigation_Setup/Laser_filter/laser_config.yaml" />
+	</node>
+
+	<!-- HMI -->
+	<group ns="MR_HMI">
+		<node pkg="mr_hmi" name="proxy" type="proxy.py">
+			<param name="missionplanner_pub" value="/mrHMI/start_stop"/>
+			<param name="deadman_pub" value="/fmSafe/hmi_deadman"/>
+			<param name="cmd_pub" value="/fmCommand/cmd_vel"/>
+			<param name="tipper_pub" value="/mrMainController/tipper"/>
+		</node>			
+	</group>
+
+
+
 
 	<node pkg="keyboard_interface" type="keyboard_node" name="keyboard">
 		<param name="keyboard_pub" value="/fmHMI/keyboard" />
 	</node>
 
-	<node pkg="twist_stamped_to_twist" name="converter" type="cmd_vel_converter.py">	
-		<param name="cmd_vel_sub" value="/fmCommand/cmd_vel" />
-		<param name="cmd_vel_pub" value="/cmd_vel" />
-	</node>
 
 
 	<!-- Notice: Use pkg="stage" if running ROS Groovy and pkg="stage_ros" if running ROS Hydro --> 
- 	<node pkg="stage_ros" type="stageros" name="simulator" args="/home/martin/roswork/src/frobo_rsd/Navigation_Setup/maps/boxSimTest.world"/>
-	<remap from="/fmKnowledge/pose" to="/odom" />
+ 	<!--node pkg="stage_ros" type="stageros" name="simulator" args="/home/martin/roswork/src/frobo_rsd/Navigation_Setup/maps/boxSimTest.world"/>
+	<remap from="/fmKnowledge/pose" to="/odom" /-->
 
-	<node pkg="frobit_plot" name="frobit_plot" type="frobit_plot_node.py" output="screen" >
+	<!--node pkg="frobit_plot" name="frobit_plot" type="frobit_plot_node.py" output="screen" >
 			<param name="pose_sub" value="/fmKnowledge/pose" />
 			<param name="gnss_sub" value="/fmInformation/gpgga_tranmerc" />
 			<param name="odom_sub" value="/fmKnowledge/odom" />
@@ -52,79 +195,134 @@
 			<param name="avatar_extension_rear" value="0.06" />
 			<param name="avatar_extension_lateral" value="0.13" />
 			<param name="avatar_reverse" value="false" />
-		</node>
+		</node-->
 
-	<node pkg="move_base" name="move_base" type="move_base" >
+	<node pkg="move_base" name="move_base" type="move_base" output="screen">
+		<!--remap from="/scan" to="/base_scan" />
 		<param name="footprint_padding" value="0.01" />
 		<param name="controller_frequency" value="10.0" />
 		<param name="controller_patience" value="3.0" />
 		
 		<param name="oscillation_timeout" value="30.0" />
-		<param name="oscillation_distance" value="0.5" />
+		<param name="oscillation_distance" value="0.5" /-->
+		<rosparam file="../Navigation_Setup/move_base_config/move_base_params.yaml" command="load" />
+    		<param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS " />  
 
-		<rosparam file="../Navigation_Setup/move_base_config_old/costmap_common_params.yaml" command="load" ns="global_costmap"/>
-		<rosparam file="../Navigation_Setup/move_base_config_old/costmap_common_params.yaml" command="load" ns="local_costmap"/>
-		<rosparam file="../Navigation_Setup/move_base_config_old/local_costmap_params.yaml" command="load"/>
-		<rosparam file="../Navigation_Setup/move_base_config_old/global_costmap_params.yaml" command="load"/>
-		<rosparam file="../Navigation_Setup/move_base_config_old/base_local_planner_params.yaml" command="load"/>
+		<rosparam file="../Navigation_Setup/move_base_config/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+		<rosparam file="../Navigation_Setup/move_base_config/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+		<rosparam file="../Navigation_Setup/move_base_config/local_costmap_params.yaml" command="load"/>
+		<rosparam file="../Navigation_Setup/move_base_config/global_costmap_params.yaml" command="load"/>
+		<!--rosparam file="../Navigation_Setup/move_base_config/base_local_planner_params.yaml" command="load"/-->
+		<rosparam file="../Navigation_Setup/move_base_config/dwa_local_planner_params.yaml" command="load"/>
 	</node>
 
 
-  	<node name="rviz" pkg="rviz" type="rviz" args="-d move_base_config/move_base_config.rviz" />
+  	<!--node name="rviz" pkg="rviz" type="rviz" args="-d move_base_config/move_base_config.rviz" /-->
 
 	<!--node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0 0 0 map odom 50"  >
 	</node-->
-
-	<node name="map_server" pkg="map_server" type="map_server" args="/home/martin/roswork/src/frobo_rsd/Navigation_Setup/maps/map2.yaml" />
-
-	<node pkg="amcl" type="amcl" name="amcl" respawn="true">
-	  <remap from="scan" to="base_scan" />
-	
-	  <param name="odom_model_type" value="omni"/>
-	  <param name="odom_alpha5" value="0.1"/>
-	  <param name="transform_tolerance" value="0.2" />
-	  <param name="gui_publish_rate" value="10.0"/>
-	  <param name="laser_max_beams" value="30"/>
-	  <param name="laser_min_range" value="0.1"/>
-	  <param name="min_particles" value="500"/>
-	  <param name="max_particles" value="5000"/>
-	  <param name="kld_err" value="0.05"/>
-	  <param name="kld_z" value="0.99"/>
-	  <param name="odom_alpha1" value="0.2"/>
-	  <param name="odom_alpha2" value="0.2"/>
-	
-	  <param name="odom_alpha3" value="0.8"/>
-	  <param name="odom_alpha4" value="0.2"/>
-	  <param name="laser_z_hit" value="0.5"/>
-	  <param name="laser_z_short" value="0.05"/>
-	  <param name="laser_z_max" value="0.05"/>
-	  <param name="laser_z_rand" value="0.5"/>
-	  <param name="laser_sigma_hit" value="0.2"/>
-	  <param name="laser_lambda_short" value="0.1"/>
-	  <param name="laser_lambda_short" value="0.1"/>
-	  <param name="laser_model_type" value="likelihood_field"/>
-	
-	  <param name="laser_likelihood_max_dist" value="2.0"/>
-	  <param name="update_min_d" value="0.2"/>
-	  <param name="update_min_a" value="0.5"/>
-	  <param name="odom_frame_id" value="odom"/>
-	  <param name="odom_frame_id" value="odom"/>
-	  <param name="global_frame_id" value="map"/>
-
-	  <param name="resample_interval" value="1"/>
-	  <param name="transform_tolerance" value="0.1"/>
-	  <param name="recovery_alpha_slow" value="0.0"/>
-	  <param name="recovery_alpha_fast" value="0.0"/>
-	<param name="initial_pose_x" value="10"/>
-	<param name="initial_pose_y" value="5"/>
-	<param name="initial_cov_xx" value="50"/>
-	<param name="initial_cov_yy" value="50"/>
-	<param name="initial_cov_aa" value="6"/>
-
-
-	 
+	<!-- LIDAR TF-->
+	<node pkg="tf" type="static_transform_publisher" name="laser_transform" args="0.25 0 0 0 0 0 base_footprint laser_frame 50"  >
 	</node>
 
+	<node pkg="tf" type="static_transform_publisher" name="imu_transform" args="0.10 0 0 0 0 0 base_footprint imu_link 50"  >
+	</node>
+
+    <node pkg="map_server" type="map_server" name="map_server" args="/home/martin/roswork/src/frobo_rsd/Navigation_Setup/maps/frontal_map_big_sim.yaml" output="screen"/>
+
+    <node pkg="amcl" type="amcl" name="amcl" output="screen">
+		<param name="odom_alpha1" value="0.8"/>
+		<param name="odom_alpha2" value="0.8"/>
+		<param name="odom_alpha3" value="0.8"/>
+		<param name="odom_alpha4" value="0.8"/>
+		<param name="min_particles" value="30"/>
+
+	      <param name="base_frame_id" value="/base_footprint"/>
+	      <param name="odom_frame_id" value="/odom"/>
+	      <param name="initial_pose_a" value="-1.9"/>
+
+    </node>
+
+	<!--node name="map_server" pkg="map_server" type="map_server" args="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/maps/map2.yaml" /-->
+
+
+
+	<!--node pkg="amcl" type="amcl" name="amcl" respawn="true">
+
+	
+		<param name="odom_model_type" value="omni"/>
+		<param name="odom_alpha5" value="0.1"/>
+		<param name="transform_tolerance" value="0.2" />
+		<param name="gui_publish_rate" value="10.0"/>
+		<param name="laser_max_beams" value="30"/>
+		<param name="min_particles" value="500"/>
+		<param name="max_particles" value="5000"/>
+		<param name="kld_err" value="0.05"/>
+		<param name="kld_z" value="0.99"/>
+		<param name="odom_alpha1" value="0.2"/>
+		<param name="odom_alpha2" value="0.2"/>
+
+		<param name="odom_alpha3" value="0.8"/>
+		<param name="odom_alpha4" value="0.2"/>
+		<param name="laser_z_hit" value="0.5"/>
+		<param name="laser_z_short" value="0.05"/>
+		<param name="laser_z_max" value="0.05"/>
+		<param name="laser_z_rand" value="0.5"/>
+		<param name="laser_sigma_hit" value="0.2"/>
+		<param name="laser_lambda_short" value="0.1"/>
+		<param name="laser_lambda_short" value="0.1"/>
+		<param name="laser_model_type" value="likelihood_field"/>
+
+		<param name="laser_likelihood_max_dist" value="2.0"/>
+		<param name="update_min_d" value="0.2"/>
+		<param name="update_min_a" value="0.5"/>
+		<param name="odom_frame_id" value="odom"/>
+		<param name="base_frame_id" value="base_link"/>
+
+		<param name="resample_interval" value="1"/>
+		<param name="transform_tolerance" value="0.1"/>
+		<param name="recovery_alpha_slow" value="0.0"/>
+		<param name="recovery_alpha_fast" value="0.0"/>
+		<param name="initial_pose_x" value="10"/>
+		<param name="initial_pose_y" value="5"/>
+		<param name="initial_pose_x" value="0"/>
+		<param name="initial_pose_y" value="0"/>
+		<param name="initial_cov_xx" value="1"/>
+		<param name="initial_cov_yy" value="1"/>
+		<param name="initial_cov_aa" value="6"/>
+	 
+	</node-->
+
+	<!-- OBSTACLE DETECTOR -->
+	<group ns="obstacle_detector">
+		<node pkg="mr_obstacle_detector" name="obstacle_detector" type="obstacle_detector.py">
+			<param name="threshold_slow" value="0.4" />
+			<param name="threshold_stop" value="0.1" />
+			<param name="threshold_ignore" value="0.00" />
+			<param name="laser_scan" value="/scan" />
+			<param name="publishTopic" value="/mrObstacleDetector/status" />
+			<param name="deadman_pub" value="/fmSafe/obstacle_detector_deadman"/>
+		</node>
+	</group>
+	<!-- Deadman Priority -->
+	<node pkg="mr_deadmanpriority" name="deadmanpriority" type="deadmanpriority.py">
+		<param name="publishTopic" value="/fmSafe/deadman" />
+		<param name="obstacleDetectorTopic" value="/fmSafe/obstacle_detector_deadman"/>
+		<param name="hmiTopic" value="/fmSafe/hmi_deadman"/>
+	</node>
+
+	<!-- Record Rosbag -->
+	<node pkg="rosbag" type="record" name="rosbag_record_all" args="-a"/>
+
+	<!-- TIP CONTROLLER -->
+	<!--group ns="MR_TipController">
+		<node pkg="mr_tip_controller" name="TipController" type="mr_tip_controller">
+			<param name="baud_rate" value="115200"/>
+			<param name="port" value="/dev/serial/by-id/usb-Arduino_Srl_Arduino_Uno_7543932393535120F172-if00"/>  	
+			<param name="debug" value="true"/>  
+			<param name="mr_maincontroller_tipper_pub" value="/mrMainController/tipper"/>	   	
+		</node>
+	</group-->
 
 
 </launch>

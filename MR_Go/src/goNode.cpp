@@ -31,6 +31,8 @@ public:
         // Get parameters
         pNh_.param<double>("linear_speed", linear_speed_, 0.1);
         pNh_.param<double>("angular_speed", angular_speed_, 0.1);
+        pNh_.param<double>("linear_precision", linear_precision_, 0.005);
+        pNh_.param<double>("angular_precision", angular_precision_, 2.000);
         
 
         // Get topics name
@@ -73,10 +75,10 @@ public:
     void odometryCallback(const nav_msgs::Odometry odom)
     {
         linear_pos_current_ = odom.pose.pose.position.x;
-		angular_pos_current_ = tf::getYaw(odom.pose.pose.orientation);
+		angular_pos_current_ = tf::getYaw(odom.pose.pose.orientation)*RAD_TO_DEG;
 		// Correct the angle just in case the /odom adds 360 degrees
-		if (std::abs(angular_pos_current_ - angular_pos_previous_) > PI)
-			angular_pos_current_ -= PI*2;
+		if (std::abs(angular_pos_current_ - angular_pos_previous_) > 180)
+			angular_pos_current_ -= 360;
 		angular_pos_previous_ = angular_pos_current_;
     }
     
@@ -85,46 +87,50 @@ public:
 	 */
     bool moveCallback(mr_go::move::Request& req, mr_go::move::Response& res)
 	{
-		// Deadman thread
-		deadmanThread_->start_thread();
-		// Desired
-		double linear_desired = linear_pos_current_ + req.linear;
-		double angle_desired = angular_pos_current_ + req.angular;
 		// Twist msg
 		twist_msg_.twist.linear.x = 0;
 		twist_msg_.twist.angular.z = 0;
-		
-		// Move the robot
-		double movement_precision = 0.005;
-		while(std::abs(linear_desired - linear_pos_current_)
-			> movement_precision
-			|| std::abs(angle_desired - angular_pos_current_)
-			> movement_precision)
-		{
-			// Create the movement msg
-			if (std::abs(linear_desired - linear_pos_current_)
-				> movement_precision){
-				std::cout << "Linear distance: " << linear_desired - linear_pos_current_ << std::endl;
-				if (req.linear > 0)
-					twist_msg_.twist.linear.x = linear_speed_;
-				else
-					twist_msg_.twist.linear.x = -linear_speed_;
-			}
-			
-			if (std::abs(angle_desired - angular_pos_current_)
-				> movement_precision){
-				std::cout << "Angular distance: " << (angle_desired - angular_pos_current_) * RAD_TO_DEG << std::endl;
-				if (req.angular > 0)
-					twist_msg_.twist.angular.z = angular_speed_;
-				else
-					twist_msg_.twist.angular.z = -angular_speed_;
-			}
-			// Publish the msg
-			pub_twist_.publish(twist_msg_);
+
+        // ONLY Linear movement
+        if (req.linear != 0) {
+            // Deadman thread
+            deadmanThread_->start_thread();
+            // Desired
+            double linear_desired = linear_pos_current_ + req.linear;
+            // Move the robot
+            while(std::abs(linear_desired - linear_pos_current_) > linear_precision_) {
+                // Create the movement msg
+                std::cout << "Linear distance: " << linear_desired - linear_pos_current_ << std::endl;
+                if (req.linear > 0)
+                    twist_msg_.twist.linear.x = linear_speed_;
+                else
+                    twist_msg_.twist.linear.x = -linear_speed_;
+                // Publish the msg
+                pub_twist_.publish(twist_msg_);
+            }
+        }
+
+        // ONLY Angular movement
+        else if (req.angular != 0) {
+            // Deadman thread
+            deadmanThread_->start_thread();
+            // Desired
+            double angle_desired = angular_pos_current_ + req.angular;
+            while(std::abs(angle_desired - angular_pos_current_) > angular_precision_)
+            {
+                // Move the robot
+                std::cout << "Angular distance: " << (angle_desired - angular_pos_current_) << std::endl;
+                if (req.angular > 0)
+                    twist_msg_.twist.angular.z = angular_speed_;
+                else
+                    twist_msg_.twist.angular.z = -angular_speed_;
+                // Publish the msg
+                pub_twist_.publish(twist_msg_);
+            }
 		}
 		// Stop the robot
-		pub_twist_.publish(twist_stop_msg_);
 		stopDeadman();
+        pub_twist_.publish(twist_stop_msg_);
 		std::cout << "Achieved!" << std::endl;
 		
 		res.done = true;
@@ -145,7 +151,7 @@ public:
                 deadman.header.stamp = ros::Time::now();
                 pub_deadman_.publish(deadman);
 				// Sleep for 50 ms = 20Hz
-				boost::this_thread::sleep_for(boost::chrono::milliseconds(50));
+				boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
                 // Signal interrupt point
                 boost::this_thread::interruption_point();
             }
@@ -189,6 +195,8 @@ private:
     // Robot speed
     double angular_speed_;
     double linear_speed_;
+    double linear_precision_;
+    double angular_precision_;
 };
 
 int main(int argc, char** argv)
@@ -198,7 +206,9 @@ int main(int argc, char** argv)
     ros::Rate rate(10);
 	ros::AsyncSpinner spinner(3);
 
-	while(!ros::isShuttingDown())
+	while(!ros::isShuttingDown()){
         spinner.start();
+        rate.sleep();
+    }
     return 0;
 }

@@ -1,9 +1,17 @@
 #ifndef SKILLS_H
 #define SKILLS_H
 
+#include <sstream>
+#include <iostream>
+
 #include <ros/ros.h>
 #include "mr_line_follower/followUntilQR.h"
 #include "mr_go/move.h"
+
+#include <move_base/move_base.h>
+#include <move_base_msgs/MoveBaseAction.h>
+#include <actionlib/client/simple_action_client.h>
+#include <tf/tf.h>
 
 class Skills
 {
@@ -41,14 +49,18 @@ public:
     /**
      *
      */
-    bool goToFreePosition(double x, double y);
+    bool goToFreePosition(double x, double y, double yaw);
 
 private:
 	ros::ServiceClient* srv_lineUntilQR_;
 	ros::ServiceClient* srv_move_;
 	ros::Publisher* pub_status_;
+
 	mr_go::move move_call_;
 	mr_line_follower::followUntilQR lineFollowerCall;
+
+    actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> *move_base_actionclient_;
+    int goal_id_;
 };
 
 #endif // SKILLS_H

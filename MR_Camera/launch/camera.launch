@@ -6,7 +6,7 @@
 			<param name="image_pub" value="/mrCamera/image"/> 
 			<param name="frameWidth" value="640"/> 
 			<param name="frameHeight" value="480"/> 
-			<param name="cameraFrequency" value="15"/> 
+			<param name="cameraFrequency" value="30"/> 
 			<param name="sharpness" value="2"/> 
 			<param name="brightness" value="2"/> 
 			<param name="whiteBalanceTemp" value="4600"/> 

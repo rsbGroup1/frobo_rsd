@@ -53,7 +53,7 @@ public:
 		pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
 		
 		srv_enable_ = nh_.advertiseService(
-			srv_lineUntilQR_name_, &lineFollower::lineUntilQRCallback, this);
+		srv_lineUntilQR_name_, &lineFollower::lineUntilQRCallback, this);
 		
 		srv_mr_camera_processing_enable_ = nh_.serviceClient<mr_camera_processing::enable>(srv_mr_camera_processing_enable_name_);
 		
@@ -107,8 +107,8 @@ public:
 			if(pid_output < pid_min_)
 				pid_output = pid_min_;
 			
-			// Save error to previous error
-			pre_error_ = pid_error;
+		// Save error to previous error
+		pre_error_ = pid_error;
 		
 		//std::cout << std::endl;
 		//std::cout << "Error PID: " << pid_error << std::endl;

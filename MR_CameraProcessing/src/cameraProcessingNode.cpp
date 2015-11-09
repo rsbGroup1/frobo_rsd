@@ -86,9 +86,14 @@ public:
 		/*
 		 * Image processing
 		 */
+		// Croping
+		int offset = 20;
+		cv::Rect croppedArea(0, image_original.rows/2-offset, image_original.cols, offset*2);
+		cv::Mat image_cropped = image_original(croppedArea);
+
 		// Bilateral Filter
 		cv::Mat image_filtered; //Necessary for the bilateral filter
-		cv::bilateralFilter(image_original, image_filtered, 15, 300, 300);
+		cv::bilateralFilter(image_cropped, image_filtered, 15, 300, 300);
 		
 		// Color threshold
 		cv::inRange(image_filtered, cv::Scalar(0, 0, 0), cv::Scalar(30, 30, 30), image_filtered);
@@ -125,7 +130,7 @@ public:
 			detected_point.x = x_detected;
 			detected_point.y = y_detected;
 			cv::circle(image_filtered, detected_point, 1, cv::Scalar(255), 2);
-			cv::circle(image_original, detected_point, 1, cv::Scalar(255, 0, 255), 2);
+			cv::circle(image_cropped, detected_point, 1, cv::Scalar(255, 0, 255), 2);
 		} else {
 			ROS_INFO("Not point found");
 		}	
@@ -135,7 +140,7 @@ public:
 		 */
 		//Image
 		sensor_msgs::ImagePtr image_msg;
-		image_msg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", image_original).toImageMsg();
+		image_msg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", image_cropped).toImageMsg();
 		pub_image_.publish(image_msg);
 		
 		//Point
@@ -158,7 +163,7 @@ public:
 		scanner.set_config(zbar::ZBAR_NONE, zbar::ZBAR_CFG_ENABLE, 1);
 		
 		// Convert image to grayscale
-		//cv::cvtColor(image_original, gray, CV_RGB2GRAY);
+		//cv::cvtColor(image_original, image_original, CV_RGB2GRAY);
 		cv::inRange(image_original, cv::Scalar(0, 0, 0), cv::Scalar(30, 30, 30), image_original);
 		
 		// Prepare the image for reading

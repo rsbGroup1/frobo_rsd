@@ -6,12 +6,22 @@ rsdNamespace.logWarningFlag = false;
 rsdNamespace.UpdateLog = function( type, timestamp, message ) {
 
     var highlighting = "";
+    var type_to_display = "Info";
 
-    if( type === "Error" ) highlighting = " error_message";
-    else if( type === "Warning" ) highlighting = " warning_message";
+    if( type == 3 ) {
+
+        type_to_display = "Error"
+        highlighting = " error_message";
+
+    } else if( type == 2 ) {
+
+        type_to_display = "Warning"
+        highlighting = " warning_message";
+
+    }
 
     var entry = '<div class="log_entry' + highlighting + '">' +
-        '<span class="log_title"><h5 class="log_title">' + type + '</h5> - ' + timestamp + '</span>' +
+        '<span class="log_title"><h5 class="log_title">' + type_to_display + '</h5> - ' + timestamp + '</span>' +
         '<p class="log_message">' + message + '</p>' +
     '</div>';
 
@@ -20,7 +30,7 @@ rsdNamespace.UpdateLog = function( type, timestamp, message ) {
     if( rsdNamespace.logErrorFlag ) rsdNamespace.FilterMessages( '.log_entry', 'error_message' );
     else if( rsdNamespace.logWarningFlag ) rsdNamespace.FilterMessages( '.log_entry', 'warning_message' );
 
-    rsdNamespace.RemoveOldEntries( ".log_entry", 30 );
+    rsdNamespace.RemoveOldEntries( ".log_entry", 50 );
 
 };
 
@@ -74,9 +84,9 @@ rsdNamespace.RemoveFilters = function( selector ) {
 
 rsdNamespace.IndicateStatus = function( code ) {
 
-    selector = "#indicator_" + code[0];
+    selector = "#indicator_" + code[1];
 
-    if( code[1] == 1 ) {
+    if( code[2] == rsdNamespace.ON ) {
 
         rsdNamespace.ActivateIndicator( selector );
 

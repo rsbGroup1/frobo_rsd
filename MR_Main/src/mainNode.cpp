@@ -144,16 +144,16 @@ int main()
 
     // Get parameter names
     std::string performActionString, navStatusSub, navCurrentnodeSub, buttonSub, buttonPub, hmiSub, tipperString, hmiPub, mesSub, mesPub;
-    pNh.param<std::string>("nav_perform_srv", performActionString, "mrNavigationController/performAction");
-    pNh.param<std::string>("nav_status_sub", navStatusSub, "mrNavigationController/status");
-    pNh.param<std::string>("nav_currentnode_sub", navCurrentnodeSub, "mrNavigationController/currentNode");
-    pNh.param<std::string>("button_sub", buttonSub, "mrButton/run");
-    pNh.param<std::string>("button_pub", buttonPub, "mrButton/status");
-    pNh.param<std::string>("hmi_sub", hmiSub, "mrHMI/run");
-    pNh.param<std::string>("hmi_pub", hmiPub, "mrHMI/status");
-    pNh.param<std::string>("tipper_srv", tipperString, "mrTipController/tip");
-    pNh.param<std::string>("mes_pub", mesPub, "mrMESClient/msgToServer");
-    pNh.param<std::string>("mes_sub", mesSub, "mrMESClient/msgFromServer");
+    pNh.param<std::string>("nav_perform_srv", performActionString, "/mrNavigationController/performAction");
+    pNh.param<std::string>("nav_status_sub", navStatusSub, "/mrNavigationController/status");
+    pNh.param<std::string>("nav_currentnode_sub", navCurrentnodeSub, "/mrNavigationController/currentNode");
+    pNh.param<std::string>("button_sub", buttonSub, "/mrButton/run");
+    pNh.param<std::string>("button_pub", buttonPub, "/mrButton/status");
+    pNh.param<std::string>("hmi_sub", hmiSub, "/mrHMI/run");
+    pNh.param<std::string>("hmi_pub", hmiPub, "/mrHMI/status");
+    pNh.param<std::string>("tipper_srv", tipperString, "/mrTipController/tip");
+    pNh.param<std::string>("mes_pub", mesPub, "/mrMESClient/msgToServer");
+    pNh.param<std::string>("mes_sub", mesSub, "/mrMESClient/msgFromServer");
 
     // Service
     _servicePerformAction = nh.serviceClient<mr_navigation_controller::performAction>(performActionString);
@@ -170,6 +170,14 @@ int main()
     ros::Subscriber navStatusSubscriber = nh.subscribe(navStatusSub, 10, navStatusCallback);
     ros::Subscriber navCurrentSubscriber = nh.subscribe(navCurrentnodeSub, 10, navCurrentNodeCallback);
     ros::Subscriber mesSubscriber = nh.subscribe(mesSub, 10, mesCallback);
+
+	
+    ros::Rate rate(1);
+    for(int i=0; i<3; i++)
+	    rate.sleep();
+
+	HMISendError("helloError");
+	HMISendWarning("helloWarning");
 
     // ROS Spin: Handle callbacks
     while(ros::ok)

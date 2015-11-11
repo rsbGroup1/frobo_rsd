@@ -313,8 +313,17 @@ rsdNamespace.ToggleAvailabilityState = function() {
 
     if( rsdNamespace.commState == 1 ) {
 
-        if( rsdNamespace.availability ) rsdNamespace.SetAvailabilitySwitch( false );
-        else rsdNamespace.SetAvailabilitySwitch( true );
+        if( rsdNamespace.availability ) {
+
+            // TODO Invoke mergency stop protocol
+            rsdNamespace.SetAvailabilitySwitch( false );
+
+        } else {
+
+            // TODO Tell the MES server, that everything is OK
+            rsdNamespace.SetAvailabilitySwitch( true );
+
+        }
 
     }
 

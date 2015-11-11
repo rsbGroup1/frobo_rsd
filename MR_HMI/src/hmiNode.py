@@ -13,7 +13,8 @@ import rospy
 from geometry_msgs.msg import Twist, TwistStamped
 from msgs.msg import BoolStamped
 from std_msgs.msg import String, Bool
-from mr_tip_controller.srv import *
+#from mr_tip_controller.srv import *
+from mr_hmi.srv import *
 
 STATUS_REQUEST = "status_request"
 REMOTE_UPDATE = "remote_update"
@@ -33,7 +34,7 @@ address = ""
 
 direction = 0
 button = 0
-logMessages = "0000,Robot has entered the box,0002,Robot is charging,0002,Robot is burning,"
+logMessages = ""
 
 subStatus = 0
 
@@ -223,8 +224,9 @@ def tip( direction ):
 
     global srvTipper
 
-    req = mr_hmi.srv.tip( direction )
-    resp = srvTipper( req ) # Request tipping (just ignore the response for now)
+    #mr_hmi.srv.
+    #req = tip( direction )
+    #srvTipper(direction)# req ) # Request tipping (just ignore the response for now)
 
 def logCallback( data ):
     """ Method Description
@@ -234,6 +236,7 @@ def logCallback( data ):
     Input message format: "code,message,"
     Output message format: "code,timestamp,message,"
     """
+    #print(data.data)
     global logMessages
 
     s = "-"
@@ -243,12 +246,16 @@ def logCallback( data ):
 
     now = datetime.datetime.now()
     logTimestamp = now.strftime("%Y-%m-%d %H:%M:%S")
+    #print(logTimestamp)
 
     newData = ""
     for i in range( 0, len( temp ), 2 ):
         newData = newData + temp[i] + d + logTimestamp + d + temp[i + 1] + d
 
     logMessages = logMessages + newData
+    #print(data.data)
+    print(logMessages)
+    #print(newData)
 
 def publishCommand( rosPublisher, command ):
     rosPublisher.publish( command )
@@ -256,7 +263,7 @@ def publishCommand( rosPublisher, command ):
 def stopServer():
     reactor.stop()
 
-def initProxy():
+def initHMI():
 
     global MR_HMI_SUB
 
@@ -280,7 +287,7 @@ def initProxy():
     # anonymous=True flag means that rospy will choose a unique
     # name for our 'talker' node so that multiple talkers can
     # run simultaneously.
-    rospy.init_node( 'proxy', anonymous = True )
+    rospy.init_node( 'mr_hmi', anonymous = True )
 
     # Read parameters
     MR_HMI_SUB = rospy.get_param( "~mr_hmi_status_sub", MR_HMI_SUB )
@@ -296,15 +303,11 @@ def initProxy():
 
     # Register Publisers
     pubModeUpdate = rospy.Publisher( MODE_UPDATE_PUB, String, queue_size = 1 )
-    # pubTipperUpdate = rospy.Publisher( TIPPER_UPDATE_SRV, Bool, queue_size = 1 )
     pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 1 )
     pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
 
     # Service Deffinitions
-    srvTipper = rospy.ServiceProxy( TIPPER_UPDATE_SRV, mr_hmi.srv.tip )
-
-    # Register Listeners
-    rospy.Subscriber( "hmi_mobile", String, callback )
+    #srvTipper = rospy.ServiceProxy( TIPPER_UPDATE_SRV, tip )
 
     # Start publishing the activationEna sygnal in a separate thread
     aThread = actuationThread( 1, "actuation_thread" )
@@ -324,5 +327,5 @@ def initProxy():
     rospy.spin()
 
 if __name__ == '__main__':
-    initProxy()
+    initHMI()
 

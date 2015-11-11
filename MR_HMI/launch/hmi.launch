@@ -64,7 +64,7 @@
 
 	<!-- HMI -->
 	<group ns="MR_HMI">
-		<node pkg="mr_hmi" name="proxy" type="proxy.py">
+		<node pkg="mr_hmi" name="HMI" type="hmiNode.py" output="screen">
 			<param name="mr_hmi_status_sub" value="/mrHMI/status"/>
 			<param name="mr_hmi_run_pub" value="/mrHMI/run"/>
 			<param name="deadman_pub" value="/fmSafe/deadman"/>
@@ -72,5 +72,21 @@
 			<param name="tipper_srv" value="/mrTipController/tip"/>
 		</node>			
 	</group>
+
+	<!-- Main launch file -->
+<!--	<group ns="MR_Main">-->
+		<node pkg="mr_main" name="Main" type="mr_main" output="screen">
+			<param name="nav_perform_srv" value="/mrNavigationController/performAction"/> 
+			<param name="nav_status_sub" value="/mrNavigationController/status"/> 
+			<param name="nav_currentnode_sub" value="/mrNavigationController/currentNode"/> 	
+			<param name="button_sub" value="/mrButton/run"/> 
+			<param name="button_pub" value="/mrButton/status"/> 
+			<param name="hmi_sub" value="/mrHMI/run"/> 
+			<param name="hmi_pub" value="/mrHMI/status"/> 
+			<param name="tipper_srv" value="/mrTipController/tip"/> 
+			<param name="mes_pub" value="/mrMESClient/msgToServer"/> 
+			<param name="mes_sub" value="/mrMESClient/msgFromServer"/> 
+		</node>
+	<!--</group>-->
 </launch>
 

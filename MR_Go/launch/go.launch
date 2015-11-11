@@ -1,0 +1,16 @@
+<!-- MR Go -->
+
+<launch>
+	<group ns="MR_Go">
+    		<node pkg="mr_go" name="mr_go" type="mr_go" respawn="true" output="screen">
+		    	<param name="odometry" value="/fmKnowledge/pose"/>
+		    	<param name="pub_twist" value="/fmCommand/cmd_vel"/>
+		    	<param name="pub_deadman" value="/fmSafe/deadman"/>
+		    	<param name="srv_move" value="/mrGo/move"/>
+		    	<param name="linear_precision" value="0.01"/>
+		    	<param name="angular_precision" value="0.500"/>
+		    	<param name="linear_speed" value="0.2"/>
+		    	<param name="angular_speed" value="0.3"/>
+    		 </node>
+	</group>
+</launch>

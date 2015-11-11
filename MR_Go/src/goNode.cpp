@@ -39,7 +39,7 @@ public:
         pNh_.param<std::string>("odometry", sub_odom_name_, "/odom");
         pNh_.param<std::string>("pub_twist", pub_twist_name_, "/fmCommand/cmd_vel");
         pNh_.param<std::string>("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
-        pNh_.param<std::string>("srv_move", srv_move_name_, "mr_go/move");
+        pNh_.param<std::string>("srv_move", srv_move_name_, "mrGo/move");
 
         // Publishers, subscribers, services
         sub_odom_ = nh_.subscribe<nav_msgs::Odometry>(sub_odom_name_, 1, &Go::odometryCallback, this);

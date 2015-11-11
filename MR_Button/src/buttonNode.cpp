@@ -173,6 +173,14 @@ void changeRunMode(MODES runMode)
     _modeMutex.unlock();
 }
 
+void buttonCallback(std_msgs::Bool msg)
+{
+    if(msg.data)
+        changeRunMode(M_RUN);
+    else
+        changeRunMode(M_IDLE);
+}
+
 void collisionCallback(std_msgs::String msg)
 {
     static MODES oldMode = M_NORMAL;
@@ -194,9 +202,9 @@ void collisionCallback(std_msgs::String msg)
 
 void HMICallback(std_msgs::String msg)
 {
-    if(msg.data == "run")
+    if(msg.data == "start")
         changeRunMode(M_RUN);
-    else if(msg.data == "idle")
+    else if(msg.data == "stop")
         changeRunMode(M_IDLE);
     else if(msg.data == "manual")
         changeRunMode(M_MANUAL);
@@ -260,14 +268,14 @@ void readSerialThread()
                         std_msgs::Bool msg;
                         msg.data = true;
                         _buttonPublisher.publish(msg);
-			ROS_INFO("btn run");
+                        ROS_INFO("btn run");
                     }
                     else if(compareMsg(msg, "idle\n"))
                     {
                         std_msgs::Bool msg;
                         msg.data = false;
                         _buttonPublisher.publish(msg);
-			ROS_INFO("btn idle");
+                        ROS_INFO("btn idle");
                     }
 
                     // Clear data
@@ -310,10 +318,11 @@ int main()
     ros::NodeHandle pNh("~");
 
     // Topic names
-    std::string obstaclePub, hmiSub, buttonPub;
+    std::string obstaclePub, hmiSub, buttonPub, buttonSub;
     pNh.param<std::string>("mr_collision_sub", obstaclePub, "/mrObstacleDetector/status");
     pNh.param<std::string>("mr_hmi_sub", hmiSub, "/mrHMI/run");
     pNh.param<std::string>("mr_button_pub", buttonPub, "/mrButton/run");
+    pNh.param<std::string>("mr_button_sub", buttonSub, "/mrButton/status");
 
     // Publisher
     _buttonPublisher = nh.advertise<std_msgs::Bool>(buttonPub, 1);
@@ -321,6 +330,7 @@ int main()
     // Subscriber
     ros::Subscriber subCollision = nh.subscribe(obstaclePub, 1, collisionCallback);
     ros::Subscriber subHMI = nh.subscribe(hmiSub, 1, HMICallback);
+    ros::Subscriber subButton = nh.subscribe(buttonSub, 1, buttonCallback);
 
     // Get serial data parameters
     int baudRate;

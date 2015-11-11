@@ -11,6 +11,7 @@
 #include "std_msgs/String.h"
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
+#include "mr_mes_client/server.h"
 
 // Defines
 #define M_PI                    3.14159265358979323846
@@ -19,9 +20,33 @@
 #define SSTR(x)                 dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
 
 // Global var
-ros::ServiceClient _servicePerformAction;
+ros::ServiceClient _servicePerformAction, _serviceTipper;
+ros::Publisher _hmiPublisher, _mesPublisher, _buttonPublisher;
 bool _buttonStatus, _hmiStatus;
 boost::mutex _runMutex;
+int _destinationCell;
+
+// Enum
+enum ROBOT_POS
+{
+    box = 1,
+    camera,
+    trackZone2,
+    trackZone1,
+    RC1,
+    RC2,
+    RC3
+};
+
+enum HMI_ICONS
+{
+    tipper = 1,
+    lineFollowing,
+    gps,
+    collectingBricks,
+    insideBox,
+    charging
+};
 
 // Functions
 void buttonCallback(std_msgs::Bool msg)
@@ -34,10 +59,76 @@ void hmiCallback(std_msgs::String msg)
 {
     boost::unique_lock<boost::mutex> lock(_runMutex);
 
-    if(msg.data == "run")
+    if(msg.data == "start")
         _hmiStatus = true;
-    else if(msg.data == "idle" || msg.data == "manual")
+    else if(msg.data == "stop" || msg.data == "manual")
         _hmiStatus = false;
+}
+
+void mesCallback(mr_mes_client::server msg)
+{
+    boost::unique_lock<boost::mutex> lock(_runMutex);
+    if(msg.mobileRobot == 1)
+    {
+        _destinationCell = msg.cell;
+
+        // START STUFF
+        mr_navigation_controller::performAction obj;
+        obj.request.action = "WTF";
+        _servicePerformAction.call(obj);
+    }
+}
+
+void navStatusCallback(std_msgs::String msg)
+{
+
+}
+
+void navCurrentNodeCallback(std_msgs::String msg)
+{
+    if(msg.data == "conveyer")
+    {
+        mr_tip_controller::tip obj;
+        obj.request.direction = true; // up
+        _serviceTipper.call(obj);
+        obj.request.direction = false; // down
+        _serviceTipper.call(obj);
+    }
+}
+
+void HMIUpdatePosition(ROBOT_POS pos)
+{
+    std_msgs::String obj;
+    obj.data = "00" + SSTR(pos) + "0,,";
+    _hmiPublisher.publish(obj);
+}
+
+void HMIUpdateIcons(HMI_ICONS state, bool value)
+{
+    std_msgs::String obj;
+    obj.data = SSTR(state) + (value?"1":"0") + "00,,";
+    _hmiPublisher.publish(obj);
+}
+
+void HMISendError(std::string msg)
+{
+    std_msgs::String obj;
+    obj.data = "0003," + msg + ",";
+    _hmiPublisher.publish(obj);
+}
+
+void HMISendInfo(std::string msg)
+{
+    std_msgs::String obj;
+    obj.data = "0001," + msg + ",";
+    _hmiPublisher.publish(obj);
+}
+
+void HMISendWarning(std::string msg)
+{
+    std_msgs::String obj;
+    obj.data = "0002," + msg + ",";
+    _hmiPublisher.publish(obj);
 }
 
 // Functions
@@ -52,17 +143,33 @@ int main()
     ros::NodeHandle nh, pNh("~");
 
     // Get parameter names
-    std::string performActionString, buttonSub, hmiSub;
-    pNh.param<std::string>("lineFollowService", performActionString, "mrNavigationController/performAction");
+    std::string performActionString, navStatusSub, navCurrentnodeSub, buttonSub, buttonPub, hmiSub, tipperString, hmiPub, mesSub, mesPub;
+    pNh.param<std::string>("nav_perform_srv", performActionString, "mrNavigationController/performAction");
+    pNh.param<std::string>("nav_status_sub", navStatusSub, "mrNavigationController/status");
+    pNh.param<std::string>("nav_currentnode_sub", navCurrentnodeSub, "mrNavigationController/currentNode");
     pNh.param<std::string>("button_sub", buttonSub, "mrButton/run");
+    pNh.param<std::string>("button_pub", buttonPub, "mrButton/status");
     pNh.param<std::string>("hmi_sub", hmiSub, "mrHMI/run");
+    pNh.param<std::string>("hmi_pub", hmiPub, "mrHMI/status");
+    pNh.param<std::string>("tipper_srv", tipperString, "mrTipController/tip");
+    pNh.param<std::string>("mes_pub", mesPub, "mrMESClient/msgToServer");
+    pNh.param<std::string>("mes_sub", mesSub, "mrMESClient/msgFromServer");
 
     // Service
     _servicePerformAction = nh.serviceClient<mr_navigation_controller::performAction>(performActionString);
+    _serviceTipper = nh.serviceClient<mr_tip_controller::tip>(tipperString);
 
-    // Topic
-    ros::Subscriber buttonSubriber = nh.subscribe(buttonSub, 1, buttonCallback);
-    ros::Subscriber hmiSubriber = nh.subscribe(hmiSub, 1, hmiCallback);
+    // Publish
+    _hmiPublisher = nh.advertise<std_msgs::String>(hmiPub, 10);
+    _mesPublisher = nh.advertise<std_msgs::String>(mesPub, 10);
+    _buttonPublisher = nh.advertise<std_msgs::Bool>(buttonPub, 10);
+
+    // Subscribe
+    ros::Subscriber buttonSubriber = nh.subscribe(buttonSub, 5, buttonCallback);
+    ros::Subscriber hmiSubscriber = nh.subscribe(hmiSub, 5, hmiCallback);
+    ros::Subscriber navStatusSubscriber = nh.subscribe(navStatusSub, 10, navStatusCallback);
+    ros::Subscriber navCurrentSubscriber = nh.subscribe(navCurrentnodeSub, 10, navCurrentNodeCallback);
+    ros::Subscriber mesSubscriber = nh.subscribe(mesSub, 10, mesCallback);
 
     // ROS Spin: Handle callbacks
     while(ros::ok)

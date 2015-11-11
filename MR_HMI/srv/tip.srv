@@ -1,0 +1,3 @@
+bool direction # true = up, false = down
+---
+bool status

@@ -120,19 +120,7 @@
 	    <param name="port" type="str" value="/dev/lidar" />
 	</node>
 
-	<!-- MISSION PLANNER -->
-	<group ns="MR_MissionPlanner">
-		<node pkg="mr_mission_planner" name="mr_mission_planner" type="mr_mission_planner">
-			<param name="baud_rate" value="115200"/>
-			<param name="port" value="/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00"/>  	
-			<param name="debug" value="true"/>  	
-			<param name="mr_collision_status_sub" value="/mrObstacleDetector/status"/>
-			<param name="mr_hmi_sub" value="/mrHMI/start_stop"/>  	
-			<param name="mr_missionplanner_pub" value="/mrMissionPlanner/status"/>    	
-		</node>
-	</group>
-
-	<!-- OBSTACLE DETECTOR -->
+	<!-- MR OBSTACLE DETECTOR -->
 	<group ns="obstacle_detector">
 		<node pkg="mr_obstacle_detector" name="mr_obstacle_detector" type="obstacle_detector.py">
 			<param name="threshold_slow" value="0.4" />
@@ -143,24 +131,120 @@
 		</node>
 	</group>
 
-	<!-- TIP CONTROLLER -->
+	<!-- MR TIP CONTROLLER -->
 	<group ns="MR_TipController">
 		<node pkg="mr_tip_controller" name="mr_tip_controller" type="mr_tip_controller">
 			<param name="baud_rate" value="115200"/>
 			<param name="port" value="/dev/serial/by-id/usb-Arduino_Srl_Arduino_Uno_7543932393535120F172-if00"/>  	
 			<param name="debug" value="true"/>  
-			<param name="mr_maincontroller_tipper_pub" value="/mrMainController/tipper"/>	   	
+			<param name="tipper_srv" value="/mrTipController/tip"/>	   	
 		</node>
 	</group>
 
-	<!-- HMI -->
+	<!-- MR HMI -->
 	<group ns="MR_HMI">
 		<node pkg="mr_hmi" name="proxy" type="proxy.py">
-			<param name="missionplanner_pub" value="/mrHMI/start_stop"/>
+			<param name="mr_hmi_status_sub" value="/mrHMI/status"/>
+			<param name="mr_hmi_run_pub" value="/mrHMI/run"/>
 			<param name="deadman_pub" value="/fmSafe/deadman"/>
 			<param name="cmd_pub" value="/fmCommand/cmd_vel"/>
-			<param name="tipper_pub" value="/mrMainController/tipper"/>
+			<param name="tipper_srv" value="/mrTipController/tip"/>
 		</node>			
 	</group>
+
+	<!-- MR Button -->
+	<group ns="MR_Button">
+		<node pkg="mr_button" name="Button" type="mr_button" output="screen">
+			<param name="baud_rate" value="115200"/>
+			<param name="port" value="/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00"/> 
+			<param name="mr_collision_sub" value="/mrObstacleDetector/status"/>
+			<param name="mr_hmi_sub" value="/mrHMI/run"/>
+			<param name="mr_button_pub" value="/mrButton/run"/> 
+			<param name="mr_button_sub" value="/mrButton/status"/> 	
+		</node>
+	</group>
+
+	<!-- MR Main -->
+	<group ns="MR_Main">
+		<node pkg="mr_main" name="Main" type="mr_main">
+			<param name="nav_perform_srv" value="mrNavigationController/performAction"/> 
+			<param name="nav_status_sub" value="mrNavigationController/status"/> 
+			<param name="nav_currentnode_sub" value="mrNavigationController/currentNode"/> 	
+			<param name="button_sub" value="mrButton/run"/> 
+			<param name="button_pub" value="mrButton/status"/> 
+			<param name="hmi_sub" value="mrHMI/run"/> 
+			<param name="hmi_pub" value="mrHMI/status"/> 
+			<param name="tipper_srv" value="mrTipController/tip"/> 
+			<param name="mes_pub" value="mrMESClient/msgToServer"/> 
+			<param name="mes_sub" value="mrMESClient/msgFromServer"/> 
+		</node>
+	</group>
+
+	<!-- MR Go -->
+	<group ns="MR_Go">
+    		<node pkg="mr_go" name="mr_go" type="mr_go" respawn="true" output="screen">
+		    	<param name="odometry" value="/fmKnowledge/pose"/>
+		    	<param name="pub_twist" value="/fmCommand/cmd_vel"/>
+		    	<param name="pub_deadman" value="/fmSafe/deadman"/>
+		    	<param name="srv_move" value="/mrGo/move"/>
+		    	<param name="linear_precision" value="0.01"/>
+		    	<param name="angular_precision" value="0.500"/>
+		    	<param name="linear_speed" value="0.2"/>
+		    	<param name="angular_speed" value="0.3"/>
+    		 </node>
+	</group>
+
+	<!-- MR Camera -->
+	<group ns="MR_Camera">
+   		<node pkg="mr_camera" name="camera" type="mr_camera" output="screen">
+    		</node>
+	</group>
+
+	<!-- MR Camera Processing -->
+	<group ns="MR_CameraProcessing">
+	    	<node pkg="mr_camera_processing" name="CameraProcessing" type="mr_camera_processing" output="screen">
+			<param name="sub_image" value="/mrCamera/image" />
+			<param name="pub_cross" value="/mrCameraProcessing/cross" />
+			<param name="pub_qr" value="/mrCameraProcessing/QR" />
+			<param name="pub_line" value="/mrCameraProcessing/line" />
+			<param name="pub_image" value="/mrCameraProcessing/output_image" />
+			<param name="srv_enable" value="/mrCameraProcessing/enable" />
+		</node>
+	</group>
+
+	<!-- MR Line Follower -->
+	<group ns="MR_LineFollower">
+		<node pkg="mr_line_follower" name="LineFollower" type="mr_line_follower" output="screen">
+			<param name="pid_p" value="1.0" />
+			<param name="pud_i" value="0" />
+			<param name="pid_d" value="0" />
+			<param name="pid_dt" value="0.33" />
+			<param name="pid_max" value="320" />
+			<param name="pid_min" value="-320" />
+			<param name="reference_point_x" value="320" />
+			<param name="reference_point_y" value="240" />
+			<param name="robot_speed" value="0.3" />
+		
+			<param name="srv_mr_camera_processing_enable_name" value="/mrCameraProcessing/enable" />
+			<param name="sub_cross" value="/mrCameraProcessing/cross" />
+			<param name="sub_line" value="/mrCameraProcessing/line" />
+			<param name="sub_qr" value="/mrCameraProcessing/QR" />
+			<param name="pub_twist" value="/fmCommand/cmd_vel" />
+			<param name="pub_deadman" value="/fmSafe/deadman" />
+		</node>
+	</group>
+
+	<!-- MR Navigation Controller -->
+	<group ns="MR_NavigationController">
+		<node pkg="mr_navigation_controller" name="NavigationController" type="mr_navigation_controller">
+			<param name="lineFollowEnableService" value="mrLineFollower/lineUntilQR"/>
+			<param name="moveService" value="mrGo/move"/>
+			<param name="performAction" value="mrNavigationController/performAction"/>
+			<param name="status" value="mrNavigationController/status"/>
+			<param name="currentNode" value="mrNavigationController/currentNode"/>
+			<param name="searchLimit" value="100"/>
+		</node>
+	</group>
+
 </launch>
 

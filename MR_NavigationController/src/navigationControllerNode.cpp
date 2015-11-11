@@ -48,7 +48,7 @@ public:
 	{	
 		// Get parameter names
         pNh_.param<std::string>("lineFollowEnableService", srv_lineUntilQR_name_, "mrLineFollower/lineUntilQR");
-		pNh_.param<std::string>("moveService", srv_move_name_, "mr_go/move");
+        pNh_.param<std::string>("moveService", srv_move_name_, "mrGo/move");
 		pNh_.param<std::string>("performAction", srv_action_name_, "mrNavigationController/performAction");
 		pNh_.param<std::string>("status", pub_status_name_, "mrNavigationController/status");
 		pNh_.param<std::string>("currentNode", pub_current_node_name_, "mrNavigationController/currentNode");

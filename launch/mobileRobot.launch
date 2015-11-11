@@ -166,8 +166,10 @@
 
 	<!-- MR Main -->
 	<group ns="MR_Main">
-		<node pkg="mr_main" name="Main" type="mr_main" output="screen">
-			<param name="navigation_srv" value="mrNavigationController/performAction"/> 	
+		<node pkg="mr_main" name="Main" type="mr_main">
+			<param name="nav_perform_srv" value="mrNavigationController/performAction"/> 
+			<param name="nav_status_sub" value="mrNavigationController/status"/> 
+			<param name="nav_currentnode_sub" value="mrNavigationController/currentNode"/> 	
 			<param name="button_sub" value="mrButton/run"/> 
 			<param name="button_pub" value="mrButton/status"/> 
 			<param name="hmi_sub" value="mrHMI/run"/> 

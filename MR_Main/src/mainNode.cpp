@@ -24,6 +24,35 @@ ros::ServiceClient _servicePerformAction, _serviceTipper;
 ros::Publisher _hmiPublisher, _mesPublisher, _buttonPublisher;
 bool _buttonStatus, _hmiStatus;
 boost::mutex _runMutex;
+int _destinationCell;
+
+// Enum
+enum ROBOT_POS
+{
+    box = 1,
+    camera,
+    trackZone2,
+    trackZone1,
+    RC1,
+    RC2,
+    RC3
+};
+
+enum HMI_ICONS
+{
+    tipperDown = 1,
+    tipperUp,
+    lineFollowingOn,
+    lineFollowingOff,
+    gpsOn,
+    gpsOff,
+    collectingBricksOn,
+    collectingBricksOff,
+    insideBoxOn,
+    insideBoxOff,
+    chargingOn,
+    chargingOff
+};
 
 // Functions
 void buttonCallback(std_msgs::Bool msg)
@@ -44,8 +73,16 @@ void hmiCallback(std_msgs::String msg)
 
 void mesCallback(mr_mes_client::server msg)
 {
-    msg.mobileRobot;
-    msg.cell;
+    boost::unique_lock<boost::mutex> lock(_runMutex);
+    if(msg.mobileRobot == 1)
+    {
+        _destinationCell = msg.cell;
+
+        // START STUFF
+        mr_navigation_controller::performAction obj;
+        obj.request.action = "WTF";
+        _servicePerformAction.call(obj);
+    }
 }
 
 void navStatusCallback(std_msgs::String msg)
@@ -55,7 +92,55 @@ void navStatusCallback(std_msgs::String msg)
 
 void navCurrentNodeCallback(std_msgs::String msg)
 {
+    if(msg.data == "conveyer")
+    {
+        mr_tip_controller::tip obj;
+        obj.request.direction = true; // up
+        _serviceTipper.call(obj);
+        obj.request.direction = false; // down
+        _serviceTipper.call(obj);
+    }
+}
 
+void HMIUpdatePosition(ROBOT_POS pos)
+{
+    std_msgs::String obj;
+    obj.data = "00" + SSTR(pos) + "0,,";
+    _hmiPublisher.publish(obj);
+}
+
+void HMIUpdateIcons(HMI_ICONS state)
+{
+    std_msgs::String obj;
+
+    if(state > 9)
+        obj.data = SSTR(state) + "00,,";
+    else
+        obj.data = "0" + SSTR(state) + "00,,";
+
+    _hmiPublisher.publish(obj);
+
+}
+
+void HMISendError(std::string msg)
+{
+    std_msgs::String obj;
+    obj.data = "0003," + msg + ",";
+    _hmiPublisher.publish(obj);
+}
+
+void HMISendInfo(std::string msg)
+{
+    std_msgs::String obj;
+    obj.data = "0001," + msg + ",";
+    _hmiPublisher.publish(obj);
+}
+
+void HMISendWarning(std::string msg)
+{
+    std_msgs::String obj;
+    obj.data = "0002," + msg + ",";
+    _hmiPublisher.publish(obj);
 }
 
 // Functions
@@ -71,7 +156,7 @@ int main()
 
     // Get parameter names
     std::string performActionString, navStatusSub, navCurrentnodeSub, buttonSub, buttonPub, hmiSub, tipperString, hmiPub, mesSub, mesPub;
-    pNh.param<std::string>("nav_perferm_srv", performActionString, "mrNavigationController/performAction");
+    pNh.param<std::string>("nav_perform_srv", performActionString, "mrNavigationController/performAction");
     pNh.param<std::string>("nav_status_sub", navStatusSub, "mrNavigationController/status");
     pNh.param<std::string>("nav_currentnode_sub", navCurrentnodeSub, "mrNavigationController/currentNode");
     pNh.param<std::string>("button_sub", buttonSub, "mrButton/run");

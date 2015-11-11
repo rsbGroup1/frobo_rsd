@@ -40,18 +40,12 @@ enum ROBOT_POS
 
 enum HMI_ICONS
 {
-    tipperDown = 1,
-    tipperUp,
-    lineFollowingOn,
-    lineFollowingOff,
-    gpsOn,
-    gpsOff,
-    collectingBricksOn,
-    collectingBricksOff,
-    insideBoxOn,
-    insideBoxOff,
-    chargingOn,
-    chargingOff
+    tipper = 1,
+    lineFollowing,
+    gps,
+    collectingBricks,
+    insideBox,
+    charging
 };
 
 // Functions
@@ -109,17 +103,11 @@ void HMIUpdatePosition(ROBOT_POS pos)
     _hmiPublisher.publish(obj);
 }
 
-void HMIUpdateIcons(HMI_ICONS state)
+void HMIUpdateIcons(HMI_ICONS state, bool value)
 {
     std_msgs::String obj;
-
-    if(state > 9)
-        obj.data = SSTR(state) + "00,,";
-    else
-        obj.data = "0" + SSTR(state) + "00,,";
-
+    obj.data = SSTR(state) + (value?"1":"0") + "00,,";
     _hmiPublisher.publish(obj);
-
 }
 
 void HMISendError(std::string msg)

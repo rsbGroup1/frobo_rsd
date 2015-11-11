@@ -1,0 +1,13 @@
+<launch>
+	<!-- HMI -->
+	<group ns="MR_HMI">
+		<node pkg="mr_hmi" name="proxy" type="hmiNode.py">
+			<param name="mr_hmi_status_sub" value="/mrHMI/status"/>
+			<param name="mr_hmi_run_pub" value="/mrHMI/run"/>
+			<param name="deadman_pub" value="/fmSafe/deadman"/>
+			<param name="cmd_pub" value="/fmCommand/cmd_vel"/>
+			<param name="tipper_srv" value="/mrTipController/tip"/>
+		</node>			
+	</group>
+</launch>
+

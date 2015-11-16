@@ -66,6 +66,41 @@ enum HMI_ICONS
 };
 
 // Functions
+void HMIUpdatePosition(ROBOT_POS pos)
+{
+	std_msgs::String obj;
+	obj.data = "00" + SSTR(pos) + "0,,";
+	_hmiPublisher.publish(obj);
+}
+
+void HMIUpdateIcons(HMI_ICONS state, bool value)
+{
+	std_msgs::String obj;
+	obj.data = SSTR(state) + (value?"1":"0") + "00,,";
+	_hmiPublisher.publish(obj);
+}
+
+void HMISendError(std::string msg)
+{
+	std_msgs::String obj;
+	obj.data = "0003," + msg + ",";
+	_hmiPublisher.publish(obj);
+}
+
+void HMISendInfo(std::string msg)
+{
+	std_msgs::String obj;
+	obj.data = "0001," + msg + ",";
+	_hmiPublisher.publish(obj);
+}
+
+void HMISendWarning(std::string msg)
+{
+	std_msgs::String obj;
+	obj.data = "0002," + msg + ",";
+	_hmiPublisher.publish(obj);
+}
+
 void buttonCallback(std_msgs::Bool msg)
 {
     boost::unique_lock<boost::mutex> lock(_runMutex);
@@ -87,66 +122,82 @@ void mesCallback(mr_mes_client::server msg)
     boost::unique_lock<boost::mutex> lock(_runMutex);
     if(msg.mobileRobot == 1)
     {
-        _destinationCell = msg.cell;
-        // START STUFF
-        mr_navigation_controller::performAction obj;
-        obj.request.action = "WTF";
+		mr_navigation_controller::performAction perform_action_obj;
+		mr_tip_controller::tip tip_obj;
 		
-        _servicePerformAction.call(obj);
+		// Send the robot to the correct wc conveyor
+        if (msg.cell == 1)
+			perform_action_obj.request.action = "wc1_conveyor";
+		if (msg.cell == 2)
+			perform_action_obj.request.action = "wc2_conveyor";
+		if (msg.cell == 3)
+			perform_action_obj.request.action = "wc3_conveyor";		
+		_servicePerformAction.call(perform_action_obj);
+		
+		// Tip 
+		tip_obj.request.direction = true;
+		_serviceTipper.call(tip_obj);
+		tip_obj.request.direction = false;
+		_serviceTipper.call(tip_obj);
+		
+		// Go to the robot
+		if (msg.cell == 1)
+			perform_action_obj.request.action = "wc1_robot";
+		if (msg.cell == 2)
+			perform_action_obj.request.action = "wc2_robot";
+		if (msg.cell == 3)
+			perform_action_obj.request.action = "wc3_robot";		
+		_servicePerformAction.call(perform_action_obj);
+		
     }
 }
 
 void navStatusCallback(std_msgs::String msg)
 {
-
+	
 }
 
 void navCurrentNodeCallback(std_msgs::String msg)
 {
-    if(msg.data == "conveyer")
-    {
-        mr_tip_controller::tip obj;
-        obj.request.direction = true; // up
-        _serviceTipper.call(obj);
-        obj.request.direction = false; // down
-        _serviceTipper.call(obj);
-    }
+	if (msg.data == "line_start")
+		HMIUpdatePosition(trackZone1);
+	else if (msg.data == "line_stop")
+		HMIUpdatePosition(trackZone1);
+	else if (msg.data == "wc1")
+		HMIUpdatePosition(RC1);
+	else if (msg.data == "wc1_conveyor")
+		HMIUpdatePosition(RC1);
+	else if (msg.data == "wc1_robot")
+		HMIUpdatePosition(RC1);
+	else if (msg.data == "wc2")
+		HMIUpdatePosition(RC2);
+	else if (msg.data == "wc2_conveyor")
+		HMIUpdatePosition(RC2);
+	else if (msg.data == "wc2_robot")
+		HMIUpdatePosition(RC2);
+	else if (msg.data == "wc3")
+		HMIUpdatePosition(RC3);
+	else if (msg.data == "wc3_conveyor")
+		HMIUpdatePosition(RC3);
+	else if (msg.data == "wc3_robot")
+		HMIUpdatePosition(RC3);
+	else if (msg.data == "wc_exit")
+		HMIUpdatePosition(trackZone1);
+	else if (msg.data == "box")
+		HMIUpdatePosition(camera);
+	else if (msg.data == "pre_charge")
+		HMIUpdatePosition(box);
+	else if (msg.data == "charge")
+		HMIUpdatePosition(box);
+	else if (msg.data == "pre_bricks")
+		HMIUpdatePosition(box);
+	else if (msg.data == "bricks")
+		HMIUpdatePosition(box);
+	else
+		HMIUpdatePosition(nul);
 }
 
-void HMIUpdatePosition(ROBOT_POS pos)
-{
-    std_msgs::String obj;
-    obj.data = "00" + SSTR(pos) + "0,,";
-    _hmiPublisher.publish(obj);
-}
 
-void HMIUpdateIcons(HMI_ICONS state, bool value)
-{
-    std_msgs::String obj;
-    obj.data = SSTR(state) + (value?"1":"0") + "00,,";
-    _hmiPublisher.publish(obj);
-}
-
-void HMISendError(std::string msg)
-{
-    std_msgs::String obj;
-    obj.data = "0003," + msg + ",";
-    _hmiPublisher.publish(obj);
-}
-
-void HMISendInfo(std::string msg)
-{
-    std_msgs::String obj;
-    obj.data = "0001," + msg + ",";
-    _hmiPublisher.publish(obj);
-}
-
-void HMISendWarning(std::string msg)
-{
-    std_msgs::String obj;
-    obj.data = "0002," + msg + ",";
-    _hmiPublisher.publish(obj);
-}
 
 // Functions
 int main()

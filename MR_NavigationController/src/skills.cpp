@@ -87,9 +87,10 @@ bool Skills::goToFreePosition(double x, double y, double yaw)
 
     if(move_base_actionclient_->waitForServer(ros::Duration(5,0)))
     {
+
         move_base_actionclient_->sendGoal(goal);
         bool finished = move_base_actionclient_->waitForResult();
-
+/* ORIGINAL
         if(move_base_actionclient_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
         {
             success = true;
@@ -100,7 +101,38 @@ bool Skills::goToFreePosition(double x, double y, double yaw)
         else
         {
             ROS_WARN("Free navigation was unable to achieve goal(%f, %f, %f)",x,y,yaw);
+	    //DSW TEsting
+	    move_base_msgs::MoveBaseGoal recovery;
+	    recovery.target_pose.pose.position.x = -0.30;
+	    recovery.target_pose.pose.position.y = -2.5;
+	    recovery.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw(1.6);
+	    recovery.target_pose.header.frame_id ="map";
+	    recovery.target_pose.header.stamp = ros::Time::now();
+	    move_base_actionclient_->sendGoal(recovery);
+	    move_base_actionclient_->sendGoal(goal);
         }
+*/
+	// DSW TEsting: move to recovery position then try again
+	    move_base_msgs::MoveBaseGoal recovery;
+	    recovery.target_pose.pose.position.x = -0.1;
+	    recovery.target_pose.pose.position.y = -0.15;
+	    recovery.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw(-1.9);
+	    recovery.target_pose.header.frame_id ="map";
+	    recovery.target_pose.header.stamp = ros::Time::now();
+        while(move_base_actionclient_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
+        {
+		ROS_WARN("To recovery=>goal");
+		move_base_actionclient_->sendGoal(recovery);
+		finished = move_base_actionclient_->waitForResult();
+		move_base_actionclient_->sendGoal(goal);
+		finished = move_base_actionclient_->waitForResult();			
+        }
+
+            success = true;
+            std_msgs::String msg;
+            msg.data = "Free navigation to X:" + std::to_string(x) + ", Y:" +  std::to_string(y);
+            pub_status_->publish(msg);
+
     }
     else
     {

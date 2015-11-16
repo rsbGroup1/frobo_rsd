@@ -147,16 +147,14 @@
 
 	<!-- HMI -->
 	<group ns="MR_HMI">
-		<node pkg="mr_hmi" name="proxy" type="proxy.py">
-			<param name="missionplanner_pub" value="/mrHMI/start_stop"/>
+		<node pkg="mr_hmi" name="HMI" type="hmiNode.py">
+			<param name="mr_hmi_status_sub" value="/mrHMI/status"/>
+			<param name="mr_hmi_run_pub" value="/mrHMI/run"/>
 			<param name="deadman_pub" value="/fmSafe/hmi_deadman"/>
 			<param name="cmd_pub" value="/fmCommand/cmd_vel"/>
-			<param name="tipper_pub" value="/mrMainController/tipper"/>
+			<param name="tipper_srv" value="/mrTipController/tip"/>
 		</node>			
 	</group>
-
-
-
 
 	<node pkg="keyboard_interface" type="keyboard_node" name="keyboard">
 		<param name="keyboard_pub" value="/fmHMI/keyboard" />
@@ -222,7 +220,7 @@
 	<node pkg="tf" type="static_transform_publisher" name="imu_transform" args="0.10 0 0 0 0 0 base_link imu_link 50"  >
 	</node>
 
-    <node pkg="map_server" type="map_server" name="map_server" args="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/maps/frontal_map_big.yaml" output="screen"/>
+    <node pkg="map_server" type="map_server" name="map_server" args="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/maps/frontal_map_big_edited.yaml" output="screen"/>
 
     <node pkg="amcl" type="amcl" name="amcl" output="screen">
 		<param name="odom_alpha1" value="0.8"/>
@@ -305,8 +303,68 @@
 		<param name="hmiTopic" value="/fmSafe/hmi_deadman"/>
 	</node>
 
+   <node pkg="mr_camera" name="camera" type="mr_camera">
+    	<param name="image_pub" value="/mrCamera/image"/> 
+		<param name="frameWidth" value="640"/> 
+		<param name="frameHeight" value="480"/> 
+		<param name="cameraFrequency" value="30"/> 
+		<param name="sharpness" value="2"/> 
+		<param name="brightness" value="2"/> 
+		<param name="whiteBalanceTemp" value="4600"/> 
+		<param name="whiteBalanceAuto" value="true"/> 
+    </node>
+
+    <node pkg="mr_camera_processing" name="CameraProcessing" type="mr_camera_processing" output="screen">
+		<param name="sub_image" value="/mrCamera/image" />
+		<param name="pub_cross" value="/mrCameraProcessing/cross" />
+		<param name="pub_qr" value="/mrCameraProcessing/QR" />
+		<param name="pub_line" value="/mrCameraProcessing/line" />
+		<param name="pub_image" value="/mrCameraProcessing/output_image" />
+		<param name="srv_enable" value="/mrCameraProcessing/enable" />
+    </node>
+
+	<node pkg="mr_line_follower" name="LineFollower" type="mr_line_follower" output="screen">
+		<param name="pid_p" value="1.0" />
+		<param name="pud_i" value="0" />
+		<param name="pid_d" value="0" />
+		<param name="pid_dt" value="0.033" />
+		<param name="pid_max" value="320" />
+		<param name="pid_min" value="-320" />
+		<param name="reference_point_x" value="320" />
+		<param name="reference_point_y" value="240" />
+		<param name="robot_speed" value="0.15" />
+		<param name="srv_mr_camera_processing_enable_name" value="/mrCameraProcessing/enable" />
+		<param name="sub_line" value="/mrCameraProcessing/line" />
+		<param name="sub_qr" value="/mrCameraProcessing/QR" />
+		<param name="pub_twist" value="/fmCommand/cmd_vel" />
+		<param name="pub_deadman" value="/fmSafe/deadman" />
+		<param name="move" value="true" />
+    </node>
+
+    <node pkg="mr_go" name="mr_go" type="mr_go" respawn="true" output="screen">
+    	<param name="odometry" value="/fmKnowledge/pose"/>
+    	<param name="pub_twist" value="/fmCommand/cmd_vel"/>
+    	<param name="pub_deadman" value="/fmSafe/deadman"/>
+    	<param name="srv_move" value="/mr_go/move"/>
+    	<param name="linear_precision" value="0.05"/>
+    	<param name="angular_precision" value="0.500"/>
+    	<param name="linear_speed" value="0.1"/>
+    	<param name="angular_speed" value="0.3"/>
+     </node>
+
+     <node pkg="mr_navigation_controller" name="mr_navigation_controller" type="mr_navigation_controller" respawn="true" output="screen">
+     	<param name="lineFollowEnableService" value="mrLineFollower/lineUntilQR"/>
+     	<param name="moveService" value="mr_go/move"/>
+     	<param name="performAction" value="mrNavigationController/performAction"/>
+     	<param name="status" value="mrNavigationController/status"/>
+     	<param name="currentNode" value="mrNavigationController/currentNode"/>
+     	<param name="searchLimit" value="100"/>
+     </node>
+
+
+
 	<!-- Record Rosbag -->
-	<node pkg="rosbag" type="record" name="rosbag_record_all" args="-a"/>
+	<!--node pkg="rosbag" type="record" name="rosbag_record_all" args="-a"/-->
 
 	<!-- TIP CONTROLLER -->
 	<group ns="MR_TipController">

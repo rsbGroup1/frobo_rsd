@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <functional>
+#include <fstream>
 
 #include <ros/ros.h>
 #include "mr_navigation_controller/performAction.h"
@@ -12,7 +13,7 @@
 
 #include "std_msgs/String.h"
 #include "std_msgs/Float64.h"
-
+#include "geometry_msgs/PoseWithCovarianceStamped.h"
 
 
 #include <boost/thread.hpp>
@@ -69,6 +70,42 @@ public:
 		createGraph();
 		//graph_->showGraph();
 
+        // Inialize AMCL
+                    std::ifstream localisationFile;
+                    localisationFile.open("localization.csv");
+                    ROS_INFO("Waiting for global localisation");
+                    ros::service::waitForService("global_localization",ros::Duration(5,0));
+                    poseSubscribe_ =nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>("amcl_pose",10,&NavigationController::poseReceived,this);
+                    if(localisationFile.is_open())
+                    {
+                        ros::ServiceClient initalize = nh_.serviceClient<std_srvs::Empty>("global_localization");
+                        std_srvs::Empty srv;
+                        initalize.call(srv);
+
+                        // Load initialization
+                        initalizePub_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>("initialpose",1);
+                        geometry_msgs::PoseWithCovarianceStamped p;
+                        localisationFile >> p.pose.pose.position.x;
+                        localisationFile >> p.pose.pose.position.y;
+                        localisationFile >> p.pose.pose.orientation.x;
+                        localisationFile >> p.pose.pose.orientation.y;
+                        localisationFile >> p.pose.pose.orientation.z;
+                        localisationFile >> p.pose.pose.orientation.w;
+                        p.header.frame_id = "map";
+
+                        ros::Duration d(6,0);
+                        d.sleep();
+                        initalizePub_.publish(p);
+
+                        localisationFile.close();
+                    }
+                    else
+                    {
+                        // global initialization
+                        ros::ServiceClient initalize = nh_.serviceClient<std_srvs::Empty>("global_localization");
+                        std_srvs::Empty srv;
+                        initalize.call(srv);
+                    }
 		
 		/*
 		 * Debug
@@ -307,12 +344,41 @@ public:
 		graph_->addVertex("line_start", "box", 1, line_start_TO_box); // for Testing
 	}
 
+    /**
+     * @brief Callback for new poses from AMCL. Used to store the pose for initialization on next start
+     * @param p
+     */
+    void poseReceived(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& p)
+    {
+        currentPose_ = *p;
+    }
+
+
+    void storePosition()
+    {
+        ROS_INFO("Storing position");
+        // Store last known position
+        std::ofstream outputFile;
+        outputFile.open("localization.csv");
+
+        outputFile << currentPose_.pose.pose.position.x << " ";
+        outputFile << currentPose_.pose.pose.position.y << " ";
+        outputFile << currentPose_.pose.pose.orientation.x << " ";
+        outputFile << currentPose_.pose.pose.orientation.y << " ";
+        outputFile << currentPose_.pose.pose.orientation.z << " ";
+        outputFile << currentPose_.pose.pose.orientation.w << " ";
+
+        outputFile.flush();
+        outputFile.close();
+    }
 	
 private:
 	ros::NodeHandle nh_, pNh_;
 	ros::Publisher pub_status_, pub_current_node_;
 	ros::ServiceClient srv_lineUntilQR_, srv_move_;
 	ros::ServiceServer srv_action_;
+    ros::Subscriber poseSubscribe_;
+    ros::Publisher initalizePub_;
 
 	std::string srv_lineUntilQR_name_, srv_move_name_, pub_status_name_, 
 		srv_action_name_, pub_current_node_name_;
@@ -321,6 +387,7 @@ private:
 	std::vector<std::function<void()>> solution_;
 	int search_limit_;
 	std::string status;
+    geometry_msgs::PoseWithCovarianceStamped currentPose_;
 };
 
 
@@ -340,6 +407,10 @@ int main(int argc, char** argv)
         ros::spinOnce();
 		rate.sleep();
 	}
+
+    // Store position
+    nc.storePosition();
+
     // Return
     return 0;
 }

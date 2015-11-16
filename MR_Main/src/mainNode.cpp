@@ -88,7 +88,6 @@ void mesCallback(mr_mes_client::server msg)
     if(msg.mobileRobot == 1)
     {
         _destinationCell = msg.cell;
-		msg.blue
         // START STUFF
         mr_navigation_controller::performAction obj;
         obj.request.action = "WTF";

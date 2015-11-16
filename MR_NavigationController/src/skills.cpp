@@ -32,7 +32,8 @@ bool Skills::lineUntilQR(std::string qr)
     srv_lineUntilQR_->call(lineFollowerCall);
 
 	std_msgs::String msg;
-	msg.data = "following_line " + qr;
+	//msg.data = "following_line " + qr;
+	msg.data = "following_line";
 	pub_status_->publish(msg);
     return lineFollowerCall.response.success;
 }
@@ -45,7 +46,8 @@ bool Skills::linearMove(double distance)
     srv_move_->call(move_call_);
 
 	std_msgs::String msg;
-	msg.data = "linear_move " + std::to_string(distance);
+	//msg.data = "linear_move " + std::to_string(distance);
+	msg.data = "linear_move";
     pub_status_->publish(msg);
     return move_call_.response.done;
 }
@@ -58,7 +60,8 @@ bool Skills::angularMove(double angle)
     srv_move_->call(move_call_);
 
 	std_msgs::String msg;
-	msg.data = "angular_move " + std::to_string(angle);
+	//msg.data = "angular_move " + std::to_string(angle);
+	msg.data = "angular_move";
 	pub_status_->publish(msg);
     return move_call_.response.done;
 }
@@ -86,7 +89,8 @@ bool Skills::goToFreePosition(double x, double y, double yaw)
         {
             success = true;
             std_msgs::String msg;
-            msg.data = "free_navigation " + std::to_string(x) + " " +  std::to_string(y);
+            //msg.data = "free_navigation " + std::to_string(x) + " " +  std::to_string(y);
+			msg.data = "free_navigation";
             pub_status_->publish(msg);
         }
         else

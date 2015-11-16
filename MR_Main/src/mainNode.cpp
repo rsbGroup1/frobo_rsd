@@ -38,19 +38,13 @@ enum ROBOT_POS
 
 enum HMI_ICONS
 {
-    null = 00,
-    tipper_up = 11,
-    tipper_down = 12,
-    lineFollowing_on = 21,
-    lineFollowing_off = 22,
-    gps_on = 31,
-    gps_off = 32,
-    collectingBricks_on = 41,
-    collectingBricks_off = 42,
-    insideBox_on = 51,
-    insideBox_off = 52,
-    charging_on = 61,
-    charging_off = 62
+    null = 0,
+    tipper = 1,
+    lineFollowing = 2,
+    gps = 3,
+    collectingBricks = 4,
+    fixedMovement = 5,
+    charging = 6,
 };
 
 class MainNode {
@@ -206,12 +200,14 @@ public:
                 perform_action_obj.request.action = "wc3_conveyor";
             _servicePerformAction.call(perform_action_obj);
 
-            // Tip
+            // Tip Up
+			HMIUpdateIcons(tipper);
             tip_obj.request.direction = true;
-			HMIUpdateIcons()
             _serviceTipper.call(tip_obj);
+			// Tip Down
             tip_obj.request.direction = false;
             _serviceTipper.call(tip_obj);
+			HMIUpdateIcons(null);
 
             // Go to the robot
             if (msg.cell == 1)
@@ -229,7 +225,14 @@ public:
 	 */
     void navStatusCallback(std_msgs::String msg)
     {
-
+		if (msg.data == "following_line")
+			HMIUpdateIcons(lineFollowing);
+		else if (msg.data == "linear_move")
+			HMIUpdateIcons(fixedMovement);
+		else if (msg.data == "angular_move")
+			HMIUpdateIcons(fixedMovement);
+		else if (msg.data == "free_navigation")
+			HMIUpdateIcons(gps);
     }
     
     /**
@@ -313,32 +316,3 @@ int main()
     // Return
     return 0;
 }
-
-
-/*
- * mrNavigationController/status
- * following_line + (data) qr_name
- * linear_move + (data) distance
- * angular_move + (data) angle
- * free_navigation + (data) x + (data) y
- */
-
-/* mrNavigationController/currentNode
- * line_start
- * line_stop
- * wc1
- * wc1_conveyor
- * wc1_robot
- * wc2
- * wc2_conveyor
- * wc2_robot
- * wc3
- * wc3_conveyor
- * wc3_robot
- * wc_exit
- * box
- * pre_charge
- * charge
- * pre_bricks
- * bricks
- */

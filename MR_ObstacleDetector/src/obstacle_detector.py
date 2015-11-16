@@ -14,12 +14,7 @@ def createBoolStampedMessage( data ):
 class obs_detector():
 	def __init__(self):
 		# initialize stuff
-		rospy.init_node('obstacle_detector')
-
-		# deadman topic things
-		global pubActuationEna
-		ACTUATION_ENA_PUB = rospy.get_param( "~deadman_pub", "/fmSafe/deadman" )
-		pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
+		rospy.init_node('mr_obstacle_detector')
 
 		publishTopic = rospy.get_param("~publishTopic", "/mrObstacleDetector/status")
 		self.obstaclePub = rospy.Publisher(publishTopic, String, queue_size=1)
@@ -30,9 +25,9 @@ class obs_detector():
 		self.oldValue = -1 # 0 = nothing, 1 = slow, 2 = stop
 
 		# get parameters
-		self.threshold_slow = rospy.get_param("~threshold_slow", 1.2)
-		self.threshold_stop = rospy.get_param("~threshold_stop", 0.5)		
-		self.threshold_ignore = rospy.get_param("~threshold_ignore", 0.2)				
+		self.threshold_slow = rospy.get_param("~threshold_proximityAlert", 0.4)
+		self.threshold_stop = rospy.get_param("~threshold_colliding", 0.3)		
+		self.threshold_ignore = rospy.get_param("~threshold_ignore", 0.05)				
 		laser_scan_topic = rospy.get_param("~laser_scan", "/scan")
 
 		#subscribe to laser scan topic
@@ -62,23 +57,12 @@ class obs_detector():
 		
 		#if self.value != self.oldValue:
 		if self.value == 0:
-			self.obstaclePub.publish("normal")
+			self.obstaclePub.publish("safe")
 		elif self.value == 1:
-			self.obstaclePub.publish("slow")
+			self.obstaclePub.publish("proximityAlert")
 		elif self.value == 2:
-			self.obstaclePub.publish("stop")
+			self.obstaclePub.publish("colliding")
 		self.oldValue = self.value
-
-		# publish deadman topic
-		#if self.value == 2:
-		#        msg = createBoolStampedMessage( False )
-		#if (self.stop):
-		msg = createBoolStampedMessage( not self.stop )
-		pubActuationEna.publish ( msg )
-		#else:
-		        #msg = createBoolStampedMessage( True )
-        		#pubActuationEna.publish ( msg )	
-			
 
 	def updater(self):
 		while not rospy.is_shutdown():

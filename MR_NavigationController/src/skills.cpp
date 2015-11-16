@@ -16,14 +16,12 @@ Skills::Skills(ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move
     pub_status_ = pub_status;
 
     // action client for move_base
-    move_base_actionclient_ = new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>("move_base",true); //actionlib::ActionClient<move_base_msgs::MoveBaseActionGoal>("move_base/goal");
-    goal_id_ = 0;
+    move_base_actionclient_ = new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>("move_base", true);
 }
 
 Skills::~Skills()
 {
     delete move_base_actionclient_;
-    // Nothing
 }
 
 bool Skills::lineUntilQR(std::string qr)
@@ -33,12 +31,11 @@ bool Skills::lineUntilQR(std::string qr)
     lineFollowerCall.request.time_limit = 30;
     srv_lineUntilQR_->call(lineFollowerCall);
 
-    //TODO Time limit + achivement checking
-
 	std_msgs::String msg;
-	msg.data = "Following line until " + qr;
+	//msg.data = "following_line " + qr;
+	msg.data = "following_line";
 	pub_status_->publish(msg);
-    return true;
+    return lineFollowerCall.response.success;
 }
 
 bool Skills::linearMove(double distance)
@@ -48,12 +45,11 @@ bool Skills::linearMove(double distance)
     move_call_.request.angular = 0;
     srv_move_->call(move_call_);
 
-    //TODO Time limit + achivement checking
-
 	std_msgs::String msg;
-	msg.data = "Linear movement of " + std::to_string(distance);
+	//msg.data = "linear_move " + std::to_string(distance);
+	msg.data = "linear_move";
     pub_status_->publish(msg);
-    return true;
+    return move_call_.response.done;
 }
 
 bool Skills::angularMove(double angle)
@@ -63,10 +59,9 @@ bool Skills::angularMove(double angle)
     move_call_.request.angular = angle;
     srv_move_->call(move_call_);
 
-    //TODO Time limit + achivement checking
-
 	std_msgs::String msg;
-	msg.data = "Linear movement of " + std::to_string(angle);
+	//msg.data = "angular_move " + std::to_string(angle);
+	msg.data = "angular_move";
 	pub_status_->publish(msg);
     return move_call_.response.done;
 }
@@ -85,17 +80,20 @@ bool Skills::goToFreePosition(double x, double y, double yaw)
     goal.target_pose.header.stamp = ros::Time::now();
 
 
+
     if(move_base_actionclient_->waitForServer(ros::Duration(5,0)))
     {
 
         move_base_actionclient_->sendGoal(goal);
         bool finished = move_base_actionclient_->waitForResult();
 /* ORIGINAL
+        move_base_actionclient_->waitForResult();
         if(move_base_actionclient_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
         {
             success = true;
             std_msgs::String msg;
-            msg.data = "Free navigation to X:" + std::to_string(x) + ", Y:" +  std::to_string(y);
+            //msg.data = "free_navigation " + std::to_string(x) + " " +  std::to_string(y);
+			msg.data = "free_navigation";
             pub_status_->publish(msg);
         }
         else
@@ -110,6 +108,7 @@ bool Skills::goToFreePosition(double x, double y, double yaw)
 	    recovery.target_pose.header.stamp = ros::Time::now();
 	    move_base_actionclient_->sendGoal(recovery);
 	    move_base_actionclient_->sendGoal(goal);
+            ROS_WARN("Free navigation was unable to achieve goal (%f, %f, %f)",x,y,yaw);
         }
 */
 	// DSW TEsting: move to recovery position then try again
@@ -138,11 +137,7 @@ bool Skills::goToFreePosition(double x, double y, double yaw)
     {
         ROS_ERROR("move_base action server not responding within timeout");
     }
-
-
-
-
-    goal_id_++;
+    
     return success;
 }
 

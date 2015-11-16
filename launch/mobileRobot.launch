@@ -121,10 +121,10 @@
 	</node>
 
 	<!-- MR OBSTACLE DETECTOR -->
-	<group ns="obstacle_detector">
+	<group ns="MR_obstacle_detector">
 		<node pkg="mr_obstacle_detector" name="mr_obstacle_detector" type="obstacle_detector.py">
-			<param name="threshold_slow" value="0.4" />
-			<param name="threshold_stop" value="0.3" />
+			<param name="threshold_proximityAlert" value="0.4" />
+			<param name="threshold_colliding" value="0.3" />
 			<param name="threshold_ignore" value="0.05" />
 			<param name="laser_scan" value="/scan" />
 			<param name="publishTopic" value="/mrObstacleDetector/status" />
@@ -177,6 +177,7 @@
 			<param name="tipper_srv" value="mrTipController/tip"/> 
 			<param name="mes_pub" value="mrMESClient/msgToServer"/> 
 			<param name="mes_sub" value="mrMESClient/msgFromServer"/> 
+			<param name="obstacle_detector_sub" value="/mrObstacleDetector/status"/> 
 		</node>
 	</group>
 

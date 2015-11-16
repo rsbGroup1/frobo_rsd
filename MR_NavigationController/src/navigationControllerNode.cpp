@@ -64,7 +64,6 @@ public:
 		pub_status_ = nh_.advertise<std_msgs::String>(pub_status_name_, 10);
 		pub_current_node_ = nh_.advertise<std_msgs::String>(pub_current_node_name_, 10);
 		
-
 		// Create the graph
 		graph_ = new Graph(&pub_current_node_);
 		createGraph();
@@ -83,8 +82,8 @@ public:
 // 
 // 		solution_ = graph_->bfs("bricks", search_limit_);
 // 		executeSkills();
- 		graph_->setCurrentNode("box");
-		
+// 		graph_->setCurrentNode("box");
+
 	}
 	
 	~NavigationController(){
@@ -109,12 +108,12 @@ public:
 		return true;
 	}
 	
+	/**
+	 * Exectue all the skills in the solution_
+	 */
 	void executeSkills(){
-		// Execute skills
-		for(auto& skill : solution_){
-			std::cout << "   ";
+		for(auto& skill : solution_)
 			skill();
-		}
 	}
 	
 	/**
@@ -344,3 +343,4 @@ int main(int argc, char** argv)
     // Return
     return 0;
 }
+

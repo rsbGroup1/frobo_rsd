@@ -67,6 +67,23 @@ public:
 		// Create the graph
 		graph_ = new Graph(&pub_current_node_);
 		createGraph();
+		//graph_->showGraph();
+
+		
+		/*
+		 * Debug
+		 */
+// 		graph_->setCurrentNode("wc1");
+// 		solution_ = graph_->bfs("charge", search_limit_);
+// 		executeSkills();
+// 		
+// 		solution_ = graph_->bfs("box", search_limit_);
+// 		executeSkills();
+// 
+// 		solution_ = graph_->bfs("bricks", search_limit_);
+// 		executeSkills();
+// 		graph_->setCurrentNode("box");
+
 	}
 	
 	~NavigationController(){
@@ -205,45 +222,52 @@ public:
 		line_end_TO_box.push_back(std::bind(&Graph::setCurrentNode, graph_, "box"));
 		
 		std::vector<std::function<void()>> box_TO_line_start;
-        box_TO_line_start.push_back(std::bind(&Skills::goToFreePosition, &skills_, 3.3, -2 , 0.6));
+                box_TO_line_start.push_back(std::bind(&Skills::goToFreePosition, &skills_, 0.1, 0.7 , 1.3));
+		box_TO_line_start.push_back(std::bind(&Skills::goToFreePosition, &skills_, 3.3, -2 , 0.6));
 		box_TO_line_start.push_back(std::bind(&Graph::setCurrentNode, graph_, "line_start"));
 		
 		
 		
 		std::vector<std::function<void()>> box_TO_pre_bricks;
-        box_TO_pre_bricks.push_back(std::bind(&Skills::angularMove, &skills_, -90));
+        box_TO_pre_bricks.push_back(std::bind(&Skills::goToFreePosition, &skills_, -0.9, -2.2 , -2.8));
 		box_TO_pre_bricks.push_back(std::bind(&Graph::setCurrentNode, graph_, "pre_bricks"));
 		
 		std::vector<std::function<void()>> pre_bricks_TO_box;
-        pre_bricks_TO_box.push_back(std::bind(&Skills::angularMove, &skills_, -90));
+        pre_bricks_TO_box.push_back(std::bind(&Skills::goToFreePosition, &skills_, -0.5, -1.5 , 1.3));
 		pre_bricks_TO_box.push_back(std::bind(&Graph::setCurrentNode, graph_, "box"));
 		
 		
 		std::vector<std::function<void()>> pre_bricks_TO_bricks;
-        pre_bricks_TO_bricks.push_back(std::bind(&Skills::angularMove, &skills_, -90));
+        pre_bricks_TO_bricks.push_back(std::bind(&Skills::linearMove, &skills_, 0.15));
 		pre_bricks_TO_bricks.push_back(std::bind(&Graph::setCurrentNode, graph_, "bricks"));
-		
 		std::vector<std::function<void()>> bricks_TO_pre_bricks;
-        bricks_TO_pre_bricks.push_back(std::bind(&Skills::angularMove, &skills_, -90));
+        bricks_TO_pre_bricks.push_back(std::bind(&Skills::linearMove, &skills_, -0.15));
+        bricks_TO_pre_bricks.push_back(std::bind(&Skills::angularMove, &skills_, -30));
 		bricks_TO_pre_bricks.push_back(std::bind(&Graph::setCurrentNode, graph_, "pre_bricks"));
 		
 		
 		std::vector<std::function<void()>> box_TO_pre_charge;
-        box_TO_pre_charge.push_back(std::bind(&Skills::angularMove, &skills_, -90));
+		box_TO_pre_charge.push_back(std::bind(&Skills::goToFreePosition, &skills_, -0.56, -2.51 , -0.2));
+	        box_TO_pre_charge.push_back(std::bind(&Skills::goToFreePosition, &skills_, 0.02, -2.51 , -0.2));
 		box_TO_pre_charge.push_back(std::bind(&Graph::setCurrentNode, graph_, "pre_charge"));
 		
 		std::vector<std::function<void()>> pre_charge_TO_box;
-        pre_charge_TO_box.push_back(std::bind(&Skills::angularMove, &skills_, -90));
+        pre_charge_TO_box.push_back(std::bind(&Skills::goToFreePosition, &skills_, -0.8, -2.1 , -0.6));
 		pre_charge_TO_box.push_back(std::bind(&Graph::setCurrentNode, graph_, "box"));
 		
 		
+		
 		std::vector<std::function<void()>> pre_charge_TO_charge;
-        pre_charge_TO_charge.push_back(std::bind(&Skills::angularMove, &skills_, -90));
+        pre_charge_TO_charge.push_back(std::bind(&Skills::linearMove, &skills_, 0.02));
 		pre_charge_TO_charge.push_back(std::bind(&Graph::setCurrentNode, graph_, "charge"));
 		
 		std::vector<std::function<void()>> charge_TO_pre_charge;
-        charge_TO_pre_charge.push_back(std::bind(&Skills::angularMove, &skills_, -90));
+        charge_TO_pre_charge.push_back(std::bind(&Skills::linearMove, &skills_, -0.02));
 		charge_TO_pre_charge.push_back(std::bind(&Graph::setCurrentNode, graph_, "pre_charge"));
+
+		std::vector<std::function<void()>> line_start_TO_box;
+        	line_start_TO_box.push_back(std::bind(&Skills::goToFreePosition, &skills_, -0.5, -1.5 , -1.9));
+		line_start_TO_box.push_back(std::bind(&Graph::setCurrentNode, graph_, "box"));
 		
 		
 		
@@ -279,6 +303,8 @@ public:
 		
 		graph_->addVertex("pre_bricks", "bricks", 1, pre_bricks_TO_bricks);
 		graph_->addVertex("bricks", "pre_bricks", 1, bricks_TO_pre_bricks);
+
+		graph_->addVertex("line_start", "box", 1, line_start_TO_box); // for Testing
 	}
 
 	

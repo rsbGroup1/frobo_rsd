@@ -47,6 +47,13 @@ enum HMI_ICONS
     charging = 6,
 };
 
+enum HMI_SAFETY
+{
+	safe = 0,
+	proximityAlert = 1,
+	colliding = 2
+};
+
 class MainNode {
 public:
     MainNode() :
@@ -63,6 +70,7 @@ public:
         _pNh.param<std::string>("tipper_srv", _tipperString, "/mrTipController/tip");
         _pNh.param<std::string>("mes_pub", _mesPub, "/mrMESClient/msgToServer");
         _pNh.param<std::string>("mes_sub", _mesSub, "/mrMESClient/msgFromServer");
+		_pNh.param<std::string>("obstacle_detector_sub", _obstacleDetectorSub, "/mrObstacleDetector/status");
 
         // Services
         _servicePerformAction = _nh.serviceClient<mr_navigation_controller::performAction>(_performActionString);
@@ -79,6 +87,7 @@ public:
         ros::Subscriber navStatusSubscriber = _nh.subscribe<std_msgs::String>(_navStatusSub, 10, &MainNode::navStatusCallback, this);
         ros::Subscriber navCurrentSubscriber = _nh.subscribe<std_msgs::String>(_navCurrentnodeSub, 10, &MainNode::navCurrentNodeCallback, this);
         ros::Subscriber mesSubscriber = _nh.subscribe<mr_mes_client::server>(_mesSub, 10, &MainNode::mesCallback, this);
+		ros::Subscriber obstacleDetectorSubscriber = _nh.subscribe<std_msgs::String>(_obstacleDetectorSub, 10, &MainNode::obstacleCallback, this);
 
     }
 
@@ -99,7 +108,7 @@ public:
     void HMIUpdatePosition(ROBOT_POS pos)
     {
         std_msgs::String obj;
-        obj.data = "00" + SSTR(pos) + "0,,";
+        obj.data = "0" + SSTR(pos) + "00,,";
         _hmiPublisher.publish(obj);
     }
 
@@ -109,9 +118,19 @@ public:
     void HMIUpdateIcons(HMI_ICONS state)
     {
         std_msgs::String obj;
-        obj.data = SSTR(state) + "00,,";
+		obj.data = "00" + SSTR(state) + "0,,";
         _hmiPublisher.publish(obj);
     }
+    
+    /**
+	 * Updates the icons that inform to the user the safety status of the robot
+	 */
+	void HMIUpdateSafety(HMI_SAFETY state)
+	{
+		std_msgs::String obj;
+		obj.data = "000" + SSTR(state) + ",,";
+		_hmiPublisher.publish(obj);
+	}
 	
 	/**
 	 * Sends to the HMI a error message
@@ -119,7 +138,7 @@ public:
     void HMISendError(std::string msg)
     {
         std_msgs::String obj;
-        obj.data = "0003," + msg + ",";
+        obj.data = "3000," + msg + ",";
         _hmiPublisher.publish(obj);
     }
 
@@ -129,7 +148,7 @@ public:
     void HMISendInfo(std::string msg)
     {
         std_msgs::String obj;
-        obj.data = "0001," + msg + ",";
+        obj.data = "1000," + msg + ",";
         _hmiPublisher.publish(obj);
     }
 
@@ -139,7 +158,7 @@ public:
     void HMISendWarning(std::string msg)
     {
         std_msgs::String obj;
-        obj.data = "0002," + msg + ",";
+        obj.data = "2000," + msg + ",";
         _hmiPublisher.publish(obj);
     }
 
@@ -277,6 +296,25 @@ public:
         else
             HMIUpdatePosition(nul);
     }
+    
+    /**
+	 * Check if the robot is close or colliding with something and
+	 * carry out the situation at the same time that shows the state
+	 * in the HMI
+	 */
+    void obstacleCallback(std_msgs::String status){
+		// Checks if the safety status has changed
+		// This avoids unnecesary messages
+		if (status.data != safety_status_prev){
+			if (status.data == "safe")
+				HMIUpdateSafety(safe);
+			else if (status.data == "proximityAlert")
+				HMIUpdateSafety(proximityAlert);
+			else if (status.data == "colliding")
+				HMIUpdateSafety(colliding);
+		}
+		safety_status_prev = status.data;
+	}
 
 
 private:
@@ -284,8 +322,9 @@ private:
     ros::ServiceClient _servicePerformAction, _serviceTipper;
     ros::Publisher _hmiPublisher, _mesPublisher, _buttonPublisher;
     bool _buttonStatus, _hmiStatus;
+	std::string safety_status_prev;
     boost::mutex _runMutex;
-    std::string _performActionString, _navStatusSub, _navCurrentnodeSub, _buttonSub, _buttonPub, _hmiSub, _tipperString, _hmiPub, _mesSub, _mesPub;
+    std::string _performActionString, _navStatusSub, _navCurrentnodeSub, _buttonSub, _buttonPub, _hmiSub, _tipperString, _hmiPub, _mesSub, _mesPub, _obstacleDetectorSub;
 };
 
 
@@ -305,7 +344,7 @@ int main()
     MainNode mn;
 
     // Rate
-    ros::Rate rate(1);
+    ros::Rate rate(30);
 
     // ROS Spin: Handle callbacks
     while(ros::ok) {

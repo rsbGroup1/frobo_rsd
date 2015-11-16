@@ -186,11 +186,11 @@ void collisionCallback(std_msgs::String msg)
     static MODES oldMode = M_NORMAL;
     MODES newMode = M_NORMAL;
 
-    if(msg.data == "stop")
+    if(msg.data == "collision")
         newMode = M_STOP;
-    else if(msg.data == "slow")
+    else if(msg.data == "proximityAlert")
         newMode = M_SLOW;
-    else if(msg.data == "normal")
+    else if(msg.data == "safe")
         newMode = M_NORMAL;
 
     if(newMode != oldMode)

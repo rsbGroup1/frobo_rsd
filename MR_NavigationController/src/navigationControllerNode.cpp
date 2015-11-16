@@ -64,26 +64,9 @@ public:
 		pub_status_ = nh_.advertise<std_msgs::String>(pub_status_name_, 10);
 		pub_current_node_ = nh_.advertise<std_msgs::String>(pub_current_node_name_, 10);
 		
-
 		// Create the graph
 		graph_ = new Graph(&pub_current_node_);
 		createGraph();
-		//graph_->showGraph();
-
-		
-		/*
-		 * Debug
-		 */
-// 		graph_->setCurrentNode("wc1");
-// 		solution_ = graph_->bfs("charge", search_limit_);
-// 		executeSkills();
-// 		
-// 		solution_ = graph_->bfs("box", search_limit_);
-// 		executeSkills();
-// 
-// 		solution_ = graph_->bfs("bricks", search_limit_);
-// 		executeSkills();
-		
 	}
 	
 	~NavigationController(){
@@ -334,3 +317,4 @@ int main(int argc, char** argv)
     // Return
     return 0;
 }
+

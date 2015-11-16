@@ -17,7 +17,6 @@ Skills::Skills(ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move
 
     // action client for move_base
     move_base_actionclient_ = new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>("move_base",true); //actionlib::ActionClient<move_base_msgs::MoveBaseActionGoal>("move_base/goal");
-    goal_id_ = 0;
 }
 
 Skills::~Skills()
@@ -36,7 +35,7 @@ bool Skills::lineUntilQR(std::string qr)
     //TODO Time limit + achivement checking
 
 	std_msgs::String msg;
-	msg.data = "Following line until " + qr;
+	msg.data = "following_line " + qr;
 	pub_status_->publish(msg);
     return true;
 }
@@ -51,7 +50,7 @@ bool Skills::linearMove(double distance)
     //TODO Time limit + achivement checking
 
 	std_msgs::String msg;
-	msg.data = "Linear movement of " + std::to_string(distance);
+	msg.data = "linear_move " + std::to_string(distance);
     pub_status_->publish(msg);
     return true;
 }
@@ -66,7 +65,7 @@ bool Skills::angularMove(double angle)
     //TODO Time limit + achivement checking
 
 	std_msgs::String msg;
-	msg.data = "Linear movement of " + std::to_string(angle);
+	msg.data = "angular_move " + std::to_string(angle);
 	pub_status_->publish(msg);
     return move_call_.response.done;
 }
@@ -88,29 +87,25 @@ bool Skills::goToFreePosition(double x, double y, double yaw)
     if(move_base_actionclient_->waitForServer(ros::Duration(5,0)))
     {
         move_base_actionclient_->sendGoal(goal);
-        bool finished = move_base_actionclient_->waitForResult();
+        move_base_actionclient_->waitForResult();
 
         if(move_base_actionclient_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
         {
             success = true;
             std_msgs::String msg;
-            msg.data = "Free navigation to X:" + std::to_string(x) + ", Y:" +  std::to_string(y);
+            msg.data = "free_navigation " + std::to_string(x) + " " +  std::to_string(y);
             pub_status_->publish(msg);
         }
         else
         {
-            ROS_WARN("Free navigation was unable to achieve goal(%f, %f, %f)",x,y,yaw);
+            ROS_WARN("Free navigation was unable to achieve goal (%f, %f, %f)",x,y,yaw);
         }
     }
     else
     {
         ROS_ERROR("move_base action server not responding within timeout");
     }
-
-
-
-
-    goal_id_++;
+    
     return success;
 }
 

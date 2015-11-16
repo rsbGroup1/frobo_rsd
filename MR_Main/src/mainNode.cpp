@@ -13,11 +13,20 @@
 #include "std_msgs/Float64.h"
 #include "mr_mes_client/server.h"
 
+
+/*
+* TODO 
+* Change performAction by navigate_to
+* Change the node to the class form
+* Implement waitForHMIRequest
+* 
+*/
+
 // Defines
-#define M_PI                    3.14159265358979323846
-#define DEGREETORAD             (M_PI/180.0)
-#define RADTODEGREE             (180.0/M_PI)
-#define SSTR(x)                 dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
+#define M_PI			3.14159265358979323846
+#define DEGREETORAD		(M_PI/180.0)
+#define RADTODEGREE		(180.0/M_PI)
+#define SSTR(x)			dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
 
 // Global var
 ros::ServiceClient _servicePerformAction, _serviceTipper;
@@ -71,10 +80,11 @@ void mesCallback(mr_mes_client::server msg)
     if(msg.mobileRobot == 1)
     {
         _destinationCell = msg.cell;
-
+		msg.blue
         // START STUFF
         mr_navigation_controller::performAction obj;
         obj.request.action = "WTF";
+		
         _servicePerformAction.call(obj);
     }
 }
@@ -186,3 +196,33 @@ int main()
     // Return
     return 0;
 }
+
+
+
+/*
+ * mrNavigationController/status
+ * following_line + (data) qr_name
+ * linear_move + (data) distance
+ * angular_move + (data) angle
+ * free_navigation + (data) x + (data) y
+ */
+
+/* mrNavigationController/currentNode
+ * line_start
+ * line_stop
+ * wc1
+ * wc1_conveyor
+ * wc1_robot
+ * wc2
+ * wc2_conveyor
+ * wc2_robot
+ * wc3
+ * wc3_conveyor
+ * wc3_robot
+ * wc_exit
+ * box
+ * pre_charge
+ * charge
+ * pre_bricks
+ * bricks
+ */

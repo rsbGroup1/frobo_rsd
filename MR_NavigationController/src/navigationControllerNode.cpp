@@ -91,12 +91,12 @@ public:
 		return true;
 	}
 	
+	/**
+	 * Exectue all the skills in the solution_
+	 */
 	void executeSkills(){
-		// Execute skills
-		for(auto& skill : solution_){
-			std::cout << "   ";
+		for(auto& skill : solution_)
 			skill();
-		}
 	}
 	
 	/**

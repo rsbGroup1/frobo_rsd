@@ -16,13 +16,12 @@ Skills::Skills(ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move
     pub_status_ = pub_status;
 
     // action client for move_base
-    move_base_actionclient_ = new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>("move_base",true); //actionlib::ActionClient<move_base_msgs::MoveBaseActionGoal>("move_base/goal");
+    move_base_actionclient_ = new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>("move_base", true);
 }
 
 Skills::~Skills()
 {
     delete move_base_actionclient_;
-    // Nothing
 }
 
 bool Skills::lineUntilQR(std::string qr)
@@ -32,12 +31,10 @@ bool Skills::lineUntilQR(std::string qr)
     lineFollowerCall.request.time_limit = 30;
     srv_lineUntilQR_->call(lineFollowerCall);
 
-    //TODO Time limit + achivement checking
-
 	std_msgs::String msg;
 	msg.data = "following_line " + qr;
 	pub_status_->publish(msg);
-    return true;
+    return lineFollowerCall.response.success;
 }
 
 bool Skills::linearMove(double distance)
@@ -47,12 +44,10 @@ bool Skills::linearMove(double distance)
     move_call_.request.angular = 0;
     srv_move_->call(move_call_);
 
-    //TODO Time limit + achivement checking
-
 	std_msgs::String msg;
 	msg.data = "linear_move " + std::to_string(distance);
     pub_status_->publish(msg);
-    return true;
+    return move_call_.response.done;
 }
 
 bool Skills::angularMove(double angle)
@@ -61,8 +56,6 @@ bool Skills::angularMove(double angle)
     move_call_.request.linear = 0;
     move_call_.request.angular = angle;
     srv_move_->call(move_call_);
-
-    //TODO Time limit + achivement checking
 
 	std_msgs::String msg;
 	msg.data = "angular_move " + std::to_string(angle);

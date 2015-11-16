@@ -11,17 +11,11 @@
 #include "std_msgs/String.h"
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
+#include "std_msgs/Float32.h"
 #include "mr_mes_client/server.h"
 
-
 // Defines
-#define M_PI			3.14159265358979323846
-#define DEGREETORAD		(M_PI/180.0)
-#define RADTODEGREE		(180.0/M_PI)
 #define SSTR(x)			dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
-
-// Global var
-
 
 // Enum
 enum ROBOT_POS
@@ -71,7 +65,11 @@ public:
         _pNh.param<std::string>("mes_pub", _mesPub, "/mrMESClient/msgToServer");
         _pNh.param<std::string>("mes_sub", _mesSub, "/mrMESClient/msgFromServer");
 		_pNh.param<std::string>("obstacle_detector_sub", _obstacleDetectorSub, "/mrObstacleDetector/status");
-
+		_pNh.param<std::string>("battery_sub", _batterySub, "/fmInformation/battery");
+		_pNh.param<double>("battery_low", _batteryLow, 12.4);
+		_pNh.param<double>("battery_critic", _batteryCritic, 12.1);
+		_pNh.param<double>("desired_charge", _desiredCharge, 14.1);
+		
         // Services
         _servicePerformAction = _nh.serviceClient<mr_navigation_controller::performAction>(_performActionString);
         _serviceTipper = _nh.serviceClient<mr_tip_controller::tip>(_tipperString);
@@ -88,7 +86,7 @@ public:
         ros::Subscriber navCurrentSubscriber = _nh.subscribe<std_msgs::String>(_navCurrentnodeSub, 10, &MainNode::navCurrentNodeCallback, this);
         ros::Subscriber mesSubscriber = _nh.subscribe<mr_mes_client::server>(_mesSub, 10, &MainNode::mesCallback, this);
 		ros::Subscriber obstacleDetectorSubscriber = _nh.subscribe<std_msgs::String>(_obstacleDetectorSub, 10, &MainNode::obstacleCallback, this);
-
+		ros::Subscriber batterySubscriber = _nh.subscribe<std_msgs::Float32>(_batterySub, 10, &MainNode::_batteryCallback, this);
     }
 
     ~MainNode()
@@ -205,18 +203,31 @@ public:
         {
             mr_navigation_controller::performAction perform_action_obj;
             mr_tip_controller::tip tip_obj;
+			std::string action;
+			
+			// Stores the current position just in case the battery is in 
+			// the critic level
+			action = _currentNode;
+			
+			// Checks if the battery is the critic level
+			checkBattery(_batteryCritic, action);
 			
 			// Go to the dispenser position
-			perform_action_obj.request.action = "bricks";
+			action = "bricks";
+			perform_action_obj.request.action = action;
 			_servicePerformAction.call(perform_action_obj);
-
+			
+			// Checks if the battery is the critic level
+			checkBattery(_batteryCritic, action);
+			
             // Send the robot to the correct wc conveyor
             if (msg.cell == 1)
-                perform_action_obj.request.action = "wc1_conveyor";
+				action = "wc1_conveyor";
             if (msg.cell == 2)
-                perform_action_obj.request.action = "wc2_conveyor";
+                action = "wc2_conveyor";
             if (msg.cell == 3)
-                perform_action_obj.request.action = "wc3_conveyor";
+                action = "wc3_conveyor";
+			perform_action_obj.request.action = action;
             _servicePerformAction.call(perform_action_obj);
 
             // Tip Up
@@ -227,15 +238,23 @@ public:
             tip_obj.request.direction = false;
             _serviceTipper.call(tip_obj);
 			HMIUpdateIcons(null);
+			
+			// Checks if the battery is the critic level
+			checkBattery(_batteryCritic, action);
 
             // Go to the robot
             if (msg.cell == 1)
-                perform_action_obj.request.action = "wc1_robot";
+                action = "wc1_robot";
             if (msg.cell == 2)
-                perform_action_obj.request.action = "wc2_robot";
+                action = "wc2_robot";
             if (msg.cell == 3)
-                perform_action_obj.request.action = "wc3_robot";
+                action = "wc3_robot";
+			perform_action_obj.request.action = action;
             _servicePerformAction.call(perform_action_obj);
+			
+			// If the battery's level is under the threshold go back home
+			checkBattery(_batteryLow, "");
+			
         }
     }
 
@@ -259,6 +278,8 @@ public:
 	 */
     void navCurrentNodeCallback(std_msgs::String msg)
     {
+		_currentNode = msg.data;
+		
         if (msg.data == "line_start")
             HMIUpdatePosition(trackZone1);
         else if (msg.data == "line_stop")
@@ -316,15 +337,39 @@ public:
 		safety_status_prev = status.data;
 	}
 
+	/**
+	 * Reads the level of the battery and store it
+	 */
+	void _batteryCallback(std_msgs::Float32 battery){
+		_batteryLevel= battery.data;
+	}
+	
+	/**
+	 * Check if the battery is under the given threshold. If so
+	 * goes to charge until it reaches the limit
+	 */
+	void checkBattery(float threshold, std::string prev_pos){
+		mr_navigation_controller::performAction perform_action_obj;
+		if (_batteryLevel < threshold) {
+			perform_action_obj.request.action = "charge";
+			_servicePerformAction.call(perform_action_obj);
+			while (_batteryLevel < _desiredCharge)
+				; // Wait
+		}
+		perform_action_obj.request.action = prev_pos;
+		_servicePerformAction.call(perform_action_obj);
+	}
+
 
 private:
     ros::NodeHandle _nh, _pNh;
     ros::ServiceClient _servicePerformAction, _serviceTipper;
     ros::Publisher _hmiPublisher, _mesPublisher, _buttonPublisher;
     bool _buttonStatus, _hmiStatus;
-	std::string safety_status_prev;
+	std::string safety_status_prev, _currentNode;
+	double _batteryLevel, _batteryLow, _batteryCritic, _desiredCharge;
     boost::mutex _runMutex;
-    std::string _performActionString, _navStatusSub, _navCurrentnodeSub, _buttonSub, _buttonPub, _hmiSub, _tipperString, _hmiPub, _mesSub, _mesPub, _obstacleDetectorSub;
+	std::string _performActionString, _navStatusSub, _navCurrentnodeSub, _buttonSub, _buttonPub, _hmiSub, _tipperString, _hmiPub, _mesSub, _mesPub, _obstacleDetectorSub, _batterySub;
 };
 
 
@@ -345,10 +390,13 @@ int main()
 
     // Rate
     ros::Rate rate(30);
+	
+	// Multithreading 
+	ros::AsyncSpinner spinner(0);
 
     // ROS Spin: Handle callbacks
     while(ros::ok) {
-        ros::spinOnce();
+        spinner.start();
         rate.sleep();
     }
 

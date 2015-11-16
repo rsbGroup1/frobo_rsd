@@ -6,7 +6,8 @@
 
 	<!-- FROBIT INTERFACE -->
 	<group ns="fmControllers">
-		<node pkg="sdu_frobit_v2" name="frobit" type="frobit_interface_node.py" output="screen" >
+		<!--node pkg="sdu_frobit_v2" name="frobit" type="frobit_interface_node.py" output="screen" -->
+		<node pkg="mr_frobit_interface" name="frobit" type="frobit_interface_node.py" output="screen" >
 			<param name="actuation_enable_sub" value="/fmSafe/actuation_enable" />
 			<param name="cmd_vel_sub" value="/fmCommand/cmd_vel" />
 			<param name="enc_left_pub" value="/fmInformation/encoder_left" />
@@ -169,7 +170,7 @@
 		<node pkg="mr_main" name="Main" type="mr_main">
 			<param name="nav_perform_srv" value="mrNavigationController/performAction"/> 
 			<param name="nav_status_sub" value="mrNavigationController/status"/> 
-			<param name="nav_currentnode_sub" value="mrNavigationController/currentNode"/> 	
+			<param name="nav_currentnode_sub" value="mrNavigationController/currentNode"/>	
 			<param name="button_sub" value="mrButton/run"/> 
 			<param name="button_pub" value="mrButton/status"/> 
 			<param name="hmi_sub" value="mrHMI/run"/> 
@@ -178,6 +179,10 @@
 			<param name="mes_pub" value="mrMESClient/msgToServer"/> 
 			<param name="mes_sub" value="mrMESClient/msgFromServer"/> 
 			<param name="obstacle_detector_sub" value="/mrObstacleDetector/status"/> 
+			<param name="battery_sub" value="/fmInformation/battery"/>
+			<param name="battery_low" value="12.4"/> 
+			<param name="battery_critic" value="12.0"/> 
+			<param name="desired_charge" value="14.1"/> 
 		</node>
 	</group>
 

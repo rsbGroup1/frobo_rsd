@@ -38,23 +38,31 @@ int _destinationCell;
 // Enum
 enum ROBOT_POS
 {
+	nul = 0,
     box = 1,
-    camera,
-    trackZone2,
-    trackZone1,
-    RC1,
-    RC2,
-    RC3
+    camera = 2,
+    trackZone2 = 3,
+    trackZone1 = 4,
+    RC1 = 5,
+    RC2 = 6,
+    RC3 = 7
 };
 
 enum HMI_ICONS
 {
-    tipper = 1,
-    lineFollowing,
-    gps,
-    collectingBricks,
-    insideBox,
-    charging
+	null = 00,
+    tipper_up = 11,
+	tipper_down = 12,
+    lineFollowing_on = 21,
+	lineFollowing_off = 22,
+    gps_on = 31,
+	gps_off = 32,
+    collectingBricks_on = 41,
+	collectingBricks_off = 42,
+    insideBox_on = 51,
+	insideBox_off = 52,
+    charging_on = 61,
+	charging_off = 62
 };
 
 // Functions

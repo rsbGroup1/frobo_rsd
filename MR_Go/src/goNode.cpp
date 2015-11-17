@@ -74,7 +74,8 @@ public:
      */
     void odometryCallback(const nav_msgs::Odometry odom)
     {
-        linear_pos_current_ = odom.pose.pose.position.x;
+        linear_pos_current_x_ = odom.pose.pose.position.x;
+        linear_pos_current_y_ = odom.pose.pose.position.y;
 		angular_pos_current_ = tf::getYaw(odom.pose.pose.orientation)*RAD_TO_DEG;
 		// Correct the angle just in case the /odom adds 360 degrees
 		if (std::abs(angular_pos_current_ - angular_pos_previous_) > 180)
@@ -96,11 +97,16 @@ public:
             // Deadman thread
             deadmanThread_->start_thread();
             // Desired
-            double linear_desired = linear_pos_current_ + req.linear;
+            double linear_desired = req.linear;
+	    double distance_moved = 0.0;
+	    double start_x = linear_pos_current_x_;
+            double start_y = linear_pos_current_y_;
             // Move the robot
-            while(std::abs(linear_desired - linear_pos_current_) > linear_precision_) {
+            while((distance_moved - std::abs(linear_desired) ) < linear_precision_) {
                 // Create the movement msg
                 //std::cout << "Linear distance: " << linear_desired - linear_pos_current_ << std::endl;
+		distance_moved = sqrt( pow((start_x-linear_pos_current_x_),2.0) + 
+			      pow((start_y-linear_pos_current_y_),2.0) );
                 if (req.linear > 0)
                     twist_msg_.twist.linear.x = linear_speed_;
                 else
@@ -185,7 +191,8 @@ private:
     std::string pub_twist_name_, pub_deadman_name_;
 
     // Variables
-	double linear_pos_current_;
+	double linear_pos_current_x_;
+	double linear_pos_current_y_;
 	double angular_pos_current_;
 	double angular_pos_previous_;
 	geometry_msgs::TwistStamped twist_msg_;

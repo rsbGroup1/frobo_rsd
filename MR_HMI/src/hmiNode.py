@@ -157,6 +157,10 @@ class actuationThread( threading.Thread ):
         self.lock = threading.Lock()
         self.threadID = threadID
         self.name = name
+        self._stop = threading.Event()
+
+    def stop(self):
+        self._stop.set()
 
     def run( self ):
 
@@ -164,7 +168,7 @@ class actuationThread( threading.Thread ):
         while not rospy.is_shutdown():
 
             self.publishActuationEna()
-            time.sleep(0.05)
+            time.sleep(0.033)
 
         stopServer()
 
@@ -200,9 +204,15 @@ def setManualMode( newState ):
         print( "Manual mode CHANGED" )
         isManual = newState
         if( isManual ):
+            aThread.start()
+            pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 1 )
+            pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
             publishCommand( pubModeUpdate, u"manual" )
             print( "Manual mode is ON" )
         else:
+            aThread.stop()
+            pubCmdVelUpdate.shutdown()
+            pubActuationEna.shutdown()
             print( "Manual mode is OFF" )
 
 def drive( linearX, angularZ ):
@@ -282,6 +292,8 @@ def initHMI():
 
     global srvTipper
 
+    global aThread
+
     # In ROS, nodes are uniquely named. If two nodes with the same
     # node are launched, the previous one is kicked off. The
     # anonymous=True flag means that rospy will choose a unique
@@ -303,15 +315,13 @@ def initHMI():
 
     # Register Publisers
     pubModeUpdate = rospy.Publisher( MODE_UPDATE_PUB, String, queue_size = 1 )
-    pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 1 )
-    pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
 
     # Service Deffinitions
     #srvTipper = rospy.ServiceProxy( TIPPER_UPDATE_SRV, tip )
 
-    # Start publishing the activationEna sygnal in a separate thread
+    # Prepare the actuation in another thread
     aThread = actuationThread( 1, "actuation_thread" )
-    aThread.start()
+    
 
     log.startLogging(sys.stdout)
 

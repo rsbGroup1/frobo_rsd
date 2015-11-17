@@ -42,16 +42,8 @@ public:
         pNh_.param<std::string>("srv_move", srv_move_name_, "mrGo/move");
 
         // Publishers, subscribers, services
-        sub_odom_ = nh_.subscribe<nav_msgs::Odometry>(sub_odom_name_, 1, &Go::odometryCallback, this);
-
-        pub_twist_ = nh_.advertise<geometry_msgs::TwistStamped> (pub_twist_name_, 1);
-        pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
 
         srv_move_ = nh_.advertiseService(srv_move_name_, &Go::moveCallback, this);
-
-        // Threads
-        deadmanThread_ = new boost::thread(&Go::enableDeadman, this);
-		stopDeadman();
 		
 		// Twist stop
 		twist_stop_msg_.twist.linear.x = 0;
@@ -85,24 +77,29 @@ public:
 	 */
     bool moveCallback(mr_go::move::Request& req, mr_go::move::Response& res)
 	{
+        // Starts the publishers, subscribers and the deadman
+        pub_twist_ = nh_.advertise<geometry_msgs::TwistStamped> (pub_twist_name_, 1);
+        pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
+        deadmanThread_ = new boost::thread(&Go::enableDeadman, this);
+        sub_odom_ = nh_.subscribe<nav_msgs::Odometry>(sub_odom_name_, 1, &Go::odometryCallback, this);
+
+
 		// Twist msg
 		twist_msg_.twist.linear.x = 0;
 		twist_msg_.twist.angular.z = 0;
 
         // ONLY Linear movement
         if (req.linear != 0) {
-            // Deadman thread
-            deadmanThread_->start_thread();
             // Desired
             double linear_desired = req.linear;
-	    double distance_moved = 0.0;
-	    double start_x = linear_pos_current_x_;
+            double distance_moved = 0.0;
+            double start_x = linear_pos_current_x_;
             double start_y = linear_pos_current_y_;
             // Move the robot
             while((distance_moved - std::abs(linear_desired) ) < linear_precision_) {
                 // Create the movement msg
                 //std::cout << "Linear distance: " << linear_desired - linear_pos_current_ << std::endl;
-		distance_moved = sqrt( pow((start_x-linear_pos_current_x_),2.0) + 
+                distance_moved = sqrt( pow((start_x-linear_pos_current_x_),2.0) + 
 			      pow((start_y-linear_pos_current_y_),2.0) );
                 if (req.linear > 0)
                     twist_msg_.twist.linear.x = linear_speed_;
@@ -133,10 +130,12 @@ public:
                 pub_twist_.publish(twist_msg_);
             }
 		}
-		// Stop the robot
+		// Stop the robot, the publishers and the deadman
 		stopDeadman();
         pub_twist_.publish(twist_stop_msg_);
-		std::cout << "Achieved!" << std::endl;
+        pub_twist_.shutdown();
+        pub_deadman_.shutdown();
+        sub_odom_.shutdown();
 		
 		res.done = true;
 		return true;

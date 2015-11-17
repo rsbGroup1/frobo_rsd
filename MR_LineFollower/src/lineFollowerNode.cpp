@@ -36,7 +36,6 @@ public:
 		pNh_.param<int> ("reference_point_x", reference_point_x_, 320);
 		pNh_.param<int> ("reference_point_y", reference_point_y_, 240);
 		pNh_.param<double> ("robot_speed", robot_speed_, 0.1);
-		pNh_.param<bool> ("move", move_, true);
 		
 		// Get topics name
 		pNh_.param<std::string> ("sub_line", sub_line_name_, "/mrCameraProcessing/line");
@@ -45,23 +44,11 @@ public:
 		pNh_.param<std::string> ("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
 		pNh_.param<std::string> ("srv_lineQr", srv_lineUntilQR_name_, "/mrLineFollower/lineUntilQR");
 		pNh_.param<std::string> ("srv_mr_camera_processing_enable_name", srv_mr_camera_processing_enable_name_, "/mrCameraProcessing/enable");
-		
-		// Publishers, subscribers, services
-		// They should only subcribe when they need to be used!
-		//sub_line_ = nh_.subscribe<geometry_msgs::Point>(sub_line_name_, 1, &lineFollower::lineCallback, this);
-		//sub_qr_ = nh_.subscribe<std_msgs::String>(sub_qr_name_, 1, &lineFollower::qrCallback, this);
-		
-		pub_twist_ = nh_.advertise<geometry_msgs::TwistStamped> (pub_twist_name_, 1);
-		pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
-		
+
 		srv_enable_ = nh_.advertiseService(
 		srv_lineUntilQR_name_, &lineFollower::lineUntilQRCallback, this);
 		
 		srv_mr_camera_processing_enable_ = nh_.serviceClient<mr_camera_processing::enable>(srv_mr_camera_processing_enable_name_);
-		
-		// Threads
-		deadmanThread_ = new boost::thread(&lineFollower::enableDeadman, this);
-		stopDeadman();
 	}
 	
 	/**
@@ -199,14 +186,15 @@ public:
 			enableCameraProcessing.request.enable = true;
 			srv_mr_camera_processing_enable_.call(enableCameraProcessing);
 		}
+
+		// Starts the deadman and publishers
+		pub_twist_ = nh_.advertise<geometry_msgs::TwistStamped> (pub_twist_name_, 1);
+		pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
+		deadmanThread_ = new boost::thread(&lineFollower::enableDeadman, this);
 		
 		// Reset the PID and qr
 		integral_ = 0;
 		pre_error_ = 0;
-		
-		// Enables deadman
-		if (move_)
-			deadmanThread_ = new boost::thread(&lineFollower::enableDeadman, this);
 		
 		/*
 		 * Starts the line line follower
@@ -239,6 +227,8 @@ public:
 		// Stops the subscribers
 		sub_line_.shutdown();
 		sub_qr_.shutdown();
+		pub_twist_.shutdown();
+		pub_deadman_.shutdown();
 		
 		// Disables the deadman
 		stopDeadman();
@@ -288,8 +278,6 @@ private:
 	// QR
 	std::string qr_desired_;
 	std::string qr_detected_;
-	// Debug
-	bool move_;
 };
 
 /**

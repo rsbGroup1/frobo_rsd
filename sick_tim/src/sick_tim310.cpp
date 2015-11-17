@@ -40,39 +40,43 @@
 #include <sick_tim/sick_tim_common_mockup.h>
 #include <sick_tim/sick_tim310_parser.h>
 
-int main(int argc, char **argv)
+int main (int argc, char** argv)
 {
-  ros::init(argc, argv, "sick_tim310");
-  ros::NodeHandle nhPriv("~");
+    ros::init (argc, argv, "sick_tim310");
+    ros::NodeHandle nhPriv ("~");
 
-  bool subscribe_datagram;
-  nhPriv.param("subscribe_datagram", subscribe_datagram, false);
+    bool subscribe_datagram;
+    nhPriv.param ("subscribe_datagram", subscribe_datagram, false);
 
-  sick_tim::SickTim310Parser* parser = new sick_tim::SickTim310Parser();
+    sick_tim::SickTim310Parser* parser = new sick_tim::SickTim310Parser();
 
-  sick_tim::SickTimCommon* s = NULL;
+    sick_tim::SickTimCommon* s = NULL;
 
-  int result = EXIT_FAILURE;
-  while (ros::ok())
-  {
-    // Atempt to connect/reconnect
-    delete s;
-    if (subscribe_datagram)
-      s = new sick_tim::SickTimCommonMockup(parser);
-    else
-      s = new sick_tim::SickTimCommonUsb(parser);
-    result = s->init();
+    int result = EXIT_FAILURE;
 
-    while(ros::ok() && (result == EXIT_SUCCESS)){
-      ros::spinOnce();
-      result = s->loopOnce();
+    while (ros::ok())
+    {
+        // Atempt to connect/reconnect
+        delete s;
+
+        if (subscribe_datagram)
+            s = new sick_tim::SickTimCommonMockup (parser);
+        else
+            s = new sick_tim::SickTimCommonUsb (parser);
+
+        result = s->init();
+
+        while (ros::ok() && (result == EXIT_SUCCESS))
+        {
+            ros::spinOnce();
+            result = s->loopOnce();
+        }
+
+        if (ros::ok() && !subscribe_datagram)
+            ros::Duration (1.0).sleep(); // Only attempt USB connections once per second
     }
 
-    if (ros::ok() && !subscribe_datagram)
-      ros::Duration(1.0).sleep(); // Only attempt USB connections once per second
-  }
-
-  delete s;
-  delete parser;
-  return result;
+    delete s;
+    delete parser;
+    return result;
 }

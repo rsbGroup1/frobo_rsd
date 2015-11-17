@@ -90,7 +90,7 @@ bool tipCallback (mr_tip_controller::tip::Request& req, mr_tip_controller::tip::
     while (_serialConnection->read (read) != 'd') ; // Wait for answer 'd'
     std::cout << "Read: " << read << std::endl;
     */
-    
+
     res.status = true;
     return true;
 }

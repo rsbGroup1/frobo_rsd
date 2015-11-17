@@ -7,16 +7,16 @@
 #define RAD_TO_DEG	(180.0/M_PI)
 
 
-Skills::Skills(ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move,
-               ros::Publisher * pub_status
-              )
+Skills::Skills (ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move,
+                ros::Publisher* pub_status
+               )
 {
     srv_lineUntilQR_ = srv_lineUntilQR;
     srv_move_ = srv_move;
     pub_status_ = pub_status;
 
     // action client for move_base
-    move_base_actionclient_ = new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>("move_base", true);
+    move_base_actionclient_ = new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> ("move_base", true);
 }
 
 Skills::~Skills()
@@ -24,120 +24,121 @@ Skills::~Skills()
     delete move_base_actionclient_;
 }
 
-bool Skills::lineUntilQR(std::string qr)
+bool Skills::lineUntilQR (std::string qr)
 {
     std::cout << "Skill: Line until QR: " << qr << std::endl;
     lineFollowerCall.request.qr = qr;
     lineFollowerCall.request.time_limit = 300;
-    srv_lineUntilQR_->call(lineFollowerCall);
+    srv_lineUntilQR_->call (lineFollowerCall);
 
-	std_msgs::String msg;
-	//msg.data = "following_line " + qr;
-	msg.data = "following_line";
-	pub_status_->publish(msg);
+    std_msgs::String msg;
+    //msg.data = "following_line " + qr;
+    msg.data = "following_line";
+    pub_status_->publish (msg);
     return lineFollowerCall.response.success;
 }
 
-bool Skills::linearMove(double distance)
+bool Skills::linearMove (double distance)
 {
-    std::cout << "Skill: Linear move for: " << distance << " m"<< std::endl;
+    std::cout << "Skill: Linear move for: " << distance << " m" << std::endl;
     move_call_.request.linear = distance;
     move_call_.request.angular = 0;
-    srv_move_->call(move_call_);
+    srv_move_->call (move_call_);
 
-	std_msgs::String msg;
-	//msg.data = "linear_move " + std::to_string(distance);
-	msg.data = "linear_move";
-    pub_status_->publish(msg);
+    std_msgs::String msg;
+    //msg.data = "linear_move " + std::to_string(distance);
+    msg.data = "linear_move";
+    pub_status_->publish (msg);
     return move_call_.response.done;
 }
 
-bool Skills::angularMove(double angle)
+bool Skills::angularMove (double angle)
 {
-    std::cout << "Skill: Angular move for: " << angle << " degrees"<< std::endl;
+    std::cout << "Skill: Angular move for: " << angle << " degrees" << std::endl;
     move_call_.request.linear = 0;
     move_call_.request.angular = angle;
-    srv_move_->call(move_call_);
+    srv_move_->call (move_call_);
 
-	std_msgs::String msg;
-	//msg.data = "angular_move " + std::to_string(angle);
-	msg.data = "angular_move";
-	pub_status_->publish(msg);
+    std_msgs::String msg;
+    //msg.data = "angular_move " + std::to_string(angle);
+    msg.data = "angular_move";
+    pub_status_->publish (msg);
     return move_call_.response.done;
 }
 
-bool Skills::goToFreePosition(double x, double y, double yaw)
+bool Skills::goToFreePosition (double x, double y, double yaw)
 {
     std::cout << "go to free position called" << std::endl;
-    ROS_INFO("Go to free position called - goal(%f, %f, %f)",x,y,yaw);
+    ROS_INFO ("Go to free position called - goal(%f, %f, %f)", x, y, yaw);
     bool success = false;
 
     move_base_msgs::MoveBaseGoal goal;
     goal.target_pose.pose.position.x = x;
     goal.target_pose.pose.position.y = y;
-    goal.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw(yaw);
-    goal.target_pose.header.frame_id ="map";
+    goal.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw (yaw);
+    goal.target_pose.header.frame_id = "map";
     goal.target_pose.header.stamp = ros::Time::now();
 
 
 
-    if(move_base_actionclient_->waitForServer(ros::Duration(5,0)))
+    if (move_base_actionclient_->waitForServer (ros::Duration (5, 0)))
     {
 
-        move_base_actionclient_->sendGoal(goal);
+        move_base_actionclient_->sendGoal (goal);
         bool finished = move_base_actionclient_->waitForResult();
-/* ORIGINAL
-        move_base_actionclient_->waitForResult();
-        if(move_base_actionclient_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+        /* ORIGINAL
+                move_base_actionclient_->waitForResult();
+                if(move_base_actionclient_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+                {
+                    success = true;
+                    std_msgs::String msg;
+                    //msg.data = "free_navigation " + std::to_string(x) + " " +  std::to_string(y);
+        			msg.data = "free_navigation";
+                    pub_status_->publish(msg);
+                }
+                else
+                {
+                    ROS_WARN("Free navigation was unable to achieve goal(%f, %f, %f)",x,y,yaw);
+        	    //DSW TEsting
+        	    move_base_msgs::MoveBaseGoal recovery;
+        	    recovery.target_pose.pose.position.x = -0.30;
+        	    recovery.target_pose.pose.position.y = -2.5;
+        	    recovery.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw(1.6);
+        	    recovery.target_pose.header.frame_id ="map";
+        	    recovery.target_pose.header.stamp = ros::Time::now();
+        	    move_base_actionclient_->sendGoal(recovery);
+        	    move_base_actionclient_->sendGoal(goal);
+                    ROS_WARN("Free navigation was unable to achieve goal (%f, %f, %f)",x,y,yaw);
+                }
+        */
+        // DSW TEsting: move to recovery position then try again
+        move_base_msgs::MoveBaseGoal recovery;
+        recovery.target_pose.pose.position.x = 0.25;
+        recovery.target_pose.pose.position.y = 0.78;
+        recovery.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw (-1.9);
+        recovery.target_pose.header.frame_id = "map";
+        recovery.target_pose.header.stamp = ros::Time::now();
+
+        while (move_base_actionclient_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
         {
-            success = true;
-            std_msgs::String msg;
-            //msg.data = "free_navigation " + std::to_string(x) + " " +  std::to_string(y);
-			msg.data = "free_navigation";
-            pub_status_->publish(msg);
-        }
-        else
-        {
-            ROS_WARN("Free navigation was unable to achieve goal(%f, %f, %f)",x,y,yaw);
-	    //DSW TEsting
-	    move_base_msgs::MoveBaseGoal recovery;
-	    recovery.target_pose.pose.position.x = -0.30;
-	    recovery.target_pose.pose.position.y = -2.5;
-	    recovery.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw(1.6);
-	    recovery.target_pose.header.frame_id ="map";
-	    recovery.target_pose.header.stamp = ros::Time::now();
-	    move_base_actionclient_->sendGoal(recovery);
-	    move_base_actionclient_->sendGoal(goal);
-            ROS_WARN("Free navigation was unable to achieve goal (%f, %f, %f)",x,y,yaw);
-        }
-*/
-	// DSW TEsting: move to recovery position then try again
-	    move_base_msgs::MoveBaseGoal recovery;
-	    recovery.target_pose.pose.position.x = 0.25;
-	    recovery.target_pose.pose.position.y = 0.78;
-	    recovery.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw(-1.9);
-	    recovery.target_pose.header.frame_id ="map";
-	    recovery.target_pose.header.stamp = ros::Time::now();
-        while(move_base_actionclient_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
-        {
-		ROS_WARN("To recovery=>goal");
-		move_base_actionclient_->sendGoal(recovery);
-		finished = move_base_actionclient_->waitForResult();
-		move_base_actionclient_->sendGoal(goal);
-		finished = move_base_actionclient_->waitForResult();			
+            ROS_WARN ("To recovery=>goal");
+            move_base_actionclient_->sendGoal (recovery);
+            finished = move_base_actionclient_->waitForResult();
+            move_base_actionclient_->sendGoal (goal);
+            finished = move_base_actionclient_->waitForResult();
         }
 
-            success = true;
-            std_msgs::String msg;
-            msg.data = "Free navigation to X:" + std::to_string(x) + ", Y:" +  std::to_string(y);
-            pub_status_->publish(msg);
+        success = true;
+        std_msgs::String msg;
+        msg.data = "Free navigation to X:" + std::to_string (x) + ", Y:" +  std::to_string (y);
+        pub_status_->publish (msg);
 
     }
     else
     {
-        ROS_ERROR("move_base action server not responding within timeout");
+        ROS_ERROR ("move_base action server not responding within timeout");
     }
-    
+
     return success;
 }
 

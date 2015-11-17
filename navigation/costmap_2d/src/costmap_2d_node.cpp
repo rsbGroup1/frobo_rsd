@@ -38,13 +38,13 @@
 #include <ros/ros.h>
 #include <costmap_2d/costmap_2d_ros.h>
 
-int main(int argc, char** argv)
+int main (int argc, char** argv)
 {
-  ros::init(argc, argv, "costmap_node");
-  tf::TransformListener tf(ros::Duration(10));
-  costmap_2d::Costmap2DROS lcr("costmap", tf);
+    ros::init (argc, argv, "costmap_node");
+    tf::TransformListener tf (ros::Duration (10));
+    costmap_2d::Costmap2DROS lcr ("costmap", tf);
 
-  ros::spin();
+    ros::spin();
 
-  return (0);
+    return (0);
 }

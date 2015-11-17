@@ -173,68 +173,68 @@ namespace camera_info_manager
 
 class CameraInfoManager
 {
- public:
+public:
 
-  CameraInfoManager(ros::NodeHandle nh,
-                    const std::string &cname="camera",
-                    const std::string &url="");
+    CameraInfoManager (ros::NodeHandle nh,
+                       const std::string& cname = "camera",
+                       const std::string& url = "");
 
-  sensor_msgs::CameraInfo getCameraInfo(void);
-  bool isCalibrated(void);
-  bool loadCameraInfo(const std::string &url);
-  std::string resolveURL(const std::string &url,
-                         const std::string &cname);
-  bool setCameraName(const std::string &cname);
-  bool setCameraInfo(const sensor_msgs::CameraInfo &camera_info);
-  bool validateURL(const std::string &url);
+    sensor_msgs::CameraInfo getCameraInfo (void);
+    bool isCalibrated (void);
+    bool loadCameraInfo (const std::string& url);
+    std::string resolveURL (const std::string& url,
+                            const std::string& cname);
+    bool setCameraName (const std::string& cname);
+    bool setCameraInfo (const sensor_msgs::CameraInfo& camera_info);
+    bool validateURL (const std::string& url);
 
- private:
+private:
 
-  // recognized URL types
-  typedef enum
+    // recognized URL types
+    typedef enum
     {
-      // supported URLs
-      URL_empty = 0,             // empty string
-      URL_file,                  // file:
-      URL_package,               // package: 
-      // URLs not supported
-      URL_invalid,               // anything >= is invalid
-      URL_flash,                 // flash: 
+        // supported URLs
+        URL_empty = 0,             // empty string
+        URL_file,                  // file:
+        URL_package,               // package:
+        // URLs not supported
+        URL_invalid,               // anything >= is invalid
+        URL_flash,                 // flash:
     } url_type_t;
 
-  // private methods
-  std::string getPackageFileName(const std::string &url);
-  bool loadCalibration(const std::string &url,
-                       const std::string &cname);
-  bool loadCalibrationFile(const std::string &filename,
-                           const std::string &cname);
-  url_type_t parseURL(const std::string &url);
-  bool saveCalibration(const sensor_msgs::CameraInfo &new_info,
-                       const std::string &url,
-                       const std::string &cname);
-  bool saveCalibrationFile(const sensor_msgs::CameraInfo &new_info,
-                           const std::string &filename,
-                           const std::string &cname);
-  bool setCameraInfoService(sensor_msgs::SetCameraInfo::Request &req,
-                            sensor_msgs::SetCameraInfo::Response &rsp);
+    // private methods
+    std::string getPackageFileName (const std::string& url);
+    bool loadCalibration (const std::string& url,
+                          const std::string& cname);
+    bool loadCalibrationFile (const std::string& filename,
+                              const std::string& cname);
+    url_type_t parseURL (const std::string& url);
+    bool saveCalibration (const sensor_msgs::CameraInfo& new_info,
+                          const std::string& url,
+                          const std::string& cname);
+    bool saveCalibrationFile (const sensor_msgs::CameraInfo& new_info,
+                              const std::string& filename,
+                              const std::string& cname);
+    bool setCameraInfoService (sensor_msgs::SetCameraInfo::Request& req,
+                               sensor_msgs::SetCameraInfo::Response& rsp);
 
-  /** @brief mutual exclusion lock for private data
-   *
-   *  This non-recursive mutex is only held for a short time while
-   *  accessing or changing private class variables.  To avoid
-   *  deadlocks and contention, it is never held during I/O or while
-   *  invoking a callback.  Most private methods operate on copies of
-   *  class variables, keeping the mutex hold time short.
-   */
-  boost::mutex mutex_;
+    /** @brief mutual exclusion lock for private data
+     *
+     *  This non-recursive mutex is only held for a short time while
+     *  accessing or changing private class variables.  To avoid
+     *  deadlocks and contention, it is never held during I/O or while
+     *  invoking a callback.  Most private methods operate on copies of
+     *  class variables, keeping the mutex hold time short.
+     */
+    boost::mutex mutex_;
 
-  // private data
-  ros::NodeHandle nh_;                  ///< node handle for service
-  ros::ServiceServer info_service_;     ///< set_camera_info service
-  std::string camera_name_;             ///< camera name
-  std::string url_;                     ///< URL for calibration data
-  sensor_msgs::CameraInfo cam_info_;    ///< current CameraInfo
-  bool loaded_cam_info_;                ///< cam_info_ load attempted
+    // private data
+    ros::NodeHandle nh_;                  ///< node handle for service
+    ros::ServiceServer info_service_;     ///< set_camera_info service
+    std::string camera_name_;             ///< camera name
+    std::string url_;                     ///< URL for calibration data
+    sensor_msgs::CameraInfo cam_info_;    ///< current CameraInfo
+    bool loaded_cam_info_;                ///< cam_info_ load attempted
 
 }; // class CameraInfoManager
 

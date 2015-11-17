@@ -1,13 +1,13 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
- * 
+ *
  *  Copyright (c) 2008, Willow Garage, Inc.
  *  All rights reserved.
- * 
+ *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
- * 
+ *
  *   * Redistributions of source code must retain the above copyright
  *     notice, this list of conditions and the following disclaimer.
  *   * Redistributions in binary form must reproduce the above
@@ -17,7 +17,7 @@
  *   * Neither the name of the Willow Garage nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
- * 
+ *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -89,59 +89,59 @@
 
 class FakeOdomNode
 {
-  public:
-    FakeOdomNode(void)
+public:
+    FakeOdomNode (void)
     {
-      m_posePub = m_nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("amcl_pose",1,true);
-      m_particlecloudPub = m_nh.advertise<geometry_msgs::PoseArray>("particlecloud",1,true);
-      m_tfServer = new tf::TransformBroadcaster();	
-      m_tfListener = new tf::TransformListener();
+        m_posePub = m_nh.advertise<geometry_msgs::PoseWithCovarianceStamped> ("amcl_pose", 1, true);
+        m_particlecloudPub = m_nh.advertise<geometry_msgs::PoseArray> ("particlecloud", 1, true);
+        m_tfServer = new tf::TransformBroadcaster();
+        m_tfListener = new tf::TransformListener();
 
-      m_base_pos_received = false;
+        m_base_pos_received = false;
 
-      ros::NodeHandle private_nh("~");
-      private_nh.param("odom_frame_id", odom_frame_id_, std::string("odom"));
-      private_nh.param("base_frame_id", base_frame_id_, std::string("base_link")); 
-      private_nh.param("global_frame_id", global_frame_id_, std::string("/map"));
-      private_nh.param("delta_x", delta_x_, 0.0);
-      private_nh.param("delta_y", delta_y_, 0.0);
-      private_nh.param("delta_yaw", delta_yaw_, 0.0);      
-      private_nh.param("transform_tolerance", transform_tolerance_, 0.1);      
-      m_particleCloud.header.stamp = ros::Time::now();
-      m_particleCloud.header.frame_id = global_frame_id_;
-      m_particleCloud.poses.resize(1);
-      ros::NodeHandle nh;
+        ros::NodeHandle private_nh ("~");
+        private_nh.param ("odom_frame_id", odom_frame_id_, std::string ("odom"));
+        private_nh.param ("base_frame_id", base_frame_id_, std::string ("base_link"));
+        private_nh.param ("global_frame_id", global_frame_id_, std::string ("/map"));
+        private_nh.param ("delta_x", delta_x_, 0.0);
+        private_nh.param ("delta_y", delta_y_, 0.0);
+        private_nh.param ("delta_yaw", delta_yaw_, 0.0);
+        private_nh.param ("transform_tolerance", transform_tolerance_, 0.1);
+        m_particleCloud.header.stamp = ros::Time::now();
+        m_particleCloud.header.frame_id = global_frame_id_;
+        m_particleCloud.poses.resize (1);
+        ros::NodeHandle nh;
 
-      m_offsetTf = tf::Transform(tf::createQuaternionFromRPY(0, 0, -delta_yaw_ ), tf::Point(-delta_x_, -delta_y_, 0.0));
+        m_offsetTf = tf::Transform (tf::createQuaternionFromRPY (0, 0, -delta_yaw_), tf::Point (-delta_x_, -delta_y_, 0.0));
 
-      stuff_sub_ = nh.subscribe("base_pose_ground_truth", 100, &FakeOdomNode::stuffFilter, this);
-      filter_sub_ = new message_filters::Subscriber<nav_msgs::Odometry>(nh, "", 100);
-      filter_ = new tf::MessageFilter<nav_msgs::Odometry>(*filter_sub_, *m_tfListener, base_frame_id_, 100);
-      filter_->registerCallback(boost::bind(&FakeOdomNode::update, this, _1));
+        stuff_sub_ = nh.subscribe ("base_pose_ground_truth", 100, &FakeOdomNode::stuffFilter, this);
+        filter_sub_ = new message_filters::Subscriber<nav_msgs::Odometry> (nh, "", 100);
+        filter_ = new tf::MessageFilter<nav_msgs::Odometry> (*filter_sub_, *m_tfListener, base_frame_id_, 100);
+        filter_->registerCallback (boost::bind (&FakeOdomNode::update, this, _1));
 
-      // subscription to "2D Pose Estimate" from RViz:
-      m_initPoseSub = new message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped>(nh, "initialpose", 1);
-      m_initPoseFilter = new tf::MessageFilter<geometry_msgs::PoseWithCovarianceStamped>(*m_initPoseSub, *m_tfListener, global_frame_id_, 1);
-      m_initPoseFilter->registerCallback(boost::bind(&FakeOdomNode::initPoseReceived, this, _1));
+        // subscription to "2D Pose Estimate" from RViz:
+        m_initPoseSub = new message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped> (nh, "initialpose", 1);
+        m_initPoseFilter = new tf::MessageFilter<geometry_msgs::PoseWithCovarianceStamped> (*m_initPoseSub, *m_tfListener, global_frame_id_, 1);
+        m_initPoseFilter->registerCallback (boost::bind (&FakeOdomNode::initPoseReceived, this, _1));
     }
 
-    ~FakeOdomNode(void)
+    ~FakeOdomNode (void)
     {
-      if (m_tfServer)
-        delete m_tfServer; 
+        if (m_tfServer)
+            delete m_tfServer;
     }
 
 
-  private:
+private:
     ros::NodeHandle m_nh;
     ros::Publisher m_posePub;
     ros::Publisher m_particlecloudPub;
     message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped>* m_initPoseSub;
-    tf::TransformBroadcaster       *m_tfServer;
-    tf::TransformListener          *m_tfListener;
+    tf::TransformBroadcaster*       m_tfServer;
+    tf::TransformListener*          m_tfListener;
     tf::MessageFilter<geometry_msgs::PoseWithCovarianceStamped>* m_initPoseFilter;
     tf::MessageFilter<nav_msgs::Odometry>* filter_;
-    ros::Subscriber stuff_sub_; 
+    ros::Subscriber stuff_sub_;
     message_filters::Subscriber<nav_msgs::Odometry>* filter_sub_;
 
     double                         delta_x_, delta_y_, delta_yaw_;
@@ -158,88 +158,98 @@ class FakeOdomNode
     std::string base_frame_id_;
     std::string global_frame_id_;
 
-  public:
-    void stuffFilter(const nav_msgs::OdometryConstPtr& odom_msg){
-      //we have to do this to force the message filter to wait for transforms
-      //from odom_frame_id_ to base_frame_id_ to be available at time odom_msg.header.stamp
-      //really, the base_pose_ground_truth should come in with no frame_id b/c it doesn't make sense
-      boost::shared_ptr<nav_msgs::Odometry> stuff_msg(new nav_msgs::Odometry);
-      *stuff_msg = *odom_msg;
-      stuff_msg->header.frame_id = odom_frame_id_;
-      filter_->add(stuff_msg);
+public:
+    void stuffFilter (const nav_msgs::OdometryConstPtr& odom_msg)
+    {
+        //we have to do this to force the message filter to wait for transforms
+        //from odom_frame_id_ to base_frame_id_ to be available at time odom_msg.header.stamp
+        //really, the base_pose_ground_truth should come in with no frame_id b/c it doesn't make sense
+        boost::shared_ptr<nav_msgs::Odometry> stuff_msg (new nav_msgs::Odometry);
+        *stuff_msg = *odom_msg;
+        stuff_msg->header.frame_id = odom_frame_id_;
+        filter_->add (stuff_msg);
     }
 
-    void update(const nav_msgs::OdometryConstPtr& message){
-      tf::Pose txi;
-      tf::poseMsgToTF(message->pose.pose, txi);
-      txi = m_offsetTf * txi;
+    void update (const nav_msgs::OdometryConstPtr& message)
+    {
+        tf::Pose txi;
+        tf::poseMsgToTF (message->pose.pose, txi);
+        txi = m_offsetTf * txi;
 
-      tf::Stamped<tf::Pose> odom_to_map;
-      try
-      {
-        m_tfListener->transformPose(odom_frame_id_, tf::Stamped<tf::Pose>(txi.inverse(), message->header.stamp, base_frame_id_), odom_to_map);
-      }
-      catch(tf::TransformException &e)
-      {
-        ROS_ERROR("Failed to transform to %s from %s: %s\n", odom_frame_id_.c_str(), base_frame_id_.c_str(), e.what());
-        return;
-      }
-      m_tfServer->sendTransform(tf::StampedTransform(odom_to_map.inverse(),
-                                                     message->header.stamp + ros::Duration(transform_tolerance_),
-                                                     global_frame_id_, message->header.frame_id));
+        tf::Stamped<tf::Pose> odom_to_map;
 
-      tf::Pose current;
-      tf::poseMsgToTF(message->pose.pose, current);
+        try
+        {
+            m_tfListener->transformPose (odom_frame_id_, tf::Stamped<tf::Pose> (txi.inverse(), message->header.stamp, base_frame_id_), odom_to_map);
+        }
+        catch (tf::TransformException& e)
+        {
+            ROS_ERROR ("Failed to transform to %s from %s: %s\n", odom_frame_id_.c_str(), base_frame_id_.c_str(), e.what());
+            return;
+        }
 
-      //also apply the offset to the pose
-      current = m_offsetTf * current;
+        m_tfServer->sendTransform (tf::StampedTransform (odom_to_map.inverse(),
+                                   message->header.stamp + ros::Duration (transform_tolerance_),
+                                   global_frame_id_, message->header.frame_id));
 
-      geometry_msgs::Pose current_msg;
-      tf::poseTFToMsg(current, current_msg);
+        tf::Pose current;
+        tf::poseMsgToTF (message->pose.pose, current);
 
-      // Publish localized pose
-      m_currentPos.header = message->header;
-      m_currentPos.header.frame_id = global_frame_id_;
-      m_currentPos.pose.pose = current_msg;
-      m_posePub.publish(m_currentPos);
+        //also apply the offset to the pose
+        current = m_offsetTf * current;
 
-      // The particle cloud is the current position. Quite convenient.
-      m_particleCloud.header = m_currentPos.header;
-      m_particleCloud.poses[0] = m_currentPos.pose.pose;
-      m_particlecloudPub.publish(m_particleCloud);
+        geometry_msgs::Pose current_msg;
+        tf::poseTFToMsg (current, current_msg);
+
+        // Publish localized pose
+        m_currentPos.header = message->header;
+        m_currentPos.header.frame_id = global_frame_id_;
+        m_currentPos.pose.pose = current_msg;
+        m_posePub.publish (m_currentPos);
+
+        // The particle cloud is the current position. Quite convenient.
+        m_particleCloud.header = m_currentPos.header;
+        m_particleCloud.poses[0] = m_currentPos.pose.pose;
+        m_particlecloudPub.publish (m_particleCloud);
     }
 
-    void initPoseReceived(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg){
-      tf::Pose pose;
-      tf::poseMsgToTF(msg->pose.pose, pose);
+    void initPoseReceived (const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)
+    {
+        tf::Pose pose;
+        tf::poseMsgToTF (msg->pose.pose, pose);
 
-      if (msg->header.frame_id != global_frame_id_){
-        ROS_WARN("Frame ID of \"initialpose\" (%s) is different from the global frame %s", msg->header.frame_id.c_str(), global_frame_id_.c_str());
-      }
+        if (msg->header.frame_id != global_frame_id_)
+        {
+            ROS_WARN ("Frame ID of \"initialpose\" (%s) is different from the global frame %s", msg->header.frame_id.c_str(), global_frame_id_.c_str());
+        }
 
-      // set offset so that current pose is set to "initialpose"    
-      tf::StampedTransform baseInMap;
-      try{
-	// just get the latest
-        m_tfListener->lookupTransform(base_frame_id_, global_frame_id_, ros::Time(0), baseInMap);
-      } catch(tf::TransformException){
-        ROS_WARN("Failed to lookup transform!");
-        return;
-      }
+        // set offset so that current pose is set to "initialpose"
+        tf::StampedTransform baseInMap;
 
-      tf::Transform delta = pose * baseInMap;
-      m_offsetTf = delta * m_offsetTf;
+        try
+        {
+            // just get the latest
+            m_tfListener->lookupTransform (base_frame_id_, global_frame_id_, ros::Time (0), baseInMap);
+        }
+        catch (tf::TransformException)
+        {
+            ROS_WARN ("Failed to lookup transform!");
+            return;
+        }
+
+        tf::Transform delta = pose * baseInMap;
+        m_offsetTf = delta * m_offsetTf;
 
     }
 };
 
-int main(int argc, char** argv)
+int main (int argc, char** argv)
 {
-  ros::init(argc, argv, "fake_localization");
+    ros::init (argc, argv, "fake_localization");
 
-  FakeOdomNode odom;
+    FakeOdomNode odom;
 
-  ros::spin();
+    ros::spin();
 
-  return 0;
+    return 0;
 }

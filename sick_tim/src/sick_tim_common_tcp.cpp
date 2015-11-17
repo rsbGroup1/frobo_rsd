@@ -1,10 +1,10 @@
 /*
  * Copyright (C) 2013, Freiburg University
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of Osnabrück University nor the names of its
  *       contributors may be used to endorse or promote products derived from
  *       this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -42,26 +42,26 @@
 namespace sick_tim
 {
 
-SickTimCommonTcp::SickTimCommonTcp(const std::string &hostname, const std::string &port, int &timelimit, AbstractParser* parser)
-:
-    SickTimCommon(parser),
-    socket_(io_service_),
-    deadline_(io_service_),
-    hostname_(hostname),
-    port_(port),
-    timelimit_(timelimit)
+SickTimCommonTcp::SickTimCommonTcp (const std::string& hostname, const std::string& port, int& timelimit, AbstractParser* parser)
+    :
+    SickTimCommon (parser),
+    socket_ (io_service_),
+    deadline_ (io_service_),
+    hostname_ (hostname),
+    port_ (port),
+    timelimit_ (timelimit)
 {
     // Set up the deadline actor to implement timeouts.
     // Based on blocking TCP example on:
     // http://www.boost.org/doc/libs/1_46_0/doc/html/boost_asio/example/timeouts/blocking_tcp_client.cpp
-    deadline_.expires_at(boost::posix_time::pos_infin);
+    deadline_.expires_at (boost::posix_time::pos_infin);
     checkDeadline();
 }
 
 SickTimCommonTcp::~SickTimCommonTcp()
 {
-  stop_scanner();
-  close_device();
+    stop_scanner();
+    close_device();
 }
 
 using boost::asio::ip::tcp;
@@ -72,56 +72,61 @@ int SickTimCommonTcp::init_device()
 {
     // Resolve the supplied hostname
     tcp::resolver::iterator iterator;
+
     try
     {
-        tcp::resolver resolver(io_service_);
-        tcp::resolver::query query(hostname_, port_);
-        iterator = resolver.resolve(query);
+        tcp::resolver resolver (io_service_);
+        tcp::resolver::query query (hostname_, port_);
+        iterator = resolver.resolve (query);
     }
-    catch (boost::system::system_error &e)
+    catch (boost::system::system_error& e)
     {
-        ROS_FATAL("Could not resolve host: ... (%d)(%s)", e.code().value(), e.code().message().c_str());
-        diagnostics_.broadcast(diagnostic_msgs::DiagnosticStatus::ERROR, "Could not resolve host.");
+        ROS_FATAL ("Could not resolve host: ... (%d)(%s)", e.code().value(), e.code().message().c_str());
+        diagnostics_.broadcast (diagnostic_msgs::DiagnosticStatus::ERROR, "Could not resolve host.");
         return EXIT_FAILURE;
     }
 
     // Try to connect to all possible endpoints
     boost::system::error_code ec;
     bool success = false;
-    for ( ; iterator != tcp::resolver::iterator(); ++iterator)
+
+    for (; iterator != tcp::resolver::iterator(); ++iterator)
     {
-        std::string repr = boost::lexical_cast<std::string>(iterator->endpoint());
+        std::string repr = boost::lexical_cast<std::string> (iterator->endpoint());
         socket_.close();
 
         // Set the time out length
-        ROS_INFO("Waiting %i seconds for device to connect.", timelimit_);
-        deadline_.expires_from_now(boost::posix_time::seconds(timelimit_));
+        ROS_INFO ("Waiting %i seconds for device to connect.", timelimit_);
+        deadline_.expires_from_now (boost::posix_time::seconds (timelimit_));
 
         ec = boost::asio::error::would_block;
-        ROS_DEBUG("Attempting to connect to %s", repr.c_str());
-        socket_.async_connect(iterator->endpoint(), boost::lambda::var(ec) = _1);
+        ROS_DEBUG ("Attempting to connect to %s", repr.c_str());
+        socket_.async_connect (iterator->endpoint(), boost::lambda::var (ec) = _1);
 
         // Wait until timeout
-        do io_service_.run_one(); while (ec == boost::asio::error::would_block);
+        do io_service_.run_one();
+
+        while (ec == boost::asio::error::would_block);
 
         if (!ec && socket_.is_open())
         {
             success = true;
-            ROS_INFO("Succesfully connected to %s", repr.c_str());
+            ROS_INFO ("Succesfully connected to %s", repr.c_str());
             break;
         }
-        ROS_ERROR("Failed to connect to %s", repr.c_str());
+
+        ROS_ERROR ("Failed to connect to %s", repr.c_str());
     }
 
     // Check if connecting succeeded
     if (!success)
     {
-        ROS_FATAL("Could not connect to host %s:%s", hostname_.c_str(), port_.c_str());
-        diagnostics_.broadcast(diagnostic_msgs::DiagnosticStatus::ERROR, "Could not connect to host.");
+        ROS_FATAL ("Could not connect to host %s:%s", hostname_.c_str(), port_.c_str());
+        diagnostics_.broadcast (diagnostic_msgs::DiagnosticStatus::ERROR, "Could not connect to host.");
         return EXIT_FAILURE;
     }
 
-    input_buffer_.consume(input_buffer_.size());
+    input_buffer_.consume (input_buffer_.size());
 
     return EXIT_SUCCESS;
 }
@@ -134,11 +139,12 @@ int SickTimCommonTcp::close_device()
         {
             socket_.close();
         }
-        catch (boost::system::system_error &e)
+        catch (boost::system::system_error& e)
         {
-            ROS_ERROR("An error occured during closing of the connection: %d:%s", e.code().value(), e.code().message().c_str());
+            ROS_ERROR ("An error occured during closing of the connection: %d:%s", e.code().value(), e.code().message().c_str());
         }
     }
+
     return 0;
 }
 
@@ -149,34 +155,37 @@ void SickTimCommonTcp::checkDeadline()
         // The reason the function is called is that the deadline expired. Close
         // the socket to return all IO operations and reset the deadline
         socket_.close();
-        deadline_.expires_at(boost::posix_time::pos_infin);
+        deadline_.expires_at (boost::posix_time::pos_infin);
     }
 
     // Nothing bad happened, go back to sleep
-    deadline_.async_wait(boost::bind(&SickTimCommonTcp::checkDeadline, this));
+    deadline_.async_wait (boost::bind (&SickTimCommonTcp::checkDeadline, this));
 }
 
-int SickTimCommonTcp::readWithTimeout(size_t timeout_ms, char *buffer, int buffer_size, int *bytes_read, bool *exception_occured)
+int SickTimCommonTcp::readWithTimeout (size_t timeout_ms, char* buffer, int buffer_size, int* bytes_read, bool* exception_occured)
 {
     // Set up the deadline to the proper timeout, error and delimiters
-    deadline_.expires_from_now(boost::posix_time::milliseconds(timeout_ms));
-    const char end_delim = static_cast<char>(0x03);
+    deadline_.expires_from_now (boost::posix_time::milliseconds (timeout_ms));
+    const char end_delim = static_cast<char> (0x03);
     ec_ = boost::asio::error::would_block;
     bytes_transfered_ = 0;
 
     // Read until 0x03 ending indicator
-    boost::asio::async_read_until(
-        socket_, 
+    boost::asio::async_read_until (
+        socket_,
         input_buffer_,
         end_delim,
-        boost::bind(
+        boost::bind (
             &SickTimCommonTcp::handleRead,
             this,
             boost::asio::placeholders::error,
             boost::asio::placeholders::bytes_transferred
         )
     );
-    do io_service_.run_one(); while (ec_ == boost::asio::error::would_block);
+
+    do io_service_.run_one();
+
+    while (ec_ == boost::asio::error::would_block);
 
     if (ec_)
     {
@@ -184,8 +193,9 @@ int SickTimCommonTcp::readWithTimeout(size_t timeout_ms, char *buffer, int buffe
         // If any other error code is set, this means something bad happened.
         if (ec_ != boost::asio::error::would_block)
         {
-            ROS_ERROR("sendSOPASCommand: failed attempt to read from socket: %d: %s", ec_.value(), ec_.message().c_str());
-            diagnostics_.broadcast(diagnostic_msgs::DiagnosticStatus::ERROR, "sendSOPASCommand: exception during read_until().");
+            ROS_ERROR ("sendSOPASCommand: failed attempt to read from socket: %d: %s", ec_.value(), ec_.message().c_str());
+            diagnostics_.broadcast (diagnostic_msgs::DiagnosticStatus::ERROR, "sendSOPASCommand: exception during read_until().");
+
             if (exception_occured != 0)
                 *exception_occured = true;
         }
@@ -193,27 +203,28 @@ int SickTimCommonTcp::readWithTimeout(size_t timeout_ms, char *buffer, int buffe
         // For would_block, just return and indicate nothing bad happend
         return EXIT_FAILURE;
     }
-    
+
     // Avoid a buffer overflow by limiting the data we read
     size_t to_read = bytes_transfered_ > buffer_size - 1 ? buffer_size - 1 : bytes_transfered_;
     size_t i = 0;
-    std::istream istr(&input_buffer_);
+    std::istream istr (&input_buffer_);
+
     if (buffer != 0)
     {
-        istr.read(buffer, to_read);
+        istr.read (buffer, to_read);
         buffer[to_read] = 0;
 
         // Consume the rest of the message if necessary
         if (to_read < bytes_transfered_)
         {
-            ROS_WARN("Dropping %zu bytes to avoid buffer overflow", bytes_transfered_ - to_read);
-            input_buffer_.consume(bytes_transfered_ - to_read);
+            ROS_WARN ("Dropping %zu bytes to avoid buffer overflow", bytes_transfered_ - to_read);
+            input_buffer_.consume (bytes_transfered_ - to_read);
         }
     }
     else
         // No buffer was provided, just drop the data
-        input_buffer_.consume(bytes_transfered_);
-    
+        input_buffer_.consume (bytes_transfered_);
+
     // Set the return variable to the size of the read message
     if (bytes_read != 0)
         *bytes_read = to_read;
@@ -224,11 +235,12 @@ int SickTimCommonTcp::readWithTimeout(size_t timeout_ms, char *buffer, int buffe
 /**
  * Send a SOPAS command to the device and print out the response to the console.
  */
-int SickTimCommonTcp::sendSOPASCommand(const char* request, std::vector<unsigned char> * reply)
+int SickTimCommonTcp::sendSOPASCommand (const char* request, std::vector<unsigned char>* reply)
 {
-    if (!socket_.is_open()) {
-        ROS_ERROR("sendSOPASCommand: socket not open");
-        diagnostics_.broadcast(diagnostic_msgs::DiagnosticStatus::ERROR, "sendSOPASCommand: socket not open.");
+    if (!socket_.is_open())
+    {
+        ROS_ERROR ("sendSOPASCommand: socket not open");
+        diagnostics_.broadcast (diagnostic_msgs::DiagnosticStatus::ERROR, "sendSOPASCommand: socket not open.");
         return EXIT_FAILURE;
     }
 
@@ -237,12 +249,12 @@ int SickTimCommonTcp::sendSOPASCommand(const char* request, std::vector<unsigned
      */
     try
     {
-        boost::asio::write(socket_, boost::asio::buffer(request, strlen(request)));
+        boost::asio::write (socket_, boost::asio::buffer (request, strlen (request)));
     }
-    catch (boost::system::system_error &e)
+    catch (boost::system::system_error& e)
     {
-        ROS_ERROR("write error for command: %s", request);
-        diagnostics_.broadcast(diagnostic_msgs::DiagnosticStatus::ERROR, "Write error for sendSOPASCommand.");
+        ROS_ERROR ("write error for command: %s", request);
+        diagnostics_.broadcast (diagnostic_msgs::DiagnosticStatus::ERROR, "Write error for sendSOPASCommand.");
         return EXIT_FAILURE;
     }
 
@@ -250,27 +262,29 @@ int SickTimCommonTcp::sendSOPASCommand(const char* request, std::vector<unsigned
     const int BUF_SIZE = 1000;
     char buffer[BUF_SIZE];
     int bytes_read;
-    if (readWithTimeout(1000, buffer, BUF_SIZE, &bytes_read, 0) == EXIT_FAILURE)
+
+    if (readWithTimeout (1000, buffer, BUF_SIZE, &bytes_read, 0) == EXIT_FAILURE)
     {
-        ROS_ERROR_THROTTLE(1.0, "sendSOPASCommand: no full reply available for read after 1s");
-        diagnostics_.broadcast(diagnostic_msgs::DiagnosticStatus::ERROR, "sendSOPASCommand: no full reply available for read after 5 s.");
+        ROS_ERROR_THROTTLE (1.0, "sendSOPASCommand: no full reply available for read after 1s");
+        diagnostics_.broadcast (diagnostic_msgs::DiagnosticStatus::ERROR, "sendSOPASCommand: no full reply available for read after 5 s.");
         return EXIT_FAILURE;
     }
 
     if (reply)
     {
-        reply->resize(bytes_read);
-        std::copy(buffer, buffer + bytes_read, &(*reply)[0]);
+        reply->resize (bytes_read);
+        std::copy (buffer, buffer + bytes_read, & (*reply) [0]);
     }
 
     return EXIT_SUCCESS;
 }
 
-int SickTimCommonTcp::get_datagram(unsigned char* receiveBuffer, int bufferSize, int* actual_length)
+int SickTimCommonTcp::get_datagram (unsigned char* receiveBuffer, int bufferSize, int* actual_length)
 {
-    if (!socket_.is_open()) {
-        ROS_ERROR("get_datagram: socket not open");
-        diagnostics_.broadcast(diagnostic_msgs::DiagnosticStatus::ERROR, "get_datagram: socket not open.");
+    if (!socket_.is_open())
+    {
+        ROS_ERROR ("get_datagram: socket not open");
+        diagnostics_.broadcast (diagnostic_msgs::DiagnosticStatus::ERROR, "get_datagram: socket not open.");
         return EXIT_FAILURE;
     }
 
@@ -283,18 +297,18 @@ int SickTimCommonTcp::get_datagram(unsigned char* receiveBuffer, int bufferSize,
     size_t timeout = 1000;
     bool exception_occured = false;
 
-    char *buffer = reinterpret_cast<char *>(receiveBuffer);
+    char* buffer = reinterpret_cast<char*> (receiveBuffer);
 
-    if (readWithTimeout(timeout, buffer, bufferSize, actual_length, &exception_occured) != EXIT_SUCCESS)
+    if (readWithTimeout (timeout, buffer, bufferSize, actual_length, &exception_occured) != EXIT_SUCCESS)
     {
-        ROS_ERROR_THROTTLE(1.0, "get_datagram: no data available for read after %zu ms", timeout);
-        diagnostics_.broadcast(diagnostic_msgs::DiagnosticStatus::ERROR, "get_datagram: no data available for read after timeout.");
+        ROS_ERROR_THROTTLE (1.0, "get_datagram: no data available for read after %zu ms", timeout);
+        diagnostics_.broadcast (diagnostic_msgs::DiagnosticStatus::ERROR, "get_datagram: no data available for read after timeout.");
 
         // Attempt to reconnect when the connection was terminated
         if (!socket_.is_open())
         {
-            sleep(1);
-            ROS_INFO("Failure - attempting to reconnect");
+            sleep (1);
+            ROS_INFO ("Failure - attempting to reconnect");
             return init();
         }
 

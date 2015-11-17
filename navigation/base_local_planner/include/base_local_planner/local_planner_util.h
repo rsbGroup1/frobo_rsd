@@ -49,59 +49,65 @@
 #include <base_local_planner/local_planner_limits.h>
 
 
-namespace base_local_planner {
+namespace base_local_planner
+{
 
 /**
  * @class LocalPlannerUtil
  * @brief Helper class implementing infrastructure code many local planner implementations may need.
  */
-class LocalPlannerUtil {
+class LocalPlannerUtil
+{
 
 private:
-  // things we get from move_base
-  std::string name_;
-  std::string global_frame_;
+    // things we get from move_base
+    std::string name_;
+    std::string global_frame_;
 
-  costmap_2d::Costmap2D* costmap_;
-  tf::TransformListener* tf_;
-
-
-  std::vector<geometry_msgs::PoseStamped> global_plan_;
+    costmap_2d::Costmap2D* costmap_;
+    tf::TransformListener* tf_;
 
 
-  boost::mutex limits_configuration_mutex_;
-  bool setup_;
-  LocalPlannerLimits default_limits_;
-  LocalPlannerLimits limits_;
-  bool initialized_;
+    std::vector<geometry_msgs::PoseStamped> global_plan_;
+
+
+    boost::mutex limits_configuration_mutex_;
+    bool setup_;
+    LocalPlannerLimits default_limits_;
+    LocalPlannerLimits limits_;
+    bool initialized_;
 
 public:
 
-  /**
-   * @brief  Callback to update the local planner's parameters
-   */
-  void reconfigureCB(LocalPlannerLimits &config, bool restore_defaults);
+    /**
+     * @brief  Callback to update the local planner's parameters
+     */
+    void reconfigureCB (LocalPlannerLimits& config, bool restore_defaults);
 
-  LocalPlannerUtil() : initialized_(false) {}
+    LocalPlannerUtil() : initialized_ (false) {}
 
-  ~LocalPlannerUtil() {
-  }
+    ~LocalPlannerUtil()
+    {
+    }
 
-  void initialize(tf::TransformListener* tf,
-      costmap_2d::Costmap2D* costmap,
-      std::string global_frame);
+    void initialize (tf::TransformListener* tf,
+                     costmap_2d::Costmap2D* costmap,
+                     std::string global_frame);
 
-  bool getGoal(tf::Stamped<tf::Pose>& goal_pose);
+    bool getGoal (tf::Stamped<tf::Pose>& goal_pose);
 
-  bool setPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan);
+    bool setPlan (const std::vector<geometry_msgs::PoseStamped>& orig_global_plan);
 
-  bool getLocalPlan(tf::Stamped<tf::Pose>& global_pose, std::vector<geometry_msgs::PoseStamped>& transformed_plan);
+    bool getLocalPlan (tf::Stamped<tf::Pose>& global_pose, std::vector<geometry_msgs::PoseStamped>& transformed_plan);
 
-  costmap_2d::Costmap2D* getCostmap();
+    costmap_2d::Costmap2D* getCostmap();
 
-  LocalPlannerLimits getCurrentLimits();
+    LocalPlannerLimits getCurrentLimits();
 
-  std::string getGlobalFrame(){ return global_frame_; }
+    std::string getGlobalFrame()
+    {
+        return global_frame_;
+    }
 };
 
 

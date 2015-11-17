@@ -40,24 +40,30 @@
 
 #include <base_local_planner/trajectory_cost_function.h>
 
-namespace base_local_planner {
+namespace base_local_planner
+{
 
-class PreferForwardCostFunction: public base_local_planner::TrajectoryCostFunction {
+class PreferForwardCostFunction: public base_local_planner::TrajectoryCostFunction
+{
 public:
 
-  PreferForwardCostFunction(double penalty) : penalty_(penalty) {}
-  ~PreferForwardCostFunction() {}
+    PreferForwardCostFunction (double penalty) : penalty_ (penalty) {}
+    ~PreferForwardCostFunction() {}
 
-  double scoreTrajectory(Trajectory &traj);
+    double scoreTrajectory (Trajectory& traj);
 
-  bool prepare() {return true;};
+    bool prepare()
+    {
+        return true;
+    };
 
-  void setPenalty(double penalty) {
-    penalty_ = penalty;
-  }
+    void setPenalty (double penalty)
+    {
+        penalty_ = penalty;
+    }
 
 private:
-  double penalty_;
+    double penalty_;
 };
 
 } /* namespace base_local_planner */

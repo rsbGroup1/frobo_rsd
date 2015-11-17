@@ -4,14 +4,14 @@
 class ResizedSubscriber : public image_transport::SimpleSubscriberPlugin<image_transport_tutorial::ResizedImage>
 {
 public:
-  virtual ~ResizedSubscriber() {}
+    virtual ~ResizedSubscriber() {}
 
-  virtual std::string getTransportName() const
-  {
-    return "resized";
-  }
+    virtual std::string getTransportName() const
+    {
+        return "resized";
+    }
 
 protected:
-  virtual void internalCallback(const typename image_transport_tutorial::ResizedImage::ConstPtr& message,
-                                const Callback& user_cb);
+    virtual void internalCallback (const typename image_transport_tutorial::ResizedImage::ConstPtr& message,
+                                   const Callback& user_cb);
 };

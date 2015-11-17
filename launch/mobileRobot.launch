@@ -38,7 +38,7 @@
 			<param name="wheel_turn_max_integral_output" value="300" /> 
 			<param name="supply_voltage_scale_factor" value="0.03747" /> 
 			<param name="min_supply_voltage" value="12.1" /> 
-			<param name="show_voltage_interval" value="300" /> 
+			<param name="show_voltage_interval" value="30" /> 
 		</node>
 	</group>
 

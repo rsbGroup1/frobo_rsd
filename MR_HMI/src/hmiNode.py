@@ -241,8 +241,6 @@ def tipper( direction ):
 
     global srvTipper
 
-    #mr_hmi.srv.
-    #req = tip( direction )
     srvTipper(direction)# req ) # Request tipping (just ignore the response for now)
 
 def logCallback( data ):

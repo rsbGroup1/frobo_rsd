@@ -19,7 +19,7 @@ void setup()
 	pinMode(is_level, INPUT_PULLUP);
 	pinMode(supply_tipped, OUTPUT);
 	pinMode(supply_level, OUTPUT);
-	pinMode(en_a, OUTPUT);   
+	pinMode(en_a, OUTPUT);  
 	pinMode(en_b, OUTPUT);
 	pinMode(8, OUTPUT);
 	pinMode(9, OUTPUT);
@@ -71,7 +71,7 @@ void tip_load()
 		digitalWrite(en_a, LOW);
 		digitalWrite(en_b, LOW);  
 	}
-	Serial.println("done");
+	Serial.println("d");
 }
    
 void return_to_level()
@@ -90,7 +90,7 @@ void return_to_level()
 		return;
 	} 
 
-	Serial.println("done");
+	Serial.println("d");
 	return;
 }
    

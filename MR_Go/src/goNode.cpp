@@ -56,9 +56,6 @@ public:
 		// Twist stop
 		twist_stop_msg_.twist.linear.x = 0;
 		twist_stop_msg_.twist.angular.z = 0;
-		
-		// Debug
-		std::cout << "Node initiated!" << std::endl;
     }
 
     /**

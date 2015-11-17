@@ -10,6 +10,7 @@
 		<node pkg="mr_frobit_interface" name="frobit" type="frobit_interface_node.py" output="screen" >
 			<param name="actuation_enable_sub" value="/fmSafe/actuation_enable" />
 			<param name="cmd_vel_sub" value="/fmCommand/cmd_vel" />
+			<param name="/fmCommand/cmd_vel" value="True" />
 			<param name="enc_left_pub" value="/fmInformation/encoder_left" />
 			<param name="enc_right_pub" value="/fmInformation/encoder_right" />
 			<param name="wheel_status_left_pub" value="/fmInformation/wheel_status_left" />
@@ -24,8 +25,8 @@
 			<param name="publish_wheel_feedback_rate" value="10" />
 			<param name="publish_wheel_pid_rate" value="10" />
 			<param name="castor_front" value="true"/>
-		        <param name="max_linear_acceleration" value="16.2"/>
-         		<param name="max_angular_acceleration" value="16.0"/>
+		    <param name="max_linear_acceleration" value="16.2"/>
+        	<param name="max_angular_acceleration" value="16.0"/>
 			<param name="wheel_drive_feed_forward" value="85" /> 
 			<param name="wheel_drive_kp" value="5" /> 
 			<param name="wheel_drive_ki" value="10" /> 
@@ -37,8 +38,8 @@
 			<param name="wheel_turn_kd" value="3" /> 
 			<param name="wheel_turn_max_integral_output" value="300" /> 
 			<param name="supply_voltage_scale_factor" value="0.03747" /> 
-			<param name="min_supply_voltage" value="12.1" /> 
-			<param name="show_voltage_interval" value="30" /> 
+			<param name="min_supply_voltage" value="11.7" /> 
+			<param name="show_voltage_interval" value="5" /> 
 		</node>
 	</group>
 
@@ -46,12 +47,15 @@
 	<group ns="fmSafety">
 		<node pkg="basic_incident_handler" name="incident_handler" type="basic_incident_handler_node.py" output="screen">
     		<param name="deadman_enable" value="True" />
-    		<param name="deadman_timeout" value="0.100" />
+    		<param name="deadman_timeout" value="0.500" />
     		<param name="deadman_sub" value="/fmSafe/deadman" />
     		<param name="critical_fault_enable" value="False" />
-    		<param name="critical_fault_timeout" value="0.100" />
+    		<param name="critical_fault_timeout" value="0.500" />
     		<param name="critical_fault_sub" value="/fmSafe/critical_fault" />
-		<param name="actuation_enable_pub" value="/fmSafe/actuation_enable" />
+	    	<param name="obstacle_enable" value="False" />
+	    	<param name="obstacle_timeout" value="0.500" />
+	    	<param name="obstacle_sub" value="/fmSafe/obstacle" />
+			<param name="actuation_enable_pub" value="/fmSafe/actuation_enable"/>
 		</node>
 	</group>
 
@@ -111,8 +115,8 @@
 
 	<!-- LIDAR -->
 	<node name="sick_tim310s01" pkg="sick_tim" type="sick_tim310s01" respawn="false" output="screen">
-	    <param name="min_ang" type="double" value="-2.35619449019" />
-	    <param name="max_ang" type="double" value="2.35619449019" />
+	    <param name="min_ang" type="double" value="-1.6" />
+	    <param name="max_ang" type="double" value="1.6" />
 	    <param name="intensity" type="bool" value="True" />
 	    <param name="skip" type="int" value="0" />
 	    <param name="frame_id" type="str" value="base_footprint" />
@@ -167,8 +171,8 @@
 
 	<!-- MR Main -->
 	<group ns="MR_Main">
-		<node pkg="mr_main" name="Main" type="mr_main">
-			<param name="nav_perform_srv" value="mrNavigationController/performAction"/> 
+		<node pkg="mr_main" name="Main" type="mr_main" output="screen">
+			<param name="nav_perform_srv" value="MR_NavigationController/performAction"/> 
 			<param name="nav_status_sub" value="mrNavigationController/status"/> 
 			<param name="nav_currentnode_sub" value="mrNavigationController/currentNode"/>	
 			<param name="button_sub" value="mrButton/run"/> 
@@ -241,16 +245,14 @@
 	</group>
 
 	<!-- MR Navigation Controller -->
-	<group ns="MR_NavigationController">
-		<node pkg="mr_navigation_controller" name="NavigationController" type="mr_navigation_controller">
-			<param name="lineFollowEnableService" value="mrLineFollower/lineUntilQR"/>
-			<param name="moveService" value="mrGo/move"/>
-			<param name="performAction" value="mrNavigationController/performAction"/>
-			<param name="status" value="mrNavigationController/status"/>
-			<param name="currentNode" value="mrNavigationController/currentNode"/>
-			<param name="searchLimit" value="100"/>
-		</node>
-	</group>
+	<node pkg="mr_navigation_controller" name="mrNavigationController" type="mr_navigation_controller" output="screen">
+		<param name="lineFollowEnableService" value="mrLineFollower/lineUntilQR"/>
+		<param name="moveService" value="mrGo/move"/>
+		<param name="performAction" value="mrNavigationController/performAction"/>
+		<param name="status" value="mrNavigationController/status"/>
+		<param name="currentNode" value="mrNavigationController/currentNode"/>
+		<param name="searchLimit" value="100"/>
+	</node>
 
 </launch>
 

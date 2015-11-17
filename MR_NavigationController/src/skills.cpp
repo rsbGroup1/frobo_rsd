@@ -28,7 +28,7 @@ bool Skills::lineUntilQR(std::string qr)
 {
     std::cout << "Skill: Line until QR: " << qr << std::endl;
     lineFollowerCall.request.qr = qr;
-    lineFollowerCall.request.time_limit = 30;
+    lineFollowerCall.request.time_limit = 300;
     srv_lineUntilQR_->call(lineFollowerCall);
 
 	std_msgs::String msg;

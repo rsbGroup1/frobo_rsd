@@ -474,10 +474,10 @@ class FrobitInterfaceNode():
 	def show_voltage(self):
 		s = rospy.get_name() + ': Frobit says: Battery %.1f Volt' % (self.frobit_volt)
 		self.battery_pub.publish(self.frobit_volt)
-		if self.frobit_voltage_ok:
- 			rospy.loginfo(s)
-		else:
-			rospy.logwarn(s)					
+		#if self.frobit_voltage_ok:
+ 		#	rospy.loginfo(s)
+		#else:
+		#	rospy.logwarn(s)					
 
 	def updater(self):
 		while not rospy.is_shutdown():

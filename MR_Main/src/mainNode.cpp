@@ -51,7 +51,8 @@ enum HMI_SAFETY
 class MainNode {
 public:
     MainNode() :
-        _pNh("~")
+        _pNh("~"),
+        _batteryLevel(0)
     {
         // Get parameter names
         _pNh.param<std::string>("nav_perform_srv", _performActionString, "/mrNavigationController/performAction");
@@ -80,13 +81,13 @@ public:
         _buttonPublisher = _nh.advertise<std_msgs::Bool>(_buttonPub, 10);
 
         // Subscribers
-        ros::Subscriber buttonSubriber = _nh.subscribe<std_msgs::Bool>(_buttonSub, 5, &MainNode::buttonCallback, this);
-        ros::Subscriber hmiSubscriber = _nh.subscribe<std_msgs::String>(_hmiSub, 5, &MainNode::hmiCallback, this);
-        ros::Subscriber navStatusSubscriber = _nh.subscribe<std_msgs::String>(_navStatusSub, 10, &MainNode::navStatusCallback, this);
-        ros::Subscriber navCurrentSubscriber = _nh.subscribe<std_msgs::String>(_navCurrentnodeSub, 10, &MainNode::navCurrentNodeCallback, this);
-        ros::Subscriber mesSubscriber = _nh.subscribe<mr_mes_client::server>(_mesSub, 10, &MainNode::mesCallback, this);
-		ros::Subscriber obstacleDetectorSubscriber = _nh.subscribe<std_msgs::String>(_obstacleDetectorSub, 10, &MainNode::obstacleCallback, this);
-		ros::Subscriber batterySubscriber = _nh.subscribe<std_msgs::Float32>(_batterySub, 10, &MainNode::_batteryCallback, this);
+        _buttonSubriber = _nh.subscribe<std_msgs::Bool>(_buttonSub, 5, &MainNode::buttonCallback, this);
+        _hmiSubscriber = _nh.subscribe<std_msgs::String>(_hmiSub, 5, &MainNode::hmiCallback, this);
+        _navStatusSubscriber = _nh.subscribe<std_msgs::String>(_navStatusSub, 10, &MainNode::navStatusCallback, this);
+        _navCurrentSubscriber = _nh.subscribe<std_msgs::String>(_navCurrentnodeSub, 10, &MainNode::navCurrentNodeCallback, this);
+        _mesSubscriber = _nh.subscribe<mr_mes_client::server>(_mesSub, 10, &MainNode::mesCallback, this);
+		_obstacleDetectorSubscriber = _nh.subscribe<std_msgs::String>(_obstacleDetectorSub, 10, &MainNode::obstacleCallback, this);
+		_batterySubscriber = _nh.subscribe<std_msgs::Float32>(_batterySub, 10, &MainNode::_batteryCallback, this);
     }
 
     ~MainNode()
@@ -208,17 +209,18 @@ public:
 			// Stores the current position just in case the battery is in 
 			// the critic level
 			action = _currentNode;
-			
 			// Checks if the battery is the critic level
 			checkBattery(_batteryCritic, action);
 			
 			// Go to the dispenser position
+            /*
 			action = "bricks";
 			perform_action_obj.request.action = action;
 			_servicePerformAction.call(perform_action_obj);
-			
+			*/
 			// Checks if the battery is the critic level
 			checkBattery(_batteryCritic, action);
+
 			
             // Send the robot to the correct wc conveyor
             if (msg.cell == 1)
@@ -350,6 +352,10 @@ public:
 	 */
 	void checkBattery(float threshold, std::string prev_pos){
 		mr_navigation_controller::performAction perform_action_obj;
+        if (_batteryLevel == 0)
+            std::cout << "No battery level! Waiting..." << std::endl;
+        while(_batteryLevel == 0) // Wait
+            ;;
 		if (_batteryLevel < threshold) {
 			perform_action_obj.request.action = "charge";
 			_servicePerformAction.call(perform_action_obj);
@@ -364,6 +370,8 @@ public:
 private:
     ros::NodeHandle _nh, _pNh;
     ros::ServiceClient _servicePerformAction, _serviceTipper;
+    ros::Subscriber _buttonSubriber, _hmiSubscriber, _navStatusSubscriber, _navCurrentSubscriber, 
+                    _mesSubscriber, _obstacleDetectorSubscriber, _batterySubscriber;
     ros::Publisher _hmiPublisher, _mesPublisher, _buttonPublisher;
     bool _buttonStatus, _hmiStatus;
 	std::string safety_status_prev, _currentNode;

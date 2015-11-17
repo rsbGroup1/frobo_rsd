@@ -47,8 +47,9 @@ public:
 		pNh_.param<std::string> ("srv_mr_camera_processing_enable_name", srv_mr_camera_processing_enable_name_, "/mrCameraProcessing/enable");
 		
 		// Publishers, subscribers, services
-		sub_line_ = nh_.subscribe<geometry_msgs::Point>(sub_line_name_, 1, &lineFollower::lineCallback, this);
-		sub_qr_ = nh_.subscribe<std_msgs::String>(sub_qr_name_, 1, &lineFollower::qrCallback, this);
+		// They should only subcribe when they need to be used!
+		//sub_line_ = nh_.subscribe<geometry_msgs::Point>(sub_line_name_, 1, &lineFollower::lineCallback, this);
+		//sub_qr_ = nh_.subscribe<std_msgs::String>(sub_qr_name_, 1, &lineFollower::qrCallback, this);
 		
 		pub_twist_ = nh_.advertise<geometry_msgs::TwistStamped> (pub_twist_name_, 1);
 		pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
@@ -224,12 +225,13 @@ public:
 		{
 			ros::spinOnce();
 		}
-		
+
 		if (req.qr == qr_detected_) 
 		{
 			std::cout << "QR " << qr_detected_ << " detected!" << std::endl;
 			res.success = true;
 		} else {
+			ROS_ERROR("Time limit following the line reached");
 			res.success = false;
 		}
 		

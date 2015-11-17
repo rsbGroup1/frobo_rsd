@@ -107,21 +107,6 @@ public:
                         initalize.call(srv);
                     }
 */		
-		/*
-		 * Debug
-		 */
-// 		graph_->setCurrentNode("wc1");
-// 		solution_ = graph_->bfs("charge", search_limit_);
-// 		executeSkills();
-// 		
-// 		solution_ = graph_->bfs("box", search_limit_);
-// 		executeSkills();
-// 
-// 		solution_ = graph_->bfs("bricks", search_limit_);
-// 		executeSkills();
-// 		graph_->setCurrentNode("box");
-// 		graph_->setCurrentNode("pre_bricks");
-
 	}
 	
 	~NavigationController(){
@@ -175,9 +160,9 @@ public:
 		graph_->addNode("pre_bricks");
 		graph_->addNode("bricks");
 		graph_->addNode("pre_charge");
-        	graph_->addNode("pre_charge_line");
-        	graph_->addNode("charge");
-        	graph_->addNode("charge_line");
+		graph_->addNode("pre_charge_line");
+		graph_->addNode("charge");
+		graph_->addNode("charge_line");
 
 		
 		/*
@@ -422,7 +407,7 @@ private:
 int main(int argc, char** argv)
 {
 	// Init ROS Node
-    ros::init(argc, argv, "MR_Navigation_Controller");
+    ros::init(argc, argv, "mrNavigationController");
 	NavigationController nc;
 	ros::Rate rate(30);
     

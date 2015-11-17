@@ -215,7 +215,7 @@ def drive( linearX, angularZ ):
     # print( "Msg published OK")
 
 def tip( direction ):
-    """ Method discription
+    """ Method Description
     Calls the tipping service with a direction specified with a boolean ergument
 
     True = up
@@ -246,16 +246,16 @@ def logCallback( data ):
 
     now = datetime.datetime.now()
     logTimestamp = now.strftime("%Y-%m-%d %H:%M:%S")
-    #print(logTimestamp)
+    # print(logTimestamp)
 
     newData = ""
     for i in range( 0, len( temp ), 2 ):
-        newData = newData + temp[i] + d + logTimestamp + d + temp[i + 1] + d
+        newData += temp[i] + d + logTimestamp + d + temp[i + 1] + d
 
     logMessages = logMessages + newData
-    #print(data.data)
-    print(logMessages)
-    #print(newData)
+    # print(data.data)
+    # print(logMessages)
+    # print(newData)
 
 def publishCommand( rosPublisher, command ):
     rosPublisher.publish( command )
@@ -328,4 +328,3 @@ def initHMI():
 
 if __name__ == '__main__':
     initHMI()
-

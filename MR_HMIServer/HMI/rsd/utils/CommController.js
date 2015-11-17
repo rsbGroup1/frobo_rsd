@@ -16,7 +16,11 @@ rsdNamespace.RC_1 = "5";
 rsdNamespace.RC_2 = "6";
 rsdNamespace.RC_3 = "7";
 
-rsdNamespace.ON = "1";
+rsdNamespace.SAFE = 1;
+rsdNamespace.PROXIMITY_ALERT = 2;
+rsdNamespace.COLLIDING = 3;
+
+// rsdNamespace.ON = "1";
 // rsdNamespace.OFF = "2";
 // rsdNamespace.TIPPER= "1";
 // rsdNamespace.LINE_FOLLOWING = "2";
@@ -89,7 +93,8 @@ rsdNamespace.StartListening = function() {
                         for( i = 0; i < messages.length; i += 3 ) {
 
                             // If message contains displayable content...
-                            var message_code = messages[i][3];
+                            // var message_code = messages[i][3];
+                            var message_code = messages[i][0];
                             if( message_code != rsdNamespace.IGNORE ) {
 
                                 // If there was an error,
@@ -106,8 +111,9 @@ rsdNamespace.StartListening = function() {
                             }
 
                             // If message contains location related information...
-                            var location_code = messages[i][2];
-                            if( location_code !== rsdNamespace.IGNORE ) {
+                            // var location_code = messages[i][2];
+                            var location_code = messages[i][1];
+                            if( location_code != rsdNamespace.IGNORE ) {
 
                                 var location = parseInt( location_code, 10 );
 
@@ -121,8 +127,8 @@ rsdNamespace.StartListening = function() {
                             }
 
                             // If message contains activity information...
-                            var activity_code = messages[i].substr(0, 2);
-                            if( activity_code != ( rsdNamespace.IGNORE + rsdNamespace.IGNORE ) ) {
+                            var activity_code = messages[i].substr(2, 2);
+                            if( activity_code != rsdNamespace.IGNORE ) {
 
                                 rsdNamespace.IndicateStatus( activity_code );
 

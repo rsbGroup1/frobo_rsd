@@ -307,6 +307,22 @@ rsdNamespace.RegisterTouchSurfaces = function() {
 
     });
 
+    $('.statusIndicator').on( "mouseover click touchstart", function() {
+
+        var id = $(this).attr('id');
+        var selector = '#indicator_message_' + id.substr(id.length - 1);
+
+        $(selector).addClass('show_label');
+
+    }).on( "mouseup mouseout touchend", function() {
+
+        var id = $(this).attr('id');
+        var selector = '#indicator_message_' + id.substr(id.length - 1);
+
+        $(selector).removeClass('show_label');
+
+    });
+
 };
 
 rsdNamespace.ToggleAvailabilityState = function() {

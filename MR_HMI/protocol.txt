@@ -1,0 +1,54 @@
+First digit:
+0 = null
+1 = info
+2 = warning
+3 = error
+
+Second digit:
+0 = null
+1 = box
+2 = camera 
+3 = track zone 2
+4 = track zone 1
+5 = RC 1
+6 = RC 2
+7 = RC 3
+
+Third digit:
+0 = null
+1 = tipper
+2 = lineFollowing 
+3 = GPS 
+4 = collectingBricks
+5 = fixedMovement
+6 = charging
+
+Fourth digit:
+0 = null
+1 = safe
+2 = proximityAlert
+3 = colliding
+
+e.g.: "1000,Your displayable message here," # The comma in the end is compulsary!
+e.g.: "2000,Your displayable warning here," # The comma in the end is compulsary!
+e.g.: "0100,," # The commas in the end are compulsary!
+
+# Third & fourth digits: # depricated
+# 00 = null
+# 11 = tipper up
+# 12 = tipper bown
+# 21 = line following on
+# 22 = line following off
+# 31 = gps on
+# 32 = gps off
+# 41 = collecting bricks on
+# 42 = collecting bricks off
+# 51. fixed movement on
+# 52. fixed movement off
+# 51 = inside box on
+# 52 = inside box off
+# 61 = charging on
+# 62 = charging off
+
+# e.g.: "1000,Your displayable message here," # The comma in the end is compulsary!
+

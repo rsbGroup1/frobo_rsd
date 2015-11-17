@@ -113,8 +113,8 @@ bool Skills::goToFreePosition(double x, double y, double yaw)
 */
 	// DSW TEsting: move to recovery position then try again
 	    move_base_msgs::MoveBaseGoal recovery;
-	    recovery.target_pose.pose.position.x = -0.1;
-	    recovery.target_pose.pose.position.y = -0.15;
+	    recovery.target_pose.pose.position.x = 0.25;
+	    recovery.target_pose.pose.position.y = 0.78;
 	    recovery.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw(-1.9);
 	    recovery.target_pose.header.frame_id ="map";
 	    recovery.target_pose.header.stamp = ros::Time::now();

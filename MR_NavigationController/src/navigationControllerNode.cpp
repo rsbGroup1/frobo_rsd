@@ -69,7 +69,7 @@ public:
 		graph_ = new Graph(&pub_current_node_);
 		createGraph();
 		//graph_->showGraph();
-
+/*
         // Inialize AMCL
                     std::ifstream localisationFile;
                     localisationFile.open("localization.csv");
@@ -106,7 +106,7 @@ public:
                         std_srvs::Empty srv;
                         initalize.call(srv);
                     }
-		
+*/		
 		/*
 		 * Debug
 		 */
@@ -120,6 +120,7 @@ public:
 // 		solution_ = graph_->bfs("bricks", search_limit_);
 // 		executeSkills();
 // 		graph_->setCurrentNode("box");
+// 		graph_->setCurrentNode("pre_bricks");
 
 	}
 	
@@ -174,7 +175,9 @@ public:
 		graph_->addNode("pre_bricks");
 		graph_->addNode("bricks");
 		graph_->addNode("pre_charge");
-        graph_->addNode("charge");
+        	graph_->addNode("pre_charge_line");
+        	graph_->addNode("charge");
+        	graph_->addNode("charge_line");
 
 		
 		/*
@@ -260,13 +263,13 @@ public:
 		
 		std::vector<std::function<void()>> box_TO_line_start;
                 box_TO_line_start.push_back(std::bind(&Skills::goToFreePosition, &skills_, 0.1, 0.7 , 1.3));
-		box_TO_line_start.push_back(std::bind(&Skills::goToFreePosition, &skills_, 3.3, -2 , 0.6));
+		box_TO_line_start.push_back(std::bind(&Skills::goToFreePosition, &skills_, 3.3, -2 , -1.5));
 		box_TO_line_start.push_back(std::bind(&Graph::setCurrentNode, graph_, "line_start"));
 		
 		
 		
 		std::vector<std::function<void()>> box_TO_pre_bricks;
-        box_TO_pre_bricks.push_back(std::bind(&Skills::goToFreePosition, &skills_, -0.9, -2.2 , -2.8));
+        box_TO_pre_bricks.push_back(std::bind(&Skills::goToFreePosition, &skills_, -0.9, -2.2 , -2.7));
 		box_TO_pre_bricks.push_back(std::bind(&Graph::setCurrentNode, graph_, "pre_bricks"));
 		
 		std::vector<std::function<void()>> pre_bricks_TO_box;
@@ -275,16 +278,15 @@ public:
 		
 		
 		std::vector<std::function<void()>> pre_bricks_TO_bricks;
-        pre_bricks_TO_bricks.push_back(std::bind(&Skills::linearMove, &skills_, 0.15));
+        pre_bricks_TO_bricks.push_back(std::bind(&Skills::linearMove, &skills_, 0.1));
 		pre_bricks_TO_bricks.push_back(std::bind(&Graph::setCurrentNode, graph_, "bricks"));
 		std::vector<std::function<void()>> bricks_TO_pre_bricks;
-        bricks_TO_pre_bricks.push_back(std::bind(&Skills::linearMove, &skills_, -0.15));
-        bricks_TO_pre_bricks.push_back(std::bind(&Skills::angularMove, &skills_, -30));
+        bricks_TO_pre_bricks.push_back(std::bind(&Skills::linearMove, &skills_, -0.1));
 		bricks_TO_pre_bricks.push_back(std::bind(&Graph::setCurrentNode, graph_, "pre_bricks"));
 		
 		
 		std::vector<std::function<void()>> box_TO_pre_charge;
-		box_TO_pre_charge.push_back(std::bind(&Skills::goToFreePosition, &skills_, -0.56, -2.51 , -0.2));
+		box_TO_pre_charge.push_back(std::bind(&Skills::goToFreePosition, &skills_, -0.56, -2.41 , -0.2));
 	        box_TO_pre_charge.push_back(std::bind(&Skills::goToFreePosition, &skills_, 0.02, -2.51 , -0.2));
 		box_TO_pre_charge.push_back(std::bind(&Graph::setCurrentNode, graph_, "pre_charge"));
 		
@@ -295,17 +297,35 @@ public:
 		
 		
 		std::vector<std::function<void()>> pre_charge_TO_charge;
-        pre_charge_TO_charge.push_back(std::bind(&Skills::linearMove, &skills_, 0.02));
+        pre_charge_TO_charge.push_back(std::bind(&Skills::linearMove, &skills_, 0.1));
 		pre_charge_TO_charge.push_back(std::bind(&Graph::setCurrentNode, graph_, "charge"));
 		
 		std::vector<std::function<void()>> charge_TO_pre_charge;
-        charge_TO_pre_charge.push_back(std::bind(&Skills::linearMove, &skills_, -0.02));
+        charge_TO_pre_charge.push_back(std::bind(&Skills::linearMove, &skills_, -0.1));
 		charge_TO_pre_charge.push_back(std::bind(&Graph::setCurrentNode, graph_, "pre_charge"));
 
 		std::vector<std::function<void()>> line_start_TO_box;
+                line_start_TO_box.push_back(std::bind(&Skills::goToFreePosition, &skills_, 0.1, 0.7 , -1.9));
         	line_start_TO_box.push_back(std::bind(&Skills::goToFreePosition, &skills_, -0.5, -1.5 , -1.9));
 		line_start_TO_box.push_back(std::bind(&Graph::setCurrentNode, graph_, "box"));
+
+		// line following charging
+		std::vector<std::function<void()>> box_TO_pre_charge_line;
+                box_TO_pre_charge_line.push_back(std::bind(&Skills::goToFreePosition, &skills_, -0.56, -2.41 , -0.2));
+                box_TO_pre_charge_line.push_back(std::bind(&Skills::lineUntilQR, &skills_, "wc_1_load"));
+		box_TO_pre_charge_line.push_back(std::bind(&Graph::setCurrentNode, graph_, "pre_charge_line"));
+
+		std::vector<std::function<void()>> pre_charge_line_TO_charge_line;
+                pre_charge_line_TO_charge_line.push_back(std::bind(&Skills::linearMove, &skills_, 0.1));
+		pre_charge_line_TO_charge_line.push_back(std::bind(&Graph::setCurrentNode, graph_, "charge_line"));
+
+		std::vector<std::function<void()>> pre_charge_line_TO_box;
+                pre_charge_line_TO_box.push_back(std::bind(&Skills::goToFreePosition, &skills_, 0.1, 0.7 , -1.9));
+		pre_charge_line_TO_box.push_back(std::bind(&Graph::setCurrentNode, graph_, "box"));
 		
+		std::vector<std::function<void()>> charge_line_TO_pre_charge_line;
+                charge_line_TO_pre_charge_line.push_back(std::bind(&Skills::linearMove, &skills_, -0.1));
+		charge_line_TO_pre_charge_line.push_back(std::bind(&Graph::setCurrentNode, graph_, "pre_charge_line"));
 		
 		
 		// Vertices 
@@ -342,6 +362,11 @@ public:
 		graph_->addVertex("bricks", "pre_bricks", 1, bricks_TO_pre_bricks);
 
 		graph_->addVertex("line_start", "box", 1, line_start_TO_box); // for Testing
+		// alternative charge behavior
+		graph_->addVertex("box", "pre_charge_line", 1, box_TO_pre_charge_line);
+		graph_->addVertex("pre_charge_line", "charge_line", 1, pre_charge_line_TO_charge_line);
+		graph_->addVertex("pre_charge_line", "box", 1, pre_charge_line_TO_box);
+		graph_->addVertex("charge_line", "pre_charge_line", 1, charge_line_TO_pre_charge_line);
 	}
 
     /**
@@ -409,7 +434,7 @@ int main(int argc, char** argv)
 	}
 
     // Store position
-    nc.storePosition();
+    //nc.storePosition();
 
     // Return
     return 0;

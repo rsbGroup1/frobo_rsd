@@ -212,28 +212,31 @@ public:
             // the critic level
             action = _currentNode;
             // Checks if the battery is the critic level
-            checkBattery(_batteryCritic, action);
+            checkBattery (_batteryCritic, action);
 
             // Go to the dispenser position
 
             action = "bricks";
             perform_action_obj.request.action = action;
-            _servicePerformAction.call(perform_action_obj);
+            _servicePerformAction.call (perform_action_obj);
 
             // Checks if the battery is the critic level
-            checkBattery(_batteryCritic, action);
+            checkBattery (_batteryCritic, action);
 
 
             // Send the robot to the correct wc conveyor
             if (msg.cell == 1)
-            	action = "wc1_conveyor";
+                action = "wc1_conveyor";
+
             if (msg.cell == 2)
                 action = "wc2_conveyor";
+
             if (msg.cell == 3)
                 action = "wc3_conveyor";
+
             perform_action_obj.request.action = action;
-            _servicePerformAction.call(perform_action_obj);
-	    
+            _servicePerformAction.call (perform_action_obj);
+
             // Tip Up
             HMIUpdateIcons (tipper);
             tip_obj.request.direction = true;
@@ -246,18 +249,21 @@ public:
             // Checks if the battery is the critic level
             checkBattery (_batteryCritic, action);
 
-                // Go to the robot
-                if (msg.cell == 1)
-                    action = "wc1_robot";
-                if (msg.cell == 2)
-                    action = "wc2_robot";
-                if (msg.cell == 3)
-                    action = "wc3_robot";
-            	perform_action_obj.request.action = action;
-                _servicePerformAction.call(perform_action_obj);
+            // Go to the robot
+            if (msg.cell == 1)
+                action = "wc1_robot";
 
-              // If the battery's level is under the threshold go back home
-              checkBattery(_batteryLow, "");
+            if (msg.cell == 2)
+                action = "wc2_robot";
+
+            if (msg.cell == 3)
+                action = "wc3_robot";
+
+            perform_action_obj.request.action = action;
+            _servicePerformAction.call (perform_action_obj);
+
+            // If the battery's level is under the threshold go back home
+            checkBattery (_batteryLow, "");
         }
     }
 
@@ -389,8 +395,8 @@ private:
     std::string safety_status_prev, _currentNode;
     double _batteryLevel, _batteryLow, _batteryCritic, _desiredCharge;
     boost::mutex _runMutex;
-    std::string _performActionString, _navStatusSub, _navCurrentnodeSub, _buttonSub, _buttonPub, 
-		_hmiSub, _tipperString, _hmiPub, _mesSub, _mesPub, _obstacleDetectorSub, _batterySub;
+    std::string _performActionString, _navStatusSub, _navCurrentnodeSub, _buttonSub, _buttonPub,
+        _hmiSub, _tipperString, _hmiPub, _mesSub, _mesPub, _obstacleDetectorSub, _batterySub;
 };
 
 

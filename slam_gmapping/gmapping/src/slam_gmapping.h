@@ -6,7 +6,7 @@
  * COMMONS PUBLIC LICENSE ("CCPL" OR "LICENSE"). THE WORK IS PROTECTED BY
  * COPYRIGHT AND/OR OTHER APPLICABLE LAW. ANY USE OF THE WORK OTHER THAN AS
  * AUTHORIZED UNDER THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
- * 
+ *
  * BY EXERCISING ANY RIGHTS TO THE WORK PROVIDED HERE, YOU ACCEPT AND AGREE TO
  * BE BOUND BY THE TERMS OF THIS LICENSE. THE LICENSOR GRANTS YOU THE RIGHTS
  * CONTAINED HERE IN CONSIDERATION OF YOUR ACCEPTANCE OF SUCH TERMS AND
@@ -32,22 +32,22 @@
 
 class SlamGMapping
 {
-  public:
+public:
     SlamGMapping();
-    SlamGMapping(unsigned long int seed, unsigned long int max_duration_buffer);
+    SlamGMapping (unsigned long int seed, unsigned long int max_duration_buffer);
     ~SlamGMapping();
 
     void init();
     void startLiveSlam();
-    void startReplay(const std::string & bag_fname, std::string scan_topic);
+    void startReplay (const std::string& bag_fname, std::string scan_topic);
     void publishTransform();
-  
-    void laserCallback(const sensor_msgs::LaserScan::ConstPtr& scan);
-    bool mapCallback(nav_msgs::GetMap::Request  &req,
-                     nav_msgs::GetMap::Response &res);
-    void publishLoop(double transform_publish_period);
 
-  private:
+    void laserCallback (const sensor_msgs::LaserScan::ConstPtr& scan);
+    bool mapCallback (nav_msgs::GetMap::Request&  req,
+                      nav_msgs::GetMap::Response& res);
+    void publishLoop (double transform_publish_period);
+
+private:
     ros::NodeHandle node_;
     ros::Publisher entropy_publisher_;
     ros::Publisher sst_;
@@ -91,12 +91,12 @@ class SlamGMapping
     std::string map_frame_;
     std::string odom_frame_;
 
-    void updateMap(const sensor_msgs::LaserScan& scan);
-    bool getOdomPose(GMapping::OrientedPoint& gmap_pose, const ros::Time& t);
-    bool initMapper(const sensor_msgs::LaserScan& scan);
-    bool addScan(const sensor_msgs::LaserScan& scan, GMapping::OrientedPoint& gmap_pose);
+    void updateMap (const sensor_msgs::LaserScan& scan);
+    bool getOdomPose (GMapping::OrientedPoint& gmap_pose, const ros::Time& t);
+    bool initMapper (const sensor_msgs::LaserScan& scan);
+    bool addScan (const sensor_msgs::LaserScan& scan, GMapping::OrientedPoint& gmap_pose);
     double computePoseEntropy();
-    
+
     // Parameters used by GMapping
     double maxRange_;
     double maxUrange_;
@@ -129,11 +129,11 @@ class SlamGMapping
     double llsamplestep_;
     double lasamplerange_;
     double lasamplestep_;
-    
+
     ros::NodeHandle private_nh_;
-    
+
     unsigned long int seed_;
-    
+
     double transform_publish_period_;
     double tf_delay_;
 };

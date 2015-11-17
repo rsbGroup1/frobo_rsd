@@ -11,38 +11,42 @@
 #include <iostream>
 
 
-int main(int argc, char** argv)
-{	
-	// Init ROS Node
-	ros::init(argc, argv, "mr_camera_false");
-	ros::NodeHandle nh;
-	// Create publisher topic
-	image_transport::ImageTransport it(nh);
-	image_transport::Publisher pub = it.advertise("/mr_camera/image", 1);
-	
-	//Load the image
-	if (argc<2){
-		std::cout << "Usage rosrun mr_camera_false mr_camera_false PATH_TO_IMAGE";
-		return 0;
-	}
-	
-			cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
-	if (!image.data){
-		std::cout << "Empty image!";
-		return 0;
-	}
+int main (int argc, char** argv)
+{
+    // Init ROS Node
+    ros::init (argc, argv, "mr_camera_false");
+    ros::NodeHandle nh;
+    // Create publisher topic
+    image_transport::ImageTransport it (nh);
+    image_transport::Publisher pub = it.advertise ("/mr_camera/image", 1);
 
-	sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", image).toImageMsg();
-	
-	ros::Rate loopRate(30);
-	
-	std::cout << "Fuck yeah!" << std::endl;
-	
-	while (ros::ok()){
-		pub.publish(msg);
-		loopRate.sleep();
-	}
-		
-	// Return
-	return 0;
+    //Load the image
+    if (argc < 2)
+    {
+        std::cout << "Usage rosrun mr_camera_false mr_camera_false PATH_TO_IMAGE";
+        return 0;
+    }
+
+    cv::Mat image = cv::imread (argv[1], CV_LOAD_IMAGE_COLOR);
+
+    if (!image.data)
+    {
+        std::cout << "Empty image!";
+        return 0;
+    }
+
+    sensor_msgs::ImagePtr msg = cv_bridge::CvImage (std_msgs::Header(), "rgb8", image).toImageMsg();
+
+    ros::Rate loopRate (30);
+
+    std::cout << "Fuck yeah!" << std::endl;
+
+    while (ros::ok())
+    {
+        pub.publish (msg);
+        loopRate.sleep();
+    }
+
+    // Return
+    return 0;
 }

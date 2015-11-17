@@ -1,10 +1,10 @@
 /*
  * Copyright (C) 2013, Osnabrück University
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +13,7 @@
  *     * Neither the name of Osnabrück University nor the names of its
  *       contributors may be used to endorse or promote products derived from
  *       this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -39,62 +39,63 @@
 namespace sick_tim
 {
 
-SickTimDatagramTest::SickTimDatagramTest(AbstractParser* parser) :
-    parser_(parser)
+SickTimDatagramTest::SickTimDatagramTest (AbstractParser* parser) :
+    parser_ (parser)
 {
-  //dynamic_reconfigure_server_.getConfigDefault(config_);
-  dynamic_reconfigure::Server<sick_tim::SickTimConfig>::CallbackType f;
-  f = boost::bind(&sick_tim::SickTimDatagramTest::update_config, this, _1, _2);
-  dynamic_reconfigure_server_.setCallback(f);
+    //dynamic_reconfigure_server_.getConfigDefault(config_);
+    dynamic_reconfigure::Server<sick_tim::SickTimConfig>::CallbackType f;
+    f = boost::bind (&sick_tim::SickTimDatagramTest::update_config, this, _1, _2);
+    dynamic_reconfigure_server_.setCallback (f);
 
-  pub_ = nh_.advertise<sensor_msgs::LaserScan>("scan_from_datagram", 1000);
-  sub_ = nh_.subscribe("datagram", 1, &SickTimDatagramTest::datagramCB, this);
+    pub_ = nh_.advertise<sensor_msgs::LaserScan> ("scan_from_datagram", 1000);
+    sub_ = nh_.subscribe ("datagram", 1, &SickTimDatagramTest::datagramCB, this);
 }
 
 SickTimDatagramTest::~SickTimDatagramTest()
 {
-  delete parser_;
+    delete parser_;
 }
 
-void SickTimDatagramTest::datagramCB(const std_msgs::String::ConstPtr &datagram_msg)
+void SickTimDatagramTest::datagramCB (const std_msgs::String::ConstPtr& datagram_msg)
 {
-  sensor_msgs::LaserScan scan_msg;
+    sensor_msgs::LaserScan scan_msg;
 
-  std::vector<char> str(datagram_msg->data.begin(), datagram_msg->data.end());
-  str.push_back('\0');
+    std::vector<char> str (datagram_msg->data.begin(), datagram_msg->data.end());
+    str.push_back ('\0');
 
-  int success = parser_->parse_datagram(&str[0], datagram_msg->data.length(), config_, scan_msg);
-  if (success == EXIT_SUCCESS)
-    pub_.publish(scan_msg);
-  else
-    ROS_ERROR("parse_datagram returned %d!", success);
+    int success = parser_->parse_datagram (&str[0], datagram_msg->data.length(), config_, scan_msg);
+
+    if (success == EXIT_SUCCESS)
+        pub_.publish (scan_msg);
+    else
+        ROS_ERROR ("parse_datagram returned %d!", success);
 }
 
-void SickTimDatagramTest::check_angle_range(SickTimConfig &conf)
+void SickTimDatagramTest::check_angle_range (SickTimConfig& conf)
 {
-  if (conf.min_ang > conf.max_ang)
-  {
-    ROS_WARN("Minimum angle must be greater than maximum angle. Adjusting min_ang.");
-    conf.min_ang = conf.max_ang;
-  }
+    if (conf.min_ang > conf.max_ang)
+    {
+        ROS_WARN ("Minimum angle must be greater than maximum angle. Adjusting min_ang.");
+        conf.min_ang = conf.max_ang;
+    }
 }
 
-void SickTimDatagramTest::update_config(sick_tim::SickTimConfig &new_config, uint32_t level)
+void SickTimDatagramTest::update_config (sick_tim::SickTimConfig& new_config, uint32_t level)
 {
-  check_angle_range(new_config);
-  config_ = new_config;
+    check_angle_range (new_config);
+    config_ = new_config;
 }
 
 } /* namespace sick_tim */
 
-int main(int argc, char **argv)
+int main (int argc, char** argv)
 {
-  ros::init(argc, argv, "sick_tim_datagram_test");
+    ros::init (argc, argv, "sick_tim_datagram_test");
 
-  sick_tim::SickTim310S01Parser* parser = new sick_tim::SickTim310S01Parser();
-  sick_tim::SickTimDatagramTest s(parser);
+    sick_tim::SickTim310S01Parser* parser = new sick_tim::SickTim310S01Parser();
+    sick_tim::SickTimDatagramTest s (parser);
 
-  ros::spin();
+    ros::spin();
 
-  return 0;
+    return 0;
 }

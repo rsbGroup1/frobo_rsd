@@ -13,7 +13,7 @@ import rospy
 from geometry_msgs.msg import Twist, TwistStamped
 from msgs.msg import BoolStamped
 from std_msgs.msg import String, Bool
-#from mr_tip_controller.srv import *
+from mr_tip_controller.srv import *
 from mr_hmi.srv import *
 
 STATUS_REQUEST = "status_request"
@@ -116,13 +116,14 @@ class MyServerProtocol( WebSocketServerProtocol ):
                 elif leftButton == u"l":
                     drive( 0.0, angularVelocity )
                 elif rightButton == u"x":
-                    tip( True )
+                    tipper( True )
                 elif rightButton == u"y":
-                    tip( False )
+                    tipper( False )
                 elif rightButton == u"a":
                     setManualMode( False )
                     publishCommand( pubModeUpdate, u"start" )
                 elif rightButton == u"b":
+                    setManualMode( False )
                     publishCommand( pubModeUpdate, u"stop" )
 
     def onClose( self, wasClean, code, reason ):
@@ -157,6 +158,11 @@ class actuationThread( threading.Thread ):
         self.lock = threading.Lock()
         self.threadID = threadID
         self.name = name
+        self._stop = threading.Event()
+
+    def stop( self ):
+        print "Stoping " + self.name
+        self._stop.set()
 
     def run( self ):
 
@@ -164,14 +170,14 @@ class actuationThread( threading.Thread ):
         while not rospy.is_shutdown():
 
             self.publishActuationEna()
-            time.sleep(0.05)
+            time.sleep(0.033)
 
         stopServer()
 
     def publishActuationEna( self ):
         global actuationEna
 
-        # print "actuationEna: " + str(actuationEna)
+        print "actuationEna: " + str(actuationEna)
 
         self.lock.acquire()
         msg = createBoolStampedMessage( actuationEna )
@@ -195,14 +201,25 @@ def createBoolStampedMessage( data ):
 
 def setManualMode( newState ):
     global isManual
+    global pubCmdVelUpdate
+    global pubActuationEna
+    global aThread
+    global actuationEna
 
     if( isManual != newState ):
         print( "Manual mode CHANGED" )
         isManual = newState
         if( isManual ):
+            pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 1 )
+            pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
+            aThread.start()
             publishCommand( pubModeUpdate, u"manual" )
             print( "Manual mode is ON" )
         else:
+            actuationEna = False
+            aThread.stop()
+            pubCmdVelUpdate.unregister()
+            pubActuationEna.unregister()
             print( "Manual mode is OFF" )
 
 def drive( linearX, angularZ ):
@@ -213,9 +230,9 @@ def drive( linearX, angularZ ):
     # print( "Msg *to be published: " + str(msg.twist.linear.x) )
     publishCommand( pubCmdVelUpdate, msg )
     # print( "Msg published OK")
-
-def tip( direction ):
-    """ Method Description
+    
+def tipper( direction ):
+    """ Method discription
     Calls the tipping service with a direction specified with a boolean ergument
 
     True = up
@@ -224,9 +241,7 @@ def tip( direction ):
 
     global srvTipper
 
-    #mr_hmi.srv.
-    #req = tip( direction )
-    #srvTipper(direction)# req ) # Request tipping (just ignore the response for now)
+    srvTipper(direction)# req ) # Request tipping (just ignore the response for now)
 
 def logCallback( data ):
     """ Method Description
@@ -282,6 +297,8 @@ def initHMI():
 
     global srvTipper
 
+    global aThread
+
     # In ROS, nodes are uniquely named. If two nodes with the same
     # node are launched, the previous one is kicked off. The
     # anonymous=True flag means that rospy will choose a unique
@@ -303,15 +320,14 @@ def initHMI():
 
     # Register Publisers
     pubModeUpdate = rospy.Publisher( MODE_UPDATE_PUB, String, queue_size = 1 )
-    pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 1 )
-    pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
 
     # Service Deffinitions
-    #srvTipper = rospy.ServiceProxy( TIPPER_UPDATE_SRV, tip )
+    rospy.wait_for_service(TIPPER_UPDATE_SRV)
+    srvTipper = rospy.ServiceProxy( TIPPER_UPDATE_SRV, tip )
 
-    # Start publishing the activationEna sygnal in a separate thread
+    # Prepare the actuation in another thread
     aThread = actuationThread( 1, "actuation_thread" )
-    aThread.start()
+
 
     log.startLogging(sys.stdout)
 

@@ -40,28 +40,30 @@
 
 #include <base_local_planner/trajectory.h>
 
-namespace base_local_planner {
+namespace base_local_planner
+{
 
 /**
  * @class TrajectorySearch
  * @brief Interface for modules finding a trajectory to use for navigation commands next
  */
-class TrajectorySearch {
+class TrajectorySearch
+{
 public:
-  /**
-   * searches the space of allowed trajectory and
-   * returns one considered the optimal given the
-   * constraints of the particular search.
-   *
-   * @param traj The container to write the result to
-   * @param all_explored pass NULL or a container to collect all trajectories for debugging (has a penalty)
-   */
-  virtual bool findBestTrajectory(Trajectory& traj, std::vector<Trajectory>* all_explored) = 0;
+    /**
+     * searches the space of allowed trajectory and
+     * returns one considered the optimal given the
+     * constraints of the particular search.
+     *
+     * @param traj The container to write the result to
+     * @param all_explored pass NULL or a container to collect all trajectories for debugging (has a penalty)
+     */
+    virtual bool findBestTrajectory (Trajectory& traj, std::vector<Trajectory>* all_explored) = 0;
 
-  virtual ~TrajectorySearch() {}
+    virtual ~TrajectorySearch() {}
 
 protected:
-  TrajectorySearch() {}
+    TrajectorySearch() {}
 
 };
 

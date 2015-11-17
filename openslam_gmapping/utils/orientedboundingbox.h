@@ -7,20 +7,22 @@
 
 #include <utils/point.h>
 
-namespace GMapping{
+namespace GMapping
+{
 
 template<class NUMERIC>
-class OrientedBoundingBox {
+class OrientedBoundingBox
+{
 
- public:
-  OrientedBoundingBox(std::vector< point<NUMERIC> > p);  
-  double area();
+public:
+    OrientedBoundingBox (std::vector< point<NUMERIC> > p);
+    double area();
 
- protected:
-  Point ul;
-  Point ur;
-  Point ll;
-  Point lr;  
+protected:
+    Point ul;
+    Point ur;
+    Point ll;
+    Point lr;
 };
 
 #include "orientedboundingbox.hxx"

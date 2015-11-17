@@ -43,50 +43,52 @@ enum HMI_ICONS
 
 enum HMI_SAFETY
 {
-	safe = 0,
-	proximityAlert = 1,
-	colliding = 2
+    safe = 0,
+    proximityAlert = 1,
+    colliding = 2
 };
 
-class MainNode {
+class MainNode
+{
 public:
     MainNode() :
-        _pNh("~")
+        _pNh ("~"),
+        _batteryLevel (0)
     {
         // Get parameter names
-        _pNh.param<std::string>("nav_perform_srv", _performActionString, "/mrNavigationController/performAction");
-        _pNh.param<std::string>("nav_status_sub", _navStatusSub, "/mrNavigationController/status");
-        _pNh.param<std::string>("nav_currentnode_sub", _navCurrentnodeSub, "/mrNavigationController/currentNode");
-        _pNh.param<std::string>("button_sub", _buttonSub, "/mrButton/run");
-        _pNh.param<std::string>("button_pub", _buttonPub, "/mrButton/status");
-        _pNh.param<std::string>("hmi_sub", _hmiSub, "/mrHMI/run");
-        _pNh.param<std::string>("hmi_pub", _hmiPub, "/mrHMI/status");
-        _pNh.param<std::string>("tipper_srv", _tipperString, "/mrTipController/tip");
-        _pNh.param<std::string>("mes_pub", _mesPub, "/mrMESClient/msgToServer");
-        _pNh.param<std::string>("mes_sub", _mesSub, "/mrMESClient/msgFromServer");
-		_pNh.param<std::string>("obstacle_detector_sub", _obstacleDetectorSub, "/mrObstacleDetector/status");
-		_pNh.param<std::string>("battery_sub", _batterySub, "/fmInformation/battery");
-		_pNh.param<double>("battery_low", _batteryLow, 12.4);
-		_pNh.param<double>("battery_critic", _batteryCritic, 12.1);
-		_pNh.param<double>("desired_charge", _desiredCharge, 14.1);
-		
+        _pNh.param<std::string> ("nav_perform_srv", _performActionString, "/mrNavigationController/performAction");
+        _pNh.param<std::string> ("nav_status_sub", _navStatusSub, "/mrNavigationController/status");
+        _pNh.param<std::string> ("nav_currentnode_sub", _navCurrentnodeSub, "/mrNavigationController/currentNode");
+        _pNh.param<std::string> ("button_sub", _buttonSub, "/mrButton/run");
+        _pNh.param<std::string> ("button_pub", _buttonPub, "/mrButton/status");
+        _pNh.param<std::string> ("hmi_sub", _hmiSub, "/mrHMI/run");
+        _pNh.param<std::string> ("hmi_pub", _hmiPub, "/mrHMI/status");
+        _pNh.param<std::string> ("tipper_srv", _tipperString, "/mrTipController/tip");
+        _pNh.param<std::string> ("mes_pub", _mesPub, "/mrMESClient/msgToServer");
+        _pNh.param<std::string> ("mes_sub", _mesSub, "/mrMESClient/msgFromServer");
+        _pNh.param<std::string> ("obstacle_detector_sub", _obstacleDetectorSub, "/mrObstacleDetector/status");
+        _pNh.param<std::string> ("battery_sub", _batterySub, "/fmInformation/battery");
+        _pNh.param<double> ("battery_low", _batteryLow, 12.4);
+        _pNh.param<double> ("battery_critic", _batteryCritic, 12.1);
+        _pNh.param<double> ("desired_charge", _desiredCharge, 14.1);
+
         // Services
-        _servicePerformAction = _nh.serviceClient<mr_navigation_controller::performAction>(_performActionString);
-        _serviceTipper = _nh.serviceClient<mr_tip_controller::tip>(_tipperString);
+        _servicePerformAction = _nh.serviceClient<mr_navigation_controller::performAction> (_performActionString);
+        _serviceTipper = _nh.serviceClient<mr_tip_controller::tip> (_tipperString);
 
         // Publishers
-        _hmiPublisher = _nh.advertise<std_msgs::String>(_hmiPub, 10);
-        _mesPublisher = _nh.advertise<std_msgs::String>(_mesPub, 10);
-        _buttonPublisher = _nh.advertise<std_msgs::Bool>(_buttonPub, 10);
+        _hmiPublisher = _nh.advertise<std_msgs::String> (_hmiPub, 10);
+        _mesPublisher = _nh.advertise<std_msgs::String> (_mesPub, 10);
+        _buttonPublisher = _nh.advertise<std_msgs::Bool> (_buttonPub, 10);
 
         // Subscribers
-        ros::Subscriber buttonSubriber = _nh.subscribe<std_msgs::Bool>(_buttonSub, 5, &MainNode::buttonCallback, this);
-        ros::Subscriber hmiSubscriber = _nh.subscribe<std_msgs::String>(_hmiSub, 5, &MainNode::hmiCallback, this);
-        ros::Subscriber navStatusSubscriber = _nh.subscribe<std_msgs::String>(_navStatusSub, 10, &MainNode::navStatusCallback, this);
-        ros::Subscriber navCurrentSubscriber = _nh.subscribe<std_msgs::String>(_navCurrentnodeSub, 10, &MainNode::navCurrentNodeCallback, this);
-        ros::Subscriber mesSubscriber = _nh.subscribe<mr_mes_client::server>(_mesSub, 10, &MainNode::mesCallback, this);
-		ros::Subscriber obstacleDetectorSubscriber = _nh.subscribe<std_msgs::String>(_obstacleDetectorSub, 10, &MainNode::obstacleCallback, this);
-		ros::Subscriber batterySubscriber = _nh.subscribe<std_msgs::Float32>(_batterySub, 10, &MainNode::_batteryCallback, this);
+        _buttonSubriber = _nh.subscribe<std_msgs::Bool> (_buttonSub, 5, &MainNode::buttonCallback, this);
+        _hmiSubscriber = _nh.subscribe<std_msgs::String> (_hmiSub, 5, &MainNode::hmiCallback, this);
+        _navStatusSubscriber = _nh.subscribe<std_msgs::String> (_navStatusSub, 10, &MainNode::navStatusCallback, this);
+        _navCurrentSubscriber = _nh.subscribe<std_msgs::String> (_navCurrentnodeSub, 10, &MainNode::navCurrentNodeCallback, this);
+        _mesSubscriber = _nh.subscribe<mr_mes_client::server> (_mesSub, 10, &MainNode::mesCallback, this);
+        _obstacleDetectorSubscriber = _nh.subscribe<std_msgs::String> (_obstacleDetectorSub, 10, &MainNode::obstacleCallback, this);
+        _batterySubscriber = _nh.subscribe<std_msgs::Float32> (_batterySub, 10, &MainNode::_batteryCallback, this);
     }
 
     ~MainNode()
@@ -100,64 +102,64 @@ public:
      * HMI
      *
      */
-	/**
-	 * Updates the position in the HMI Map
-	 */
-    void HMIUpdatePosition(ROBOT_POS pos)
+    /**
+     * Updates the position in the HMI Map
+     */
+    void HMIUpdatePosition (ROBOT_POS pos)
     {
         std_msgs::String obj;
-        obj.data = "0" + SSTR(pos) + "00,,";
-        _hmiPublisher.publish(obj);
+        obj.data = "0" + SSTR (pos) + "00,,";
+        _hmiPublisher.publish (obj);
     }
 
     /**
-	 * Updates the icons that inform to the user what the robot is doing
-	 */
-    void HMIUpdateIcons(HMI_ICONS state)
+     * Updates the icons that inform to the user what the robot is doing
+     */
+    void HMIUpdateIcons (HMI_ICONS state)
     {
         std_msgs::String obj;
-		obj.data = "00" + SSTR(state) + "0,,";
-        _hmiPublisher.publish(obj);
+        obj.data = "00" + SSTR (state) + "0,,";
+        _hmiPublisher.publish (obj);
     }
-    
+
     /**
-	 * Updates the icons that inform to the user the safety status of the robot
-	 */
-	void HMIUpdateSafety(HMI_SAFETY state)
-	{
-		std_msgs::String obj;
-		obj.data = "000" + SSTR(state) + ",,";
-		_hmiPublisher.publish(obj);
-	}
-	
-	/**
-	 * Sends to the HMI a error message
-	 */
-    void HMISendError(std::string msg)
+     * Updates the icons that inform to the user the safety status of the robot
+     */
+    void HMIUpdateSafety (HMI_SAFETY state)
+    {
+        std_msgs::String obj;
+        obj.data = "000" + SSTR (state) + ",,";
+        _hmiPublisher.publish (obj);
+    }
+
+    /**
+     * Sends to the HMI a error message
+     */
+    void HMISendError (std::string msg)
     {
         std_msgs::String obj;
         obj.data = "3000," + msg + ",";
-        _hmiPublisher.publish(obj);
+        _hmiPublisher.publish (obj);
     }
 
     /**
-	 * Sends to the HMI a info message
-	 */
-    void HMISendInfo(std::string msg)
+     * Sends to the HMI a info message
+     */
+    void HMISendInfo (std::string msg)
     {
         std_msgs::String obj;
         obj.data = "1000," + msg + ",";
-        _hmiPublisher.publish(obj);
+        _hmiPublisher.publish (obj);
     }
 
     /**
-	 * Sends to the HMI a warning message
-	 */
-    void HMISendWarning(std::string msg)
+     * Sends to the HMI a warning message
+     */
+    void HMISendWarning (std::string msg)
     {
         std_msgs::String obj;
         obj.data = "2000," + msg + ",";
-        _hmiPublisher.publish(obj);
+        _hmiPublisher.publish (obj);
     }
 
 
@@ -166,210 +168,235 @@ public:
      * Callbacks
      *
      */
-	/**
-	 * When the botton is pressed, 
-	 */
-    void buttonCallback(std_msgs::Bool msg)
+    /**
+     * When the botton is pressed,
+     */
+    void buttonCallback (std_msgs::Bool msg)
     {
-        boost::unique_lock<boost::mutex> lock(_runMutex);
+        boost::unique_lock<boost::mutex> lock (_runMutex);
         _buttonStatus = msg.data;
     }
 
     /**
-	 * Controls the mode of the robot from the HMI. Automatic or Manual
-	 */
-    void hmiCallback(std_msgs::String msg)
+     * Controls the mode of the robot from the HMI. Automatic or Manual
+     */
+    void hmiCallback (std_msgs::String msg)
     {
-        boost::unique_lock<boost::mutex> lock(_runMutex);
+        boost::unique_lock<boost::mutex> lock (_runMutex);
 
-        if(msg.data == "start")
+        if (msg.data == "start")
             _hmiStatus = true;
-        else if(msg.data == "stop" || msg.data == "manual")
+        else if (msg.data == "stop" || msg.data == "manual")
             _hmiStatus = false;
     }
 
     /**
-	 * Reads from the MES server if there is a new order.
-	 * If so:
-	 * 1. Goes to pick some bricks to the dispenser
-	 * 2. Goes to the desired workcell coveyor
-	 * 3. Leave the bricks in the conveyor with the tipper
-	 * 4. Moves to the robot position of the same workcell
-	 */
-    void mesCallback(mr_mes_client::server msg)
+     * Reads from the MES server if there is a new order.
+     * If so:
+     * 1. Goes to pick some bricks to the dispenser
+     * 2. Goes to the desired workcell coveyor
+     * 3. Leave the bricks in the conveyor with the tipper
+     * 4. Moves to the robot position of the same workcell
+     */
+    void mesCallback (mr_mes_client::server msg)
     {
-        boost::unique_lock<boost::mutex> lock(_runMutex);
-        if(msg.mobileRobot == 1)
+        boost::unique_lock<boost::mutex> lock (_runMutex);
+
+        if (msg.mobileRobot == 1)
         {
             mr_navigation_controller::performAction perform_action_obj;
             mr_tip_controller::tip tip_obj;
-			std::string action;
-			
-			// Stores the current position just in case the battery is in 
-			// the critic level
-			action = _currentNode;
-			
-			// Checks if the battery is the critic level
-			checkBattery(_batteryCritic, action);
-			
-			// Go to the dispenser position
-			action = "bricks";
-			perform_action_obj.request.action = action;
-			_servicePerformAction.call(perform_action_obj);
-			
-			// Checks if the battery is the critic level
-			checkBattery(_batteryCritic, action);
-			
+            std::string action;
+
+            // Stores the current position just in case the battery is in
+            // the critic level
+            action = _currentNode;
+            // Checks if the battery is the critic level
+            checkBattery (_batteryCritic, action);
+
+            // Go to the dispenser position
+
+            action = "bricks";
+            perform_action_obj.request.action = action;
+            _servicePerformAction.call (perform_action_obj);
+
+            // Checks if the battery is the critic level
+            checkBattery (_batteryCritic, action);
+
+
             // Send the robot to the correct wc conveyor
             if (msg.cell == 1)
-				action = "wc1_conveyor";
+                action = "wc1_conveyor";
+
             if (msg.cell == 2)
                 action = "wc2_conveyor";
+
             if (msg.cell == 3)
                 action = "wc3_conveyor";
-			perform_action_obj.request.action = action;
-            _servicePerformAction.call(perform_action_obj);
+
+            perform_action_obj.request.action = action;
+            _servicePerformAction.call (perform_action_obj);
 
             // Tip Up
-			HMIUpdateIcons(tipper);
+            HMIUpdateIcons (tipper);
             tip_obj.request.direction = true;
-            _serviceTipper.call(tip_obj);
-			// Tip Down
+            _serviceTipper.call (tip_obj);
+            // Tip Down
             tip_obj.request.direction = false;
-            _serviceTipper.call(tip_obj);
-			HMIUpdateIcons(null);
-			
-			// Checks if the battery is the critic level
-			checkBattery(_batteryCritic, action);
+            _serviceTipper.call (tip_obj);
+            HMIUpdateIcons (null);
+
+            // Checks if the battery is the critic level
+            checkBattery (_batteryCritic, action);
 
             // Go to the robot
             if (msg.cell == 1)
                 action = "wc1_robot";
+
             if (msg.cell == 2)
                 action = "wc2_robot";
+
             if (msg.cell == 3)
                 action = "wc3_robot";
-			perform_action_obj.request.action = action;
-            _servicePerformAction.call(perform_action_obj);
-			
-			// If the battery's level is under the threshold go back home
-			checkBattery(_batteryLow, "");
-			
+
+            perform_action_obj.request.action = action;
+            _servicePerformAction.call (perform_action_obj);
+
+            // If the battery's level is under the threshold go back home
+            checkBattery (_batteryLow, "");
         }
     }
 
     /**
-	 * Reads the navigation status and activate the icons in the HMI
-	 */
-    void navStatusCallback(std_msgs::String msg)
+     * Reads the navigation status and activate the icons in the HMI
+     */
+    void navStatusCallback (std_msgs::String msg)
     {
-		if (msg.data == "following_line")
-			HMIUpdateIcons(lineFollowing);
-		else if (msg.data == "linear_move")
-			HMIUpdateIcons(fixedMovement);
-		else if (msg.data == "angular_move")
-			HMIUpdateIcons(fixedMovement);
-		else if (msg.data == "free_navigation")
-			HMIUpdateIcons(gps);
+        if (msg.data == "following_line")
+            HMIUpdateIcons (lineFollowing);
+        else if (msg.data == "linear_move")
+            HMIUpdateIcons (fixedMovement);
+        else if (msg.data == "angular_move")
+            HMIUpdateIcons (fixedMovement);
+        else if (msg.data == "free_navigation")
+            HMIUpdateIcons (gps);
     }
-    
-    /**
-	 * Reads the current robot position and send it to the HMI
-	 */
-    void navCurrentNodeCallback(std_msgs::String msg)
-    {
-		_currentNode = msg.data;
-		
-        if (msg.data == "line_start")
-            HMIUpdatePosition(trackZone1);
-        else if (msg.data == "line_stop")
-            HMIUpdatePosition(trackZone1);
-        else if (msg.data == "wc1")
-            HMIUpdatePosition(RC1);
-        else if (msg.data == "wc1_conveyor")
-            HMIUpdatePosition(RC1);
-        else if (msg.data == "wc1_robot")
-            HMIUpdatePosition(RC1);
-        else if (msg.data == "wc2")
-            HMIUpdatePosition(RC2);
-        else if (msg.data == "wc2_conveyor")
-            HMIUpdatePosition(RC2);
-        else if (msg.data == "wc2_robot")
-            HMIUpdatePosition(RC2);
-        else if (msg.data == "wc3")
-            HMIUpdatePosition(RC3);
-        else if (msg.data == "wc3_conveyor")
-            HMIUpdatePosition(RC3);
-        else if (msg.data == "wc3_robot")
-            HMIUpdatePosition(RC3);
-        else if (msg.data == "wc_exit")
-            HMIUpdatePosition(trackZone1);
-        else if (msg.data == "box")
-            HMIUpdatePosition(camera);
-        else if (msg.data == "pre_charge")
-            HMIUpdatePosition(box);
-        else if (msg.data == "charge")
-            HMIUpdatePosition(box);
-        else if (msg.data == "pre_bricks")
-            HMIUpdatePosition(box);
-        else if (msg.data == "bricks")
-            HMIUpdatePosition(box);
-        else
-            HMIUpdatePosition(nul);
-    }
-    
-    /**
-	 * Check if the robot is close or colliding with something and
-	 * carry out the situation at the same time that shows the state
-	 * in the HMI
-	 */
-    void obstacleCallback(std_msgs::String status){
-		// Checks if the safety status has changed
-		// This avoids unnecesary messages
-		if (status.data != safety_status_prev){
-			if (status.data == "safe")
-				HMIUpdateSafety(safe);
-			else if (status.data == "proximityAlert")
-				HMIUpdateSafety(proximityAlert);
-			else if (status.data == "colliding")
-				HMIUpdateSafety(colliding);
-		}
-		safety_status_prev = status.data;
-	}
 
-	/**
-	 * Reads the level of the battery and store it
-	 */
-	void _batteryCallback(std_msgs::Float32 battery){
-		_batteryLevel= battery.data;
-	}
-	
-	/**
-	 * Check if the battery is under the given threshold. If so
-	 * goes to charge until it reaches the limit
-	 */
-	void checkBattery(float threshold, std::string prev_pos){
-		mr_navigation_controller::performAction perform_action_obj;
-		if (_batteryLevel < threshold) {
-			perform_action_obj.request.action = "charge";
-			_servicePerformAction.call(perform_action_obj);
-			while (_batteryLevel < _desiredCharge)
-				; // Wait
-		}
-		perform_action_obj.request.action = prev_pos;
-		_servicePerformAction.call(perform_action_obj);
-	}
+    /**
+     * Reads the current robot position and send it to the HMI
+     */
+    void navCurrentNodeCallback (std_msgs::String msg)
+    {
+        _currentNode = msg.data;
+
+        if (msg.data == "line_start")
+            HMIUpdatePosition (trackZone1);
+        else if (msg.data == "line_stop")
+            HMIUpdatePosition (trackZone1);
+        else if (msg.data == "wc1")
+            HMIUpdatePosition (RC1);
+        else if (msg.data == "wc1_conveyor")
+            HMIUpdatePosition (RC1);
+        else if (msg.data == "wc1_robot")
+            HMIUpdatePosition (RC1);
+        else if (msg.data == "wc2")
+            HMIUpdatePosition (RC2);
+        else if (msg.data == "wc2_conveyor")
+            HMIUpdatePosition (RC2);
+        else if (msg.data == "wc2_robot")
+            HMIUpdatePosition (RC2);
+        else if (msg.data == "wc3")
+            HMIUpdatePosition (RC3);
+        else if (msg.data == "wc3_conveyor")
+            HMIUpdatePosition (RC3);
+        else if (msg.data == "wc3_robot")
+            HMIUpdatePosition (RC3);
+        else if (msg.data == "wc_exit")
+            HMIUpdatePosition (trackZone1);
+        else if (msg.data == "box")
+            HMIUpdatePosition (camera);
+        else if (msg.data == "pre_charge")
+            HMIUpdatePosition (box);
+        else if (msg.data == "charge")
+            HMIUpdatePosition (box);
+        else if (msg.data == "pre_bricks")
+            HMIUpdatePosition (box);
+        else if (msg.data == "bricks")
+            HMIUpdatePosition (box);
+        else
+            HMIUpdatePosition (nul);
+    }
+
+    /**
+     * Check if the robot is close or colliding with something and
+     * carry out the situation at the same time that shows the state
+     * in the HMI
+     */
+    void obstacleCallback (std_msgs::String status)
+    {
+        // Checks if the safety status has changed
+        // This avoids unnecesary messages
+        if (status.data != safety_status_prev)
+        {
+            if (status.data == "safe")
+                HMIUpdateSafety (safe);
+            else if (status.data == "proximityAlert")
+                HMIUpdateSafety (proximityAlert);
+            else if (status.data == "colliding")
+                HMIUpdateSafety (colliding);
+        }
+
+        safety_status_prev = status.data;
+    }
+
+    /**
+     * Reads the level of the battery and store it
+     */
+    void _batteryCallback (std_msgs::Float32 battery)
+    {
+        _batteryLevel = battery.data;
+    }
+
+    /**
+     * Check if the battery is under the given threshold. If so
+     * goes to charge until it reaches the limit
+     */
+    void checkBattery (float threshold, std::string prev_pos)
+    {
+        mr_navigation_controller::performAction perform_action_obj;
+
+        if (_batteryLevel == 0)
+            std::cout << "No battery level! Waiting..." << std::endl;
+
+        while (_batteryLevel == 0) // Wait
+            ;;
+
+        if (_batteryLevel < threshold)
+        {
+            perform_action_obj.request.action = "charge";
+            _servicePerformAction.call (perform_action_obj);
+
+            while (_batteryLevel < _desiredCharge)
+                ; // Wait
+        }
+
+        perform_action_obj.request.action = prev_pos;
+        _servicePerformAction.call (perform_action_obj);
+    }
 
 
 private:
     ros::NodeHandle _nh, _pNh;
     ros::ServiceClient _servicePerformAction, _serviceTipper;
+    ros::Subscriber _buttonSubriber, _hmiSubscriber, _navStatusSubscriber, _navCurrentSubscriber,
+        _mesSubscriber, _obstacleDetectorSubscriber, _batterySubscriber;
     ros::Publisher _hmiPublisher, _mesPublisher, _buttonPublisher;
     bool _buttonStatus, _hmiStatus;
-	std::string safety_status_prev, _currentNode;
-	double _batteryLevel, _batteryLow, _batteryCritic, _desiredCharge;
+    std::string safety_status_prev, _currentNode;
+    double _batteryLevel, _batteryLow, _batteryCritic, _desiredCharge;
     boost::mutex _runMutex;
-	std::string _performActionString, _navStatusSub, _navCurrentnodeSub, _buttonSub, _buttonPub, _hmiSub, _tipperString, _hmiPub, _mesSub, _mesPub, _obstacleDetectorSub, _batterySub;
+    std::string _performActionString, _navStatusSub, _navCurrentnodeSub, _buttonSub, _buttonPub,
+        _hmiSub, _tipperString, _hmiPub, _mesSub, _mesPub, _obstacleDetectorSub, _batterySub;
 };
 
 
@@ -383,19 +410,20 @@ int main()
     int argc = 0;
 
     // Init ROS Node
-    ros::init(argc, argv, "MR_Main");
+    ros::init (argc, argv, "MR_Main");
 
     // Main Node
     MainNode mn;
 
     // Rate
-    ros::Rate rate(30);
-	
-	// Multithreading 
-	ros::AsyncSpinner spinner(0);
+    ros::Rate rate (30);
+
+    // Multithreading
+    ros::AsyncSpinner spinner (0);
 
     // ROS Spin: Handle callbacks
-    while(ros::ok) {
+    while (!ros::isShuttingDown())
+    {
         spinner.start();
         rate.sleep();
     }

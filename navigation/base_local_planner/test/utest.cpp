@@ -51,16 +51,18 @@
 
 using namespace std;
 
-namespace base_local_planner {
+namespace base_local_planner
+{
 
-class TrajectoryPlannerTest : public testing::Test {
-  public:
-    TrajectoryPlannerTest(MapGrid* g, WavefrontMapAccessor* wave, const costmap_2d::Costmap2D& map, std::vector<geometry_msgs::Point> footprint_spec);
+class TrajectoryPlannerTest : public testing::Test
+{
+public:
+    TrajectoryPlannerTest (MapGrid* g, WavefrontMapAccessor* wave, const costmap_2d::Costmap2D& map, std::vector<geometry_msgs::Point> footprint_spec);
     void correctFootprint();
     void footprintObstacles();
     void checkGoalDistance();
     void checkPathDistance();
-    virtual void TestBody(){}
+    virtual void TestBody() {}
 
     MapGrid* map_;
     WavefrontMapAccessor* wa;
@@ -68,148 +70,157 @@ class TrajectoryPlannerTest : public testing::Test {
     TrajectoryPlanner tc;
 };
 
-TrajectoryPlannerTest::TrajectoryPlannerTest(MapGrid* g, WavefrontMapAccessor* wave, const costmap_2d::Costmap2D& map, std::vector<geometry_msgs::Point> footprint_spec)
-: map_(g), wa(wave), cm(map), tc(cm, map, footprint_spec, 0.0, 1.0, 1.0, 1.0, 1.0, 2.0)
+TrajectoryPlannerTest::TrajectoryPlannerTest (MapGrid* g, WavefrontMapAccessor* wave, const costmap_2d::Costmap2D& map, std::vector<geometry_msgs::Point> footprint_spec)
+    : map_ (g), wa (wave), cm (map), tc (cm, map, footprint_spec, 0.0, 1.0, 1.0, 1.0, 1.0, 2.0)
 {}
 
 
 
-void TrajectoryPlannerTest::footprintObstacles(){
-  //place an obstacle
-  map_->operator ()(4, 6).target_dist = 1;
-  wa->synchronize();
-  EXPECT_EQ(wa->getCost(4,6), costmap_2d::LETHAL_OBSTACLE);
-  Trajectory traj(0, 0, 0, 0.1, 30);
-  //tc->generateTrajectory(4.5, 4.5, M_PI_2, 0, 0, 0, 4, 0, 0, 4, 0, 0, DBL_MAX, traj, 2, 30);
-  tc.generateTrajectory(4.5, 4.5, M_PI_2, 0, 0, 0, 4, 0, 0, 4, 0, 0, DBL_MAX, traj);
-  //we expect this path to hit the obstacle
-  EXPECT_FLOAT_EQ(traj.cost_, -1.0);
+void TrajectoryPlannerTest::footprintObstacles()
+{
+    //place an obstacle
+    map_->operator () (4, 6).target_dist = 1;
+    wa->synchronize();
+    EXPECT_EQ (wa->getCost (4, 6), costmap_2d::LETHAL_OBSTACLE);
+    Trajectory traj (0, 0, 0, 0.1, 30);
+    //tc->generateTrajectory(4.5, 4.5, M_PI_2, 0, 0, 0, 4, 0, 0, 4, 0, 0, DBL_MAX, traj, 2, 30);
+    tc.generateTrajectory (4.5, 4.5, M_PI_2, 0, 0, 0, 4, 0, 0, 4, 0, 0, DBL_MAX, traj);
+    //we expect this path to hit the obstacle
+    EXPECT_FLOAT_EQ (traj.cost_, -1.0);
 
-  //place a wall next to the footprint of the robot
-  tc.path_map_(7, 1).target_dist = 1;
-  tc.path_map_(7, 3).target_dist = 1;
-  tc.path_map_(7, 4).target_dist = 1;
-  tc.path_map_(7, 5).target_dist = 1;
-  tc.path_map_(7, 6).target_dist = 1;
-  tc.path_map_(7, 7).target_dist = 1;
-  wa->synchronize();
+    //place a wall next to the footprint of the robot
+    tc.path_map_ (7, 1).target_dist = 1;
+    tc.path_map_ (7, 3).target_dist = 1;
+    tc.path_map_ (7, 4).target_dist = 1;
+    tc.path_map_ (7, 5).target_dist = 1;
+    tc.path_map_ (7, 6).target_dist = 1;
+    tc.path_map_ (7, 7).target_dist = 1;
+    wa->synchronize();
 
-  //try to rotate into it
-  //tc->generateTrajectory(4.5, 4.5, M_PI_2, 0, 0, 0, 0, 0, M_PI_2, 0, 0, M_PI_4, 100, traj, 2, 30);
-  tc.generateTrajectory(4.5, 4.5, M_PI_2, 0, 0, 0, 0, 0, M_PI_2, 0, 0, M_PI_4, 100, traj);
-  //we expect this path to hit the obstacle
-  EXPECT_FLOAT_EQ(traj.cost_, -1.0);
+    //try to rotate into it
+    //tc->generateTrajectory(4.5, 4.5, M_PI_2, 0, 0, 0, 0, 0, M_PI_2, 0, 0, M_PI_4, 100, traj, 2, 30);
+    tc.generateTrajectory (4.5, 4.5, M_PI_2, 0, 0, 0, 0, 0, M_PI_2, 0, 0, M_PI_4, 100, traj);
+    //we expect this path to hit the obstacle
+    EXPECT_FLOAT_EQ (traj.cost_, -1.0);
 }
 
-void TrajectoryPlannerTest::checkGoalDistance(){
-  //let's box a cell in and make sure that its distance gets set to max
-  map_->operator ()(1, 2).target_dist = 1;
-  map_->operator ()(1, 1).target_dist = 1;
-  map_->operator ()(1, 0).target_dist = 1;
-  map_->operator ()(2, 0).target_dist = 1;
-  map_->operator ()(3, 0).target_dist = 1;
-  map_->operator ()(3, 1).target_dist = 1;
-  map_->operator ()(3, 2).target_dist = 1;
-  map_->operator ()(2, 2).target_dist = 1;
-  wa->synchronize();
+void TrajectoryPlannerTest::checkGoalDistance()
+{
+    //let's box a cell in and make sure that its distance gets set to max
+    map_->operator () (1, 2).target_dist = 1;
+    map_->operator () (1, 1).target_dist = 1;
+    map_->operator () (1, 0).target_dist = 1;
+    map_->operator () (2, 0).target_dist = 1;
+    map_->operator () (3, 0).target_dist = 1;
+    map_->operator () (3, 1).target_dist = 1;
+    map_->operator () (3, 2).target_dist = 1;
+    map_->operator () (2, 2).target_dist = 1;
+    wa->synchronize();
 
-  //set a goal
-  tc.path_map_.resetPathDist();
-  queue<MapCell*> target_dist_queue;
-  MapCell& current = tc.path_map_(4, 9);
-  current.target_dist = 0.0;
-  current.target_mark = true;
-  target_dist_queue.push(&current);
-  tc.path_map_.computeTargetDistance(target_dist_queue, tc.costmap_);
+    //set a goal
+    tc.path_map_.resetPathDist();
+    queue<MapCell*> target_dist_queue;
+    MapCell& current = tc.path_map_ (4, 9);
+    current.target_dist = 0.0;
+    current.target_mark = true;
+    target_dist_queue.push (&current);
+    tc.path_map_.computeTargetDistance (target_dist_queue, tc.costmap_);
 
-  EXPECT_FLOAT_EQ(tc.path_map_(4, 8).target_dist, 1.0);
-  EXPECT_FLOAT_EQ(tc.path_map_(4, 7).target_dist, 2.0);
-  EXPECT_FLOAT_EQ(tc.path_map_(4, 6).target_dist, 100.0); //there's an obstacle here placed above
-  EXPECT_FLOAT_EQ(tc.path_map_(4, 5).target_dist, 6.0);
-  EXPECT_FLOAT_EQ(tc.path_map_(4, 4).target_dist, 7.0);
-  EXPECT_FLOAT_EQ(tc.path_map_(4, 3).target_dist, 8.0);
-  EXPECT_FLOAT_EQ(tc.path_map_(4, 2).target_dist, 9.0);
-  EXPECT_FLOAT_EQ(tc.path_map_(4, 1).target_dist, 10.0);
-  EXPECT_FLOAT_EQ(tc.path_map_(4, 0).target_dist, 11.0);
-  EXPECT_FLOAT_EQ(tc.path_map_(5, 8).target_dist, 2.0);
-  EXPECT_FLOAT_EQ(tc.path_map_(9, 4).target_dist, 10.0);
+    EXPECT_FLOAT_EQ (tc.path_map_ (4, 8).target_dist, 1.0);
+    EXPECT_FLOAT_EQ (tc.path_map_ (4, 7).target_dist, 2.0);
+    EXPECT_FLOAT_EQ (tc.path_map_ (4, 6).target_dist, 100.0); //there's an obstacle here placed above
+    EXPECT_FLOAT_EQ (tc.path_map_ (4, 5).target_dist, 6.0);
+    EXPECT_FLOAT_EQ (tc.path_map_ (4, 4).target_dist, 7.0);
+    EXPECT_FLOAT_EQ (tc.path_map_ (4, 3).target_dist, 8.0);
+    EXPECT_FLOAT_EQ (tc.path_map_ (4, 2).target_dist, 9.0);
+    EXPECT_FLOAT_EQ (tc.path_map_ (4, 1).target_dist, 10.0);
+    EXPECT_FLOAT_EQ (tc.path_map_ (4, 0).target_dist, 11.0);
+    EXPECT_FLOAT_EQ (tc.path_map_ (5, 8).target_dist, 2.0);
+    EXPECT_FLOAT_EQ (tc.path_map_ (9, 4).target_dist, 10.0);
 
-  //check the boxed in cell
-  EXPECT_FLOAT_EQ(100.0, tc.path_map_(2, 2).target_dist);
+    //check the boxed in cell
+    EXPECT_FLOAT_EQ (100.0, tc.path_map_ (2, 2).target_dist);
 
 }
 
-void TrajectoryPlannerTest::checkPathDistance(){
-  tc.path_map_.resetPathDist();
-  queue<MapCell*> target_dist_queue;
-  MapCell& current = tc.path_map_(4, 9);
-  current.target_dist = 0.0;
-  current.target_mark = true;
-  target_dist_queue.push(&current);
-  tc.path_map_.computeTargetDistance(target_dist_queue, tc.costmap_);
+void TrajectoryPlannerTest::checkPathDistance()
+{
+    tc.path_map_.resetPathDist();
+    queue<MapCell*> target_dist_queue;
+    MapCell& current = tc.path_map_ (4, 9);
+    current.target_dist = 0.0;
+    current.target_mark = true;
+    target_dist_queue.push (&current);
+    tc.path_map_.computeTargetDistance (target_dist_queue, tc.costmap_);
 
-  EXPECT_FLOAT_EQ(tc.path_map_(4, 8).target_dist, 1.0);
-  EXPECT_FLOAT_EQ(tc.path_map_(4, 7).target_dist, 2.0);
-  EXPECT_FLOAT_EQ(tc.path_map_(4, 6).target_dist, 100.0); //there's an obstacle here placed above
-  EXPECT_FLOAT_EQ(tc.path_map_(4, 5).target_dist, 6.0);
-  EXPECT_FLOAT_EQ(tc.path_map_(4, 4).target_dist, 7.0);
-  EXPECT_FLOAT_EQ(tc.path_map_(4, 3).target_dist, 8.0);
-  EXPECT_FLOAT_EQ(tc.path_map_(4, 2).target_dist, 9.0);
-  EXPECT_FLOAT_EQ(tc.path_map_(4, 1).target_dist, 10.0);
-  EXPECT_FLOAT_EQ(tc.path_map_(4, 0).target_dist, 11.0);
-  EXPECT_FLOAT_EQ(tc.path_map_(5, 8).target_dist, 2.0);
-  EXPECT_FLOAT_EQ(tc.path_map_(9, 4).target_dist, 10.0);
+    EXPECT_FLOAT_EQ (tc.path_map_ (4, 8).target_dist, 1.0);
+    EXPECT_FLOAT_EQ (tc.path_map_ (4, 7).target_dist, 2.0);
+    EXPECT_FLOAT_EQ (tc.path_map_ (4, 6).target_dist, 100.0); //there's an obstacle here placed above
+    EXPECT_FLOAT_EQ (tc.path_map_ (4, 5).target_dist, 6.0);
+    EXPECT_FLOAT_EQ (tc.path_map_ (4, 4).target_dist, 7.0);
+    EXPECT_FLOAT_EQ (tc.path_map_ (4, 3).target_dist, 8.0);
+    EXPECT_FLOAT_EQ (tc.path_map_ (4, 2).target_dist, 9.0);
+    EXPECT_FLOAT_EQ (tc.path_map_ (4, 1).target_dist, 10.0);
+    EXPECT_FLOAT_EQ (tc.path_map_ (4, 0).target_dist, 11.0);
+    EXPECT_FLOAT_EQ (tc.path_map_ (5, 8).target_dist, 2.0);
+    EXPECT_FLOAT_EQ (tc.path_map_ (9, 4).target_dist, 10.0);
 
-  //check the boxed in cell
-  EXPECT_FLOAT_EQ(tc.path_map_(2, 2).target_dist, 100.0);
+    //check the boxed in cell
+    EXPECT_FLOAT_EQ (tc.path_map_ (2, 2).target_dist, 100.0);
 
 }
 
 
 TrajectoryPlannerTest* tct = NULL;
 
-TrajectoryPlannerTest* setup_testclass_singleton() {
-  if (tct == NULL) {
-    MapGrid* mg = new MapGrid (10, 10);
-    WavefrontMapAccessor* wa = new WavefrontMapAccessor(mg, .25);
-    const costmap_2d::Costmap2D& map = *wa;
-    std::vector<geometry_msgs::Point> footprint_spec;
-    geometry_msgs::Point pt;
-    //create a square footprint
-    pt.x = 2;
-    pt.y = 2;
-    footprint_spec.push_back(pt);
-    pt.x = 2;
-    pt.y = -2;
-    footprint_spec.push_back(pt);
-    pt.x = -2;
-    pt.y = -2;
-    footprint_spec.push_back(pt);
-    pt.x = -2;
-    pt.y = 2;
-    footprint_spec.push_back(pt);
+TrajectoryPlannerTest* setup_testclass_singleton()
+{
+    if (tct == NULL)
+    {
+        MapGrid* mg = new MapGrid (10, 10);
+        WavefrontMapAccessor* wa = new WavefrontMapAccessor (mg, .25);
+        const costmap_2d::Costmap2D& map = *wa;
+        std::vector<geometry_msgs::Point> footprint_spec;
+        geometry_msgs::Point pt;
+        //create a square footprint
+        pt.x = 2;
+        pt.y = 2;
+        footprint_spec.push_back (pt);
+        pt.x = 2;
+        pt.y = -2;
+        footprint_spec.push_back (pt);
+        pt.x = -2;
+        pt.y = -2;
+        footprint_spec.push_back (pt);
+        pt.x = -2;
+        pt.y = 2;
+        footprint_spec.push_back (pt);
 
-    tct = new base_local_planner::TrajectoryPlannerTest(mg, wa, map, footprint_spec);
-  }
-  return tct;
+        tct = new base_local_planner::TrajectoryPlannerTest (mg, wa, map, footprint_spec);
+    }
+
+    return tct;
 }
 
 //make sure that trajectories that intersect obstacles are invalidated
-TEST(TrajectoryPlannerTest, footprintObstacles){
-  TrajectoryPlannerTest* tct = setup_testclass_singleton();
-  tct->footprintObstacles();
+TEST (TrajectoryPlannerTest, footprintObstacles)
+{
+    TrajectoryPlannerTest* tct = setup_testclass_singleton();
+    tct->footprintObstacles();
 }
 
 //make sure that goal distance is being computed as expected
-TEST(TrajectoryPlannerTest, checkGoalDistance){
-  TrajectoryPlannerTest* tct = setup_testclass_singleton();
-  tct->checkGoalDistance();
+TEST (TrajectoryPlannerTest, checkGoalDistance)
+{
+    TrajectoryPlannerTest* tct = setup_testclass_singleton();
+    tct->checkGoalDistance();
 }
 
 //make sure that path distance is being computed as expected
-TEST(TrajectoryPlannerTest, checkPathDistance){
-  TrajectoryPlannerTest* tct = setup_testclass_singleton();
-  tct->checkPathDistance();
+TEST (TrajectoryPlannerTest, checkPathDistance)
+{
+    TrajectoryPlannerTest* tct = setup_testclass_singleton();
+    tct->checkPathDistance();
 }
 
 }; //namespace

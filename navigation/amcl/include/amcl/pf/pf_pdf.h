@@ -44,27 +44,27 @@ extern "C" {
 // Gaussian PDF info
 typedef struct
 {
-  // Mean, covariance and inverse covariance
-  pf_vector_t x;
-  pf_matrix_t cx;
-  //pf_matrix_t cxi;
-  double cxdet;
+    // Mean, covariance and inverse covariance
+    pf_vector_t x;
+    pf_matrix_t cx;
+    //pf_matrix_t cxi;
+    double cxdet;
 
-  // Decomposed covariance matrix (rotation * diagonal)
-  pf_matrix_t cr;
-  pf_vector_t cd;
+    // Decomposed covariance matrix (rotation * diagonal)
+    pf_matrix_t cr;
+    pf_vector_t cd;
 
-  // A random number generator
-  //gsl_rng *rng;
+    // A random number generator
+    //gsl_rng *rng;
 
 } pf_pdf_gaussian_t;
 
 
 // Create a gaussian pdf
-pf_pdf_gaussian_t *pf_pdf_gaussian_alloc(pf_vector_t x, pf_matrix_t cx);
+pf_pdf_gaussian_t* pf_pdf_gaussian_alloc (pf_vector_t x, pf_matrix_t cx);
 
 // Destroy the pdf
-void pf_pdf_gaussian_free(pf_pdf_gaussian_t *pdf);
+void pf_pdf_gaussian_free (pf_pdf_gaussian_t* pdf);
 
 // Compute the value of the pdf at some point [z].
 //double pf_pdf_gaussian_value(pf_pdf_gaussian_t *pdf, pf_vector_t z);
@@ -73,10 +73,10 @@ void pf_pdf_gaussian_free(pf_pdf_gaussian_t *pdf);
 // deviation sigma.
 // We use the polar form of the Box-Muller transformation, explained here:
 //   http://www.taygeta.com/random/gaussian.html
-double pf_ran_gaussian(double sigma);
+double pf_ran_gaussian (double sigma);
 
 // Generate a sample from the the pdf.
-pf_vector_t pf_pdf_gaussian_sample(pf_pdf_gaussian_t *pdf);
+pf_vector_t pf_pdf_gaussian_sample (pf_pdf_gaussian_t* pdf);
 
 
 #if 0
@@ -88,30 +88,30 @@ pf_vector_t pf_pdf_gaussian_sample(pf_pdf_gaussian_t *pdf);
 // Discrete PDF info
 typedef struct
 {
-  // The list of discrete probs
-  int prob_count;
-  double *probs;
+    // The list of discrete probs
+    int prob_count;
+    double* probs;
 
-  // A random number generator
-  gsl_rng *rng;
+    // A random number generator
+    gsl_rng* rng;
 
-  // The discrete prob generator
-  gsl_ran_discrete_t *ran;
+    // The discrete prob generator
+    gsl_ran_discrete_t* ran;
 
 } pf_pdf_discrete_t;
 
 
 // Create a discrete pdf
-pf_pdf_discrete_t *pf_pdf_discrete_alloc(int count, double *probs);
+pf_pdf_discrete_t* pf_pdf_discrete_alloc (int count, double* probs);
 
 // Destroy the pdf
-void pf_pdf_discrete_free(pf_pdf_discrete_t *pdf);
+void pf_pdf_discrete_free (pf_pdf_discrete_t* pdf);
 
 // Compute the value of the probability of some element [i]
-double pf_pdf_discrete_value(pf_pdf_discrete_t *pdf, int i);
+double pf_pdf_discrete_value (pf_pdf_discrete_t* pdf, int i);
 
 // Generate a sample from the the pdf.
-int pf_pdf_discrete_sample(pf_pdf_discrete_t *pdf);
+int pf_pdf_discrete_sample (pf_pdf_discrete_t* pdf);
 #endif
 
 #ifdef __cplusplus

@@ -51,34 +51,34 @@ namespace sick_tim
 class SickTimCommonMockup : public SickTimCommon
 {
 public:
-  SickTimCommonMockup(AbstractParser* parser);
-  virtual ~SickTimCommonMockup();
+    SickTimCommonMockup (AbstractParser* parser);
+    virtual ~SickTimCommonMockup();
 
 protected:
-  virtual int init_device();
-  virtual int init_scanner();
-  virtual int close_device();
+    virtual int init_device();
+    virtual int init_scanner();
+    virtual int close_device();
 
-  /// Send a SOPAS command to the device and print out the response to the console.
-  virtual int sendSOPASCommand(const char* request, std::vector<unsigned char> * reply);
+    /// Send a SOPAS command to the device and print out the response to the console.
+    virtual int sendSOPASCommand (const char* request, std::vector<unsigned char>* reply);
 
-  /// Read a datagram from the device.
-  /**
-   * \param [in] receiveBuffer data buffer to fill
-   * \param [in] bufferSize max data size to write to buffer (result should be 0 terminated)
-   * \param [out] actual_length the actual amount of data written
-   */
-  virtual int get_datagram(unsigned char* receiveBuffer, int bufferSize, int* actual_length);
+    /// Read a datagram from the device.
+    /**
+     * \param [in] receiveBuffer data buffer to fill
+     * \param [in] bufferSize max data size to write to buffer (result should be 0 terminated)
+     * \param [out] actual_length the actual amount of data written
+     */
+    virtual int get_datagram (unsigned char* receiveBuffer, int bufferSize, int* actual_length);
 
 private:
-  ros::NodeHandle nh_;
+    ros::NodeHandle nh_;
 
-  // subscriber to "datagram" topic
-  ros::Subscriber sub_;
+    // subscriber to "datagram" topic
+    ros::Subscriber sub_;
 
-  std_msgs::String::ConstPtr datagram_msg_;
+    std_msgs::String::ConstPtr datagram_msg_;
 
-  void datagramCB(const std_msgs::String::ConstPtr &msg);
+    void datagramCB (const std_msgs::String::ConstPtr& msg);
 };
 
 } /* namespace sick_tim */

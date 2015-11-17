@@ -137,14 +137,12 @@
 	</group>
 
 	<!-- MR TIP CONTROLLER -->
-	<group ns="MR_TipController">
-		<node pkg="mr_tip_controller" name="mr_tip_controller" type="mr_tip_controller">
-			<param name="baud_rate" value="115200"/>
-			<param name="port" value="/dev/serial/by-id/usb-Arduino_Srl_Arduino_Uno_7543932393535120F172-if00"/>  	
-			<param name="debug" value="true"/>  
-			<param name="tipper_srv" value="/mrTipController/tip"/>	   	
-		</node>
-	</group>
+	<node pkg="mr_tip_controller" name="mr_tip_controller" type="mr_tip_controller">
+		<param name="baud_rate" value="115200"/>
+		<param name="port" value="/dev/serial/by-id/usb-Arduino_Srl_Arduino_Uno_7543932393535120F172-if00"/>  	
+		<param name="debug" value="true"/>  
+		<param name="tipper_srv" value="/mrTipController/tip"/>	   	
+	</node>
 
 	<!-- MR HMI -->
 	<group ns="MR_HMI">

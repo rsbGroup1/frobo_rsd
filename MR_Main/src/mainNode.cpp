@@ -403,7 +403,7 @@ int main()
 	ros::AsyncSpinner spinner(0);
 
     // ROS Spin: Handle callbacks
-    while(ros::ok) {
+    while(!ros::isShuttingDown()) {
         spinner.start();
         rate.sleep();
     }

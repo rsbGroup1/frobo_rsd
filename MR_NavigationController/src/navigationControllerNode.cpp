@@ -7,6 +7,7 @@
 #include <fstream>
 
 #include <ros/ros.h>
+#include <ros/package.h>
 #include "mr_navigation_controller/performAction.h"
 #include "mr_line_follower/followUntilQR.h"
 #include "mr_go/move.h"
@@ -45,7 +46,7 @@ public:
      */
     NavigationController() :
         pNh_ ("~"),
-        skills_ (&srv_lineUntilQR_, &srv_move_, &pub_status_)
+        skills_ (&srv_lineUntilQR_, &srv_move_, &pub_status_, &pub_initialize_)
     {
         // Get parameter names
         pNh_.param<std::string> ("lineFollowEnableService", srv_lineUntilQR_name_, "mrLineFollower/lineUntilQR");
@@ -54,59 +55,63 @@ public:
         pNh_.param<std::string> ("status", pub_status_name_, "mrNavigationController/status");
         pNh_.param<std::string> ("currentNode", pub_current_node_name_, "mrNavigationController/currentNode");
         pNh_.param<int> ("searchLimit", search_limit_, 100);
+		std::string path_to_node = ros::package::getPath("mrNavigationController");
 
         // Service
-        srv_lineUntilQR_ =
-            nh_.serviceClient<mr_line_follower::followUntilQR> (srv_lineUntilQR_name_);
+        srv_lineUntilQR_ = nh_.serviceClient<mr_line_follower::followUntilQR> (srv_lineUntilQR_name_);
         srv_move_ = nh_.serviceClient<mr_go::move> (srv_move_name_);
         srv_action_ = nh_.advertiseService (srv_action_name_, &NavigationController::performActionCallback, this);
+		
+		// Subscriber
+		sub_pose_ =nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>("amcl_pose",10,&NavigationController::poseReceived,this);
 
         // Publisher
         pub_status_ = nh_.advertise<std_msgs::String> (pub_status_name_, 10);
         pub_current_node_ = nh_.advertise<std_msgs::String> (pub_current_node_name_, 10);
+		pub_initialize_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>("initialpose",1);
 
         // Create the graph
         graph_ = new Graph (&pub_current_node_);
         createGraph();
         //graph_->showGraph();
-        /*
-                // Inialize AMCL
-                            std::ifstream localisationFile;
-                            localisationFile.open("localization.csv");
-                            ROS_INFO("Waiting for global localisation");
-                            ros::service::waitForService("global_localization",ros::Duration(5,0));
-                            poseSubscribe_ =nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>("amcl_pose",10,&NavigationController::poseReceived,this);
-                            if(localisationFile.is_open())
-                            {
-                                ros::ServiceClient initalize = nh_.serviceClient<std_srvs::Empty>("global_localization");
-                                std_srvs::Empty srv;
-                                initalize.call(srv);
+        
+		// Inialize AMCL
+		std::ifstream localisationFile;
+		//std::string path_to_file = path_to_node + 
+		localisationFile.open("localization.csv");
+		ROS_INFO("Waiting for global localisation");
+		ros::service::waitForService("global_localization",ros::Duration(5,0));
+		
+		
+		if(localisationFile.is_open())
+		{
+			ros::ServiceClient initalize = nh_.serviceClient<std_srvs::Empty>("global_localization");
+			std_srvs::Empty srv;
+			initalize.call(srv);
 
-                                // Load initialization
-                                //initalizePub_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>("initialpose",1);
-                                geometry_msgs::PoseWithCovarianceStamped p;
-                                localisationFile >> p.pose.pose.position.x;
-                                localisationFile >> p.pose.pose.position.y;
-                                localisationFile >> p.pose.pose.orientation.x;
-                                localisationFile >> p.pose.pose.orientation.y;
-                                localisationFile >> p.pose.pose.orientation.z;
-                                localisationFile >> p.pose.pose.orientation.w;
-                                p.header.frame_id = "map";
+			// Load initialization
+			geometry_msgs::PoseWithCovarianceStamped p;
+			localisationFile >> p.pose.pose.position.x;
+			localisationFile >> p.pose.pose.position.y;
+			localisationFile >> p.pose.pose.orientation.x;
+			localisationFile >> p.pose.pose.orientation.y;
+			localisationFile >> p.pose.pose.orientation.z;
+			localisationFile >> p.pose.pose.orientation.w;
+			p.header.frame_id = "map";
 
-                                ros::Duration d(6,0);
-                                d.sleep();
-                                initalizePub_.publish(p);
+			ros::Duration d(6,0);
+			d.sleep();
+			pub_initialize_.publish(p);
 
-                                localisationFile.close();
-                            }
-                            else
-                            {
-                                // global initialization
-                                ros::ServiceClient initalize = nh_.serviceClient<std_srvs::Empty>("global_localization");
-                                std_srvs::Empty srv;
-                                initalize.call(srv);
-                            }
-        */
+			localisationFile.close();
+		}
+		else
+		{
+			// global initialization
+			ros::ServiceClient initalize = nh_.serviceClient<std_srvs::Empty>("global_localization");
+			std_srvs::Empty srv;
+			initalize.call(srv);
+		}
     }
 
     ~NavigationController()
@@ -115,7 +120,7 @@ public:
     }
 
     /**
-     *
+     * Service that search for the solution and execute it
      */
     bool performActionCallback (mr_navigation_controller::performAction::Request& req,
                                 mr_navigation_controller::performAction::Response& res)
@@ -360,7 +365,6 @@ public:
 
     /**
      * @brief Callback for new poses from AMCL. Used to store the pose for initialization on next start
-     * @param p
      */
     void poseReceived (const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& p)
     {
@@ -368,6 +372,9 @@ public:
     }
 
 
+	/**
+	 * Stores the current position in the localisation file
+	 */
     void storePosition()
     {
         ROS_INFO ("Storing position");
@@ -388,11 +395,10 @@ public:
 
 private:
     ros::NodeHandle nh_, pNh_;
-    ros::Publisher pub_status_, pub_current_node_;
+	ros::Publisher pub_status_, pub_current_node_, pub_initialize_;
     ros::ServiceClient srv_lineUntilQR_, srv_move_;
     ros::ServiceServer srv_action_;
-    ros::Subscriber poseSubscribe_;
-    //ros::Publisher initalizePub_;
+    ros::Subscriber sub_pose_;
 
     std::string srv_lineUntilQR_name_, srv_move_name_, pub_status_name_,
         srv_action_name_, pub_current_node_name_;

@@ -86,13 +86,6 @@ bool tipCallback(mr_tip_controller::tip::Request& req, mr_tip_controller::tip::R
         _queue.enqueue ("d");
     }
 
-   
-    std::string read;
-    while(_serialConnection->read (read) != 'd'){
-        std::cout << "Read: " << read << std::endl;
-        
-    } ; // Wait for answer 'd'
-
     _waitMutex.lock();
     bool tipperDone = _tipperDone;
     _waitMutex.unlock();
@@ -157,40 +150,12 @@ void readSerialThread()
         try
         {
             tempString = _serialConnection->read(10);
-
-            if(tempString.size() == 1)
+            if(tempString.size() > 1 && tempString.find("d")!=std::string::npos)
             {
-                msg[i] = tempString[0];
-
-                if(msg[i] == '\n')
-                {
-                    if(compareMsg (msg, "d\n"))
-                    {
-                        _waitMutex.lock();
-                        _tipperDone = true;
-                        _waitMutex.unlock();
-                    }
-
-                    // Clear data
-                    i = 0;
-                }
-                else	// Wait for new character
-                    i++;
+                _waitMutex.lock();
+                _tipperDone = true;
+                _waitMutex.unlock();
             }
-            else
-            {
-                // Clear if buffer is full without newline
-                if(i == DATA_LENGTH - 1)
-                {
-                    i = 0;
-
-                    for(unsigned int k = 0; k < DATA_LENGTH; k++)
-                        msg[k] = ' ';
-
-                    msg[DATA_LENGTH] = '\n';
-                }
-            }
-
             // Signal interrupt point
             boost::this_thread::interruption_point();
         }

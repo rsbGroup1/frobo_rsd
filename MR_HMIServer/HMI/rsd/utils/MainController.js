@@ -53,30 +53,29 @@ rsdNamespace.SetTarget = function() {
 rsdNamespace.ToggleHighlighting = function( selector ) {
 
     var id;
-
-    //console.log( 'selector:' + selector );
+    console.log( 'selector:' + selector );
 
     switch( selector ) {
 
-        case '0':
+        case 0:
             id = rsdNamespace.robotCellThree;
             break;
-        case '1':
+        case 1:
             id = rsdNamespace.robotCellTwo;
             break;
-        case '2':
+        case 2:
             id = rsdNamespace.robotCellOne;
             break;
-        case '3':
+        case 3:
             id = rsdNamespace.trackZoneOne;
             break;
-        case '4':
+        case 4:
             id = rsdNamespace.trackZoneTwo;
             break;
-        case '5':
+        case 5:
             id = rsdNamespace.cameraZone;
             break;
-        case '6':
+        case 6:
             id = rsdNamespace.box;
             break;
         default:
@@ -85,7 +84,7 @@ rsdNamespace.ToggleHighlighting = function( selector ) {
 
     }
 
-    //console.log( "id: " + id );
+    console.log( "id: " + id );
 
     var style = $( '#' + id ).attr( 'style' );
     var textStyle = $( '#' + id + 'Label' ).attr( 'style' );

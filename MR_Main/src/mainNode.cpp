@@ -90,19 +90,6 @@ public:
         _obstacleDetectorSubscriber = _nh.subscribe<std_msgs::String> (_obstacleDetectorSub, 10, &MainNode::obstacleCallback, this);
         _batterySubscriber = _nh.subscribe<std_msgs::Float32> (_batterySub, 10, &MainNode::_batteryCallback, this);
 
-        // FIXME Garbage used for testing, REMOVE THIS!!!
-        ros::Rate r(0.1); // 0.1 hz
-        temp = 1
-        while ( ros::ok() )
-        {
-
-            if( temp > 7 ) temp = 1;
-            HMIUpdatePosition( temp );
-            temp++;
-            r.sleep();
-
-        }
-
     }
 
     ~MainNode()
@@ -430,16 +417,24 @@ int main()
     MainNode mn;
 
     // Rate
-    ros::Rate rate (30);
+    ros::Rate rate (0.5);
 
     // Multithreading
     ros::AsyncSpinner spinner (0);
 
+    int i = 0;
     // ROS Spin: Handle callbacks
     while (!ros::isShuttingDown())
     {
+      
         spinner.start();
+	//mn.HMIUpdateIcons((HMI_ICONS)i);
+	//mn.HMIUpdateSafety((HMI_SAFETY) i);
+    mn.HMISendError("BURNING!!!");
+    mn.HMISendInfo("Ready to rollllll");
+    mn.HMISendWarning("Almost burning");
         rate.sleep();
+	(i<3)?i++:i=0;
     }
 
     // Return

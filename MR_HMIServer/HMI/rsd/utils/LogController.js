@@ -84,20 +84,23 @@ rsdNamespace.RemoveFilters = function( selector ) {
 
 rsdNamespace.IndicateStatus = function( code ) {
 
+
     selector = "#indicator_" + code[0];
+    //console.log(selector);
+    //console.log(String(code));
     $(selector).toggleClass( "statusActiveNormal" );
 
-    if( code[2] != rsdNamespace.IGNORE ) {
+    if( code[1] != rsdNamespace.IGNORE ) {
 
-        if( code[2] == rsdNamespace.SAFE ) {
+        if( code[1] == rsdNamespace.SAFE ) {
 
             $('#indicator_7').removeClass( "statusActiveWarning statusActiveError" );
 
-        } else if( code[2] == rsdNamespace.PROXIMITY_ALERT ) {
+        } else if( code[1] == rsdNamespace.PROXIMITY_ALERT ) {
 
             $('#indicator_7').removeClass( "statusActiveError" ).addClass( "statusActiveWarning" );
 
-        } else if( code[2] == rsdNamespace.COLLIDING ) {
+        } else if( code[1] == rsdNamespace.COLLIDING ) {
 
             // If there was an error,react:
             //     The SetAvailabilitySwitch method will take care of the
@@ -105,6 +108,7 @@ rsdNamespace.IndicateStatus = function( code ) {
             rsdNamespace.SetAvailabilitySwitch( false );
 
             $('#indicator_7').removeClass( "statusActiveWarning" ).addClass( "statusActiveError" );
+        }
 
     }
 

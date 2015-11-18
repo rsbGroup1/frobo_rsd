@@ -120,11 +120,13 @@ class MyServerProtocol( WebSocketServerProtocol ):
                 elif rightButton == u"y":
                     tipper( False )
                 elif rightButton == u"a":
-                    setManualMode( False )
-                    publishCommand( pubModeUpdate, u"start" )
+                    if isManual == True:
+                        setManualMode( False )
+                        publishCommand( pubModeUpdate, u"start" )
                 elif rightButton == u"b":
-                    setManualMode( False )
-                    publishCommand( pubModeUpdate, u"stop" )
+                    if isManual == True:
+                        setManualMode( False )
+                        publishCommand( pubModeUpdate, u"stop" )
 
     def onClose( self, wasClean, code, reason ):
         global actuationEna
@@ -161,6 +163,8 @@ class actuationThread( threading.Thread ):
         self._stop = threading.Event()
 
     def stop( self ):
+        # global actuationEna
+        # actuationEna = False
         print "Stoping " + self.name
         self._stop.set()
 

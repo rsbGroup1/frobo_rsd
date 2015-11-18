@@ -260,14 +260,10 @@ public:
 			HMIUpdateIcons (tipper);
 			tip_obj.request.direction = true;
 			_serviceTipper.call (tip_obj);
-			while(tip_obj.response.status != true) 
-				;; //Wait
-				// Tip Down
-				tip_obj.request.direction = false;
+			// Tip Down
+			tip_obj.request.direction = false;
 			_serviceTipper.call (tip_obj);
-			while(tip_obj.response.status != true) 
-				;; //Wait
-				HMIUpdateIcons (null);
+			HMIUpdateIcons (null);
 			
 			// Checks if the battery is the critic level
 			checkBattery (_batteryCritic, action);

@@ -119,7 +119,7 @@
 	    <param name="max_ang" type="double" value="1.6" />
 	    <param name="intensity" type="bool" value="True" />
 	    <param name="skip" type="int" value="0" />
-	    <param name="frame_id" type="str" value="base_footprint" />
+	    <param name="frame_id" type="str" value="laser_frame" />
 	    <param name="time_offset" type="double" value="-0.001" />
 	    <param name="publish_datagram" type="bool" value="False" />
 	    <param name="port" type="str" value="/dev/lidar" />
@@ -251,6 +251,48 @@
 		<param name="currentNode" value="mrNavigationController/currentNode"/>
 		<param name="searchLimit" value="100"/>
 	</node>
+
+	<node pkg="move_base" name="move_base" type="move_base" output="screen">
+		<!--remap from="/scan" to="/scan_filtered" />
+		<param name="footprint_padding" value="0.01" />
+		<param name="controller_frequency" value="10.0" />
+		<param name="controller_patience" value="3.0" />
+		
+		<param name="oscillation_timeout" value="30.0" />
+		<param name="oscillation_distance" value="0.5" /-->
+		<rosparam file="../Navigation_Setup/move_base_config/move_base_params.yaml" command="load" />
+    		<param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS " />  
+
+		<rosparam file="../Navigation_Setup/move_base_config/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+		<rosparam file="../Navigation_Setup/move_base_config/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+		<rosparam file="../Navigation_Setup/move_base_config/local_costmap_params.yaml" command="load"/>
+		<rosparam file="../Navigation_Setup/move_base_config/global_costmap_params.yaml" command="load"/>
+		<!--rosparam file="../Navigation_Setup/move_base_config/base_local_planner_params.yaml" command="load"/-->
+		<rosparam file="../Navigation_Setup/move_base_config/dwa_local_planner_params.yaml" command="load"/>
+	</node>
+
+
+	<!-- LIDAR TF-->
+	<node pkg="tf" type="static_transform_publisher" name="laser_transform" args="0.25 0 0 0 0 0 base_footprint laser_frame 50"  >
+	</node>
+
+	<node pkg="tf" type="static_transform_publisher" name="imu_transform" args="0.10 0 0 0 0 0 base_footprint imu_link 50"  >
+	</node>
+
+    <node pkg="map_server" type="map_server" name="map_server" args="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/maps/frontal_map_big_edited.yaml" output="screen"/>
+
+    <node pkg="amcl" type="amcl" name="amcl" output="screen">
+		<param name="odom_alpha1" value="0.8"/>
+		<param name="odom_alpha2" value="0.8"/>
+		<param name="odom_alpha3" value="0.8"/>
+		<param name="odom_alpha4" value="0.8"/>
+		<param name="min_particles" value="30"/>
+
+	      <param name="base_frame_id" value="/base_footprint"/>
+	      <param name="odom_frame_id" value="/odom"/>
+	      <param name="initial_pose_a" value="-1.9"/>
+
+    </node>
 
 </launch>
 

@@ -215,7 +215,6 @@ public:
             checkBattery (_batteryCritic, action);
 
             // Go to the dispenser position
-
             action = "bricks";
             perform_action_obj.request.action = action;
             _servicePerformAction.call (perform_action_obj);
@@ -223,17 +222,13 @@ public:
             // Checks if the battery is the critic level
             checkBattery (_batteryCritic, action);
 
-
             // Send the robot to the correct wc conveyor
             if (msg.cell == 1)
                 action = "wc1_conveyor";
-
             if (msg.cell == 2)
                 action = "wc2_conveyor";
-
             if (msg.cell == 3)
                 action = "wc3_conveyor";
-
             perform_action_obj.request.action = action;
             _servicePerformAction.call (perform_action_obj);
 
@@ -241,9 +236,13 @@ public:
             HMIUpdateIcons (tipper);
             tip_obj.request.direction = true;
             _serviceTipper.call (tip_obj);
+			while(tip_obj.response.status != true) 
+				;; //Wait
             // Tip Down
             tip_obj.request.direction = false;
             _serviceTipper.call (tip_obj);
+			while(tip_obj.response.status != true) 
+				;; //Wait
             HMIUpdateIcons (null);
 
             // Checks if the battery is the critic level
@@ -252,16 +251,18 @@ public:
             // Go to the robot
             if (msg.cell == 1)
                 action = "wc1_robot";
-
             if (msg.cell == 2)
                 action = "wc2_robot";
-
             if (msg.cell == 3)
                 action = "wc3_robot";
-
             perform_action_obj.request.action = action;
             _servicePerformAction.call (perform_action_obj);
 
+			// Go to charge position
+			action = "charge";
+			perform_action_obj.request.action = action;
+			_servicePerformAction.call (perform_action_obj);
+			
             // If the battery's level is under the threshold go back home
             checkBattery (_batteryLow, "");
         }

@@ -89,6 +89,20 @@ public:
         _mesSubscriber = _nh.subscribe<mr_mes_client::server> (_mesSub, 10, &MainNode::mesCallback, this);
         _obstacleDetectorSubscriber = _nh.subscribe<std_msgs::String> (_obstacleDetectorSub, 10, &MainNode::obstacleCallback, this);
         _batterySubscriber = _nh.subscribe<std_msgs::Float32> (_batterySub, 10, &MainNode::_batteryCallback, this);
+
+        // FIXME Garbage used for testing, REMOVE THIS!!!
+        ros::Rate r(0.1); // 0.1 hz
+        temp = 1
+        while ( ros::ok() )
+        {
+
+            if( temp > 7 ) temp = 1;
+            HMIUpdatePosition( temp );
+            temp++;
+            r.sleep();
+
+        }
+
     }
 
     ~MainNode()

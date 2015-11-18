@@ -16,9 +16,9 @@ rsdNamespace.RC_1 = "5";
 rsdNamespace.RC_2 = "6";
 rsdNamespace.RC_3 = "7";
 
-rsdNamespace.SAFE = 1;
-rsdNamespace.PROXIMITY_ALERT = 2;
-rsdNamespace.COLLIDING = 3;
+rsdNamespace.SAFE = '1';
+rsdNamespace.PROXIMITY_ALERT = '2';
+rsdNamespace.COLLIDING = '3';
 
 // rsdNamespace.ON = "1";
 // rsdNamespace.OFF = "2";
@@ -130,7 +130,9 @@ rsdNamespace.StartListening = function() {
                             var activity_code = messages[i].substr(2, 2);
                             if( activity_code != rsdNamespace.IGNORE ) {
 
-                                rsdNamespace.IndicateStatus( activity_code );
+                                rsdNamespace.IndicateStatus
+
+                                ( activity_code );
 
                             }
 

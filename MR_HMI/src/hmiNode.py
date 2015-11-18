@@ -51,6 +51,10 @@ angularVelocity = 0.8
 #tipperTilted = False
 isManual = False
 actuationEna = False
+er = True
+
+threadCounter = 0
+aThreads = []
 
 class MyServerProtocol( WebSocketServerProtocol ):
 
@@ -84,6 +88,8 @@ class MyServerProtocol( WebSocketServerProtocol ):
 
             if messageIn["messageType"] == STATUS_REQUEST:
 
+                handleEmergencySituation( messageIn["data"]["resume"] ) # Handle signal from the emergency switch
+
                 massageOutRaw = {
                     "messageType":"status_response",
                     "data":{
@@ -116,15 +122,23 @@ class MyServerProtocol( WebSocketServerProtocol ):
                 elif leftButton == u"l":
                     drive( 0.0, angularVelocity )
                 elif rightButton == u"x":
+                    stop_aThreads()
+                    setManualMode( False )
                     tipper( True )
                 elif rightButton == u"y":
+                    stop_aThreads()
+                    setManualMode( False )
                     tipper( False )
                 elif rightButton == u"a":
-                    setManualMode( False )
-                    publishCommand( pubModeUpdate, u"start" )
+                    stop_aThreads()
+                    if isManual == True:
+                        setManualMode( False )
+                        publishCommand( pubModeUpdate, u"start" )
                 elif rightButton == u"b":
-                    setManualMode( False )
-                    publishCommand( pubModeUpdate, u"stop" )
+                    stop_aThreads()
+                    if isManual == True:
+                        setManualMode( False )
+                        publishCommand( pubModeUpdate, u"stop" )
 
     def onClose( self, wasClean, code, reason ):
         global actuationEna
@@ -147,9 +161,9 @@ class MyServerProtocol( WebSocketServerProtocol ):
             self.updateActuation( enaSignal )
 
         if enaSignal == True and posession == True:
-            print "Actuation enabled."
+            print "Actuation enabled. [NOT PUBLISHED]"
         else:
-            print "Actuation disabled."
+            print "Actuation disabled. [NOT PUBLISHED]"
 
 class actuationThread( threading.Thread ):
 
@@ -158,26 +172,27 @@ class actuationThread( threading.Thread ):
         self.lock = threading.Lock()
         self.threadID = threadID
         self.name = name
-        self._stop = threading.Event()
+        self.stopFlag = threading.Event()
+
+        print "Starting " + self.name
 
     def stop( self ):
         print "Stoping " + self.name
-        self._stop.set()
+        self.stopFlag.set()
 
     def run( self ):
-
         print "Starting " + self.name
-        while not rospy.is_shutdown():
+        while not self.stopFlag.is_set():
 
             self.publishActuationEna()
             time.sleep(0.033)
 
-        stopServer()
+        # stopServer()
 
     def publishActuationEna( self ):
         global actuationEna
 
-        print "actuationEna: " + str(actuationEna)
+        print "actuationEna: " + str(actuationEna) + " [PUBLISHED]"
 
         self.lock.acquire()
         msg = createBoolStampedMessage( actuationEna )
@@ -210,23 +225,25 @@ def setManualMode( newState ):
         print( "Manual mode CHANGED" )
         isManual = newState
         if( isManual ):
-            pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 1 )
-            pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
-            aThread.start()
+            # pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 1 )
+            # pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
+            start_an_aThread()
             publishCommand( pubModeUpdate, u"manual" )
             print( "Manual mode is ON" )
         else:
             actuationEna = False
-            aThread.stop()
-            pubCmdVelUpdate.unregister()
-            pubActuationEna.unregister()
+            stop_aThreads()
+            #pubCmdVelUpdate.unregister()
+            #pubActuationEna.unregister()
             print( "Manual mode is OFF" )
 
 def drive( linearX, angularZ ):
     global pubCmdVelUpdate
+    global actuationEna
+
+    setManualMode( True )
 
     msg = createdTwistedCommand( linearX, angularZ )
-    setManualMode( True )
     # print( "Msg *to be published: " + str(msg.twist.linear.x) )
     publishCommand( pubCmdVelUpdate, msg )
     # print( "Msg published OK")
@@ -272,11 +289,42 @@ def logCallback( data ):
     # print(logMessages)
     # print(newData)
 
+# TODO check if this works, and publish the messages
+def handleEmergencySituation( signal ):
+    global er
+
+    # print "resume: " + str(signal)
+
+    if signal != er:
+        er = signal
+
+    # TODO publish it here
+
 def publishCommand( rosPublisher, command ):
     rosPublisher.publish( command )
 
 def stopServer():
     reactor.stop()
+
+def stop_aThreads():
+    global aThreads
+
+    for temp in aThreads:
+        temp.stop()
+
+    del aThreads[:]
+
+def start_an_aThread():
+    global aThreads
+    global threadCounter
+
+    stop_aThreads()
+
+    t = actuationThread( threadCounter, "actuation_thread_" + str(threadCounter) )
+    t.start()
+
+    aThreads.append( t )
+    threadCounter += 1
 
 def initHMI():
 
@@ -320,14 +368,15 @@ def initHMI():
 
     # Register Publisers
     pubModeUpdate = rospy.Publisher( MODE_UPDATE_PUB, String, queue_size = 1 )
+    pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 1 )
+    pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
 
     # Service Deffinitions
     rospy.wait_for_service(TIPPER_UPDATE_SRV)
     srvTipper = rospy.ServiceProxy( TIPPER_UPDATE_SRV, tip )
 
     # Prepare the actuation in another thread
-    aThread = actuationThread( 1, "actuation_thread" )
-
+    # aThread = actuationThread( 1, "actuation_thread" )
 
     log.startLogging(sys.stdout)
 

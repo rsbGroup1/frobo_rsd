@@ -4,7 +4,7 @@ from distutils.core import setup
 from catkin_pkg.python_setup import generate_distutils_setup
 
 d = generate_distutils_setup(
-  scripts=['src/frobitInterfaceNode.py'],
+  scripts=['src/frobit_interface_node.py'],
 )
 
 setup(**d)

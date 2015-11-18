@@ -51,6 +51,11 @@ public:
      */
     bool goToFreePosition (double x, double y, double yaw);
 
+    /**
+     *
+     */
+    bool setInitialPoseAMCL (double x, double y, double yaw);
+
 private:
     ros::ServiceClient* srv_lineUntilQR_;
     ros::ServiceClient* srv_move_;

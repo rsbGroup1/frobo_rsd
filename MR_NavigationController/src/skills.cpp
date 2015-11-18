@@ -143,4 +143,20 @@ bool Skills::goToFreePosition (double x, double y, double yaw)
 }
 
 
+bool Skills::setInitialPoseAMCL (double x, double y, double yaw)
+{
+    std::cout << "setting initial pose for AMCL" << std::endl;
+    ROS_INFO ("setting initial pose for AMCL to(%f, %f, %f)", x, y, yaw);
+    bool success = false;
 
+
+    geometry_msgs::PoseWithCovarianceStamped p;
+	p.pose.pose.position.x = x;
+	p.pose.pose.position.y = y;
+	p.pose.pose.orientation = ;
+    p.header.frame_id = "map";
+
+	initalizePub_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>("initialpose",1);
+    initalizePub_.publish(p);
+	success = true;
+}

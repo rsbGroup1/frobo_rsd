@@ -55,7 +55,7 @@ public:
         pNh_.param<std::string> ("status", pub_status_name_, "mrNavigationController/status");
         pNh_.param<std::string> ("currentNode", pub_current_node_name_, "mrNavigationController/currentNode");
         pNh_.param<int> ("searchLimit", search_limit_, 100);
-		std::string path_to_node = ros::package::getPath("mrNavigationController");
+		//std::string path_to_node = ros::package::getPath("mrNavigationController");
 
         // Service
         srv_lineUntilQR_ = nh_.serviceClient<mr_line_follower::followUntilQR> (srv_lineUntilQR_name_);

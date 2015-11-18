@@ -243,14 +243,26 @@
 	</group>
 
 	<!-- MR Navigation Controller -->
-	<node pkg="mr_navigation_controller" name="mrNavigationController" type="mr_navigation_controller" output="screen">
-		<param name="lineFollowEnableService" value="mrLineFollower/lineUntilQR"/>
-		<param name="moveService" value="mrGo/move"/>
-		<param name="performAction" value="mrNavigationController/performAction"/>
-		<param name="status" value="mrNavigationController/status"/>
-		<param name="currentNode" value="mrNavigationController/currentNode"/>
-		<param name="searchLimit" value="100"/>
-	</node>
+	<group ns="MR_NavigationController">
+		<node pkg="mr_navigation_controller" name="mrNavigationController" type="mr_navigation_controller" output="screen">
+			<param name="lineFollowEnableService" value="mrLineFollower/lineUntilQR"/>
+			<param name="moveService" value="mrGo/move"/>
+			<param name="performAction" value="mrNavigationController/performAction"/>
+			<param name="status" value="mrNavigationController/status"/>
+			<param name="currentNode" value="mrNavigationController/currentNode"/>
+			<param name="searchLimit" value="100"/>
+		</node>
+	</group>
+
+	<!-- MR MES Client -->
+	<group ns="MR_MES_Client">
+		<node pkg="mr_mes_client" name="mr_mes_client" type="mr_mes_client">
+			<param name="mesPub" value="/mrMESClient/msgFromServer"/>
+			<param name="mesSub" value="/mrMESClient/msgToServer"/>
+			<param name="serverIP" value="10.115.253.233"/>
+			<param name="serverPort" value="21240"/>
+		</node>
+	</group>	
 
 </launch>
 

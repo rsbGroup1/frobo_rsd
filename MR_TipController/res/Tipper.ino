@@ -6,8 +6,9 @@ int supply_tipped = 4; //2nd leg for the tipped sensor
 int supply_level = 5; //2nd leg for the level sensor
 int is_tipped = 6 ;//sensor pin when tipped
 int is_level = 7 ;// sensor pin when normal
-int ramp = 67;
-int ning = 11;
+ int ramp = 67;
+ int ning = 11;
+
 Stepper stepmotor(stepsPerRevolution, 8, 9, 10, 11);  //Stepper(int number_of_steps, int motor_pin_1, int motor_pin_2, int motor_pin_3, int motor_pin_4, int use_half_step);
 
 
@@ -56,38 +57,36 @@ void loop() {
   
 void tip_load()
 {
+        ramp =67;
+        ning = 11;
+       
 	while (digitalRead(is_tipped) != LOW )
 	{
+                
 		digitalWrite(en_a, HIGH);
 		digitalWrite(en_b, HIGH);
-		//stepmotor.setSpeed(80);
-		//stepmotor.step(stepsPerRevolution);
-		// x=x+10;
-		// half_step(8,9,10,11);
 		half_step(8,9,10,11);
-
-		// Serial.println("Tipping"); 
-		//Serial.println(x);
 		digitalWrite(en_a, LOW);
 		digitalWrite(en_b, LOW);  
+                 
+                
 	}
 	Serial.println("d");
+	return;
 }
    
 void return_to_level()
-{
+{ 
+        ramp = 67;
+        ning = 11;
 	while(digitalRead(is_level) != LOW)
 	{
 		digitalWrite(en_a, HIGH);
 		digitalWrite(en_b, HIGH);
-		//stepmotor.setSpeed(60);
-		full_step(10,11,8,9);
-		full_step(10,11,8,9);
-		//stepmotor.step(-stepsPerRevolution);
-		//   Serial.println("Reversing");
+		half_step(10,11,8,9);
 		digitalWrite(en_a, LOW);
 		digitalWrite(en_b, LOW);  
-		return;
+		
 	} 
 
 	Serial.println("d");
@@ -96,106 +95,169 @@ void return_to_level()
    
 void half_step(int pin1, int pin2, int pin3, int pin4)
 {
-	int timer_delay=3;
+	int timer_delay=2;
 
 	digitalWrite(pin1, HIGH);
 	digitalWrite(pin2, LOW);  //1
 	digitalWrite(pin3, HIGH);
 	digitalWrite(pin4, LOW);
-	delay(timer_delay);
-	//Serial.println(ramp);
+	delay(timer_delay+ramp);
+        
+//          if (ramp>0) {
+//  	     ramp= ramp-ning;
+//          }
+//  	  if (ning>0){   
+//  	     ning--;
+//  	  }
+//	
 	digitalWrite(pin1, LOW);
 	digitalWrite(pin2, LOW);
 	digitalWrite(pin3, HIGH);  //2
 	digitalWrite(pin4, LOW);
-	delay(timer_delay);
-	// Serial.println(ramp);
+	delay(timer_delay+ramp);
+        
+//          if (ramp>0) {
+//  	     ramp= ramp-ning;
+//          }
+//  	  if (ning>0){   
+//  	     ning--;
+//  	  }
+//	
 	digitalWrite(pin1, LOW);
 	digitalWrite(pin2, HIGH);  //3
 	digitalWrite(pin3, HIGH);
 	digitalWrite(pin4, LOW);
-	delay(timer_delay);
-	//Serial.println(ramp);
+	delay(timer_delay+ramp);
+        
+          if (ramp>0) {
+  	     ramp= ramp-ning;
+          }
+  	  if (ning>0){   
+  	     ning--;
+  	  }
+	
 	digitalWrite(pin1, LOW);
 	digitalWrite(pin2, HIGH);   //4
 	digitalWrite(pin3, LOW);
 	digitalWrite(pin4, LOW);
-	delay(timer_delay);
-	// Serial.println(ramp);
+	delay(timer_delay+ramp);
+        
+          if (ramp>0) {
+  	     ramp= ramp-ning;
+          }
+  	  if (ning>0){   
+  	     ning--;
+  	  }
+	
 	digitalWrite(pin1, LOW);
 	digitalWrite(pin2, HIGH);   //5
 	digitalWrite(pin3, LOW);
 	digitalWrite(pin4, HIGH);
-	delay(timer_delay);
-	// Serial.println(ramp);
+	delay(timer_delay+ramp);
+        
+          if (ramp>0) {
+  	     ramp= ramp-ning;
+          }
+  	  if (ning>0){   
+  	     ning--;
+  	  }
+	
+	
 	digitalWrite(pin1, LOW);
 	digitalWrite(pin2, LOW);  //6
 	digitalWrite(pin3, LOW);
 	digitalWrite(pin4, HIGH);
-	delay(timer_delay);
-	// Serial.println(ramp);
+	delay(timer_delay+ramp);
+        
+          if (ramp>0) {
+  	     ramp= ramp-ning;
+          }
+  	  if (ning>0){   
+  	     ning--;
+  	  }
+	
 	digitalWrite(pin1, HIGH);
 	digitalWrite(pin2, LOW);   //7
 	digitalWrite(pin3, LOW);
 	digitalWrite(pin4, HIGH);
-	delay(timer_delay);
-	//Serial.println(ramp);
+	delay(timer_delay+ramp);
+        
+          if (ramp>0) {
+  	     ramp= ramp-ning;
+          }
+  	  if (ning>0){   
+  	     ning--;
+  	  }
+	
 	digitalWrite(pin1, HIGH);
 	digitalWrite(pin2, LOW);
 	digitalWrite(pin3, LOW);
 	digitalWrite(pin4, LOW);
-	delay(timer_delay);
-	// Serial.println(ramp);
-	// if (ramp>0) {
-	// ramp= ramp-ning;
-	//if (ning>0){   
-	// ning--;
-	//}
-	//}
+	delay(timer_delay+ramp);
+        
+          if (ramp>0) {
+  	     ramp= ramp-ning;
+          }
+  	  if (ning>0){   
+  	     ning--;
+  	  }
+	
+	
 	return;
 }
      
 
 void full_step(int pin1, int pin2, int pin3, int pin4) 
 {
-	int timer_delay=3;
-	digitalWrite(pin1, HIGH);
+	int timer_delay=2;
+	
+        digitalWrite(pin1, HIGH);
 	digitalWrite(pin2, LOW);
 	digitalWrite(pin3, HIGH);
 	digitalWrite(pin4, LOW);
-	delay(timer_delay);
-	Serial.println(ramp);
-
+	delay(timer_delay+ramp);
+	 if (ramp>0) {
+	 ramp= ramp-ning;
+        }
+	if (ning>0){   
+	 ning--;
+	}
+	
 	digitalWrite(pin1, LOW);
 	digitalWrite(pin2, HIGH);
 	digitalWrite(pin3, HIGH);
 	digitalWrite(pin4, LOW);
 	delay(timer_delay+ramp);
-	Serial.println(ramp);
+	 if (ramp>0) {
+	 ramp= ramp-ning;
+        }
+	if (ning>0){   
+	 ning--;
+	}
 
 	digitalWrite(pin1, LOW);
 	digitalWrite(pin2, HIGH);
 	digitalWrite(pin3, LOW);
 	digitalWrite(pin4, HIGH);
 	delay(timer_delay+ramp);
-	Serial.println(ramp);
-
+	 if (ramp>0) {
+	 ramp= ramp-ning;
+        }
+	if (ning>0){   
+	 ning--;
+	}
 	digitalWrite(pin1, HIGH);
 	digitalWrite(pin2, LOW);
 	digitalWrite(pin3, LOW);
 	digitalWrite(pin4, HIGH);
 	delay(timer_delay+ramp);
-	Serial.println(ramp);
-
-	if (ramp>0) 
-	{
-		ramp= ramp-ning;
+	 if (ramp>0) {
+	 ramp= ramp-ning;
+        }
+	if (ning>0){   
+	 ning--;
 	}
-
-	if (ning>0)
-	{   
-		ning--;
-	}
+	
 	return;
 }
 

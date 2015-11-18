@@ -7,6 +7,7 @@
 #include <fstream>
 
 #include <ros/ros.h>
+#include <ros/package.h>
 #include "mr_navigation_controller/performAction.h"
 #include "mr_line_follower/followUntilQR.h"
 #include "mr_go/move.h"
@@ -54,6 +55,7 @@ public:
         pNh_.param<std::string> ("status", pub_status_name_, "mrNavigationController/status");
         pNh_.param<std::string> ("currentNode", pub_current_node_name_, "mrNavigationController/currentNode");
         pNh_.param<int> ("searchLimit", search_limit_, 100);
+		std::string path_to_node = ros::package::getPath("mrNavigationController");
 
         // Service
         srv_lineUntilQR_ = nh_.serviceClient<mr_line_follower::followUntilQR> (srv_lineUntilQR_name_);
@@ -75,9 +77,11 @@ public:
         
 		// Inialize AMCL
 		std::ifstream localisationFile;
+		//std::string path_to_file = path_to_node + 
 		localisationFile.open("localization.csv");
 		ROS_INFO("Waiting for global localisation");
 		ros::service::waitForService("global_localization",ros::Duration(5,0));
+		
 		
 		if(localisationFile.is_open())
 		{
@@ -86,7 +90,6 @@ public:
 			initalize.call(srv);
 
 			// Load initialization
-			
 			geometry_msgs::PoseWithCovarianceStamped p;
 			localisationFile >> p.pose.pose.position.x;
 			localisationFile >> p.pose.pose.position.y;

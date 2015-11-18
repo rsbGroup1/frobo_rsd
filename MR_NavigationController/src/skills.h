@@ -20,7 +20,7 @@ public:
      *
      */
     Skills (ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move,
-			ros::Publisher* pub_status, ros::Publisher* pub_initialize);
+			ros::Publisher* pub_status, ros::Publisher* pub_initialize );
 
     /**
      *

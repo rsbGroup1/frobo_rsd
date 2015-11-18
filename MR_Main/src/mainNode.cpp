@@ -478,7 +478,7 @@ int main()
     MainNode* mn = new MainNode();
 
     // Rate
-    ros::Rate rate (0.5);
+    ros::Rate rate (30);
 
     // Multithreading
     ros::AsyncSpinner spinner (0);
@@ -491,13 +491,7 @@ int main()
 		
 		// Spin
         spinner.start();
-    	//mn.HMIUpdateIcons((HMI_ICONS)i);
-    	//mn.HMIUpdateSafety((HMI_SAFETY) i);
-        //mn.HMISendError("BURNING!!!");
-        //mn.HMISendInfo("Ready to rollllll");
-        //mn.HMISendWarning("Almost burning");
         rate.sleep();
-	    //(i<3)?i++:i=0;
     }
 
     // Return

@@ -1,6 +1,7 @@
 #include "skills.h"
 
 #include "std_msgs/String.h"
+#include "geometry_msgs/PoseWithCovarianceStamped.h"
 
 #define M_PI		3.14159265358979323846
 #define DEG_TO_RAD	(M_PI/180.0)
@@ -8,12 +9,12 @@
 
 
 Skills::Skills (ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move,
-                ros::Publisher* pub_status
-               )
+                ros::Publisher* pub_status, ros::Publisher* pub_initialize )
 {
     srv_lineUntilQR_ = srv_lineUntilQR;
     srv_move_ = srv_move;
     pub_status_ = pub_status;
+	pub_initialize_ = pub_initialize;
 
     // action client for move_base
     move_base_actionclient_ = new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> ("move_base", true);
@@ -79,38 +80,10 @@ bool Skills::goToFreePosition (double x, double y, double yaw)
     goal.target_pose.header.frame_id = "map";
     goal.target_pose.header.stamp = ros::Time::now();
 
-
-
     if (move_base_actionclient_->waitForServer (ros::Duration (5, 0)))
     {
-
         move_base_actionclient_->sendGoal (goal);
         bool finished = move_base_actionclient_->waitForResult();
-        /* ORIGINAL
-                move_base_actionclient_->waitForResult();
-                if(move_base_actionclient_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-                {
-                    success = true;
-                    std_msgs::String msg;
-                    //msg.data = "free_navigation " + std::to_string(x) + " " +  std::to_string(y);
-        			msg.data = "free_navigation";
-                    pub_status_->publish(msg);
-                }
-                else
-                {
-                    ROS_WARN("Free navigation was unable to achieve goal(%f, %f, %f)",x,y,yaw);
-        	    //DSW TEsting
-        	    move_base_msgs::MoveBaseGoal recovery;
-        	    recovery.target_pose.pose.position.x = -0.30;
-        	    recovery.target_pose.pose.position.y = -2.5;
-        	    recovery.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw(1.6);
-        	    recovery.target_pose.header.frame_id ="map";
-        	    recovery.target_pose.header.stamp = ros::Time::now();
-        	    move_base_actionclient_->sendGoal(recovery);
-        	    move_base_actionclient_->sendGoal(goal);
-                    ROS_WARN("Free navigation was unable to achieve goal (%f, %f, %f)",x,y,yaw);
-                }
-        */
         // DSW TEsting: move to recovery position then try again
         move_base_msgs::MoveBaseGoal recovery;
         recovery.target_pose.pose.position.x = 0.25;
@@ -149,14 +122,13 @@ bool Skills::setInitialPoseAMCL (double x, double y, double yaw)
     ROS_INFO ("setting initial pose for AMCL to(%f, %f, %f)", x, y, yaw);
     bool success = false;
 
-
     geometry_msgs::PoseWithCovarianceStamped p;
 	p.pose.pose.position.x = x;
 	p.pose.pose.position.y = y;
-	p.pose.pose.orientation = ;
+	p.pose.pose.orientation = tf::createQuaternionMsgFromYaw(yaw);
     p.header.frame_id = "map";
 
-	initalizePub_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>("initialpose",1);
-    initalizePub_.publish(p);
+	pub_initialize_->publish(p);
 	success = true;
+	return true;
 }

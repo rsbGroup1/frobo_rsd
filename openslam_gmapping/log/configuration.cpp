@@ -1,8 +1,10 @@
 #include "configuration.h"
 
-namespace GMapping {
+namespace GMapping
+{
 
-Configuration::~Configuration(){
+Configuration::~Configuration()
+{
 }
 
 };

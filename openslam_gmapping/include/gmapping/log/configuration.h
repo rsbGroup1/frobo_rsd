@@ -4,12 +4,14 @@
 #include <istream>
 #include <gmapping/sensor/sensor_base/sensor.h>
 
-namespace GMapping {
+namespace GMapping
+{
 
-class Configuration{
-	public:
-		virtual ~Configuration();
-		virtual SensorMap computeSensorMap() const=0;
+class Configuration
+{
+public:
+    virtual ~Configuration();
+    virtual SensorMap computeSensorMap() const = 0;
 };
 
 };

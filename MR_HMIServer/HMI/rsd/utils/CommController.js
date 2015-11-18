@@ -2,21 +2,34 @@ window.rsdNamespace = window.rsdNamespace || { };
 
 rsdNamespace.connection;
 
+
+rsdNamespace.IGNORE = "0";
+rsdNamespace.MESSAGE = "1";
+rsdNamespace.WARNING = "2";
+rsdNamespace.ERROR   = "3";
+
+rsdNamespace.BOX = "1";
+rsdNamespace.CAMERA = "2";
+rsdNamespace.ZONE_TWO = "3";
+rsdNamespace.ZONE_ONE = "4";
+rsdNamespace.RC_1 = "5";
+rsdNamespace.RC_2 = "6";
+rsdNamespace.RC_3 = "7";
+
+rsdNamespace.SAFE = 1;
+rsdNamespace.PROXIMITY_ALERT = 2;
+rsdNamespace.COLLIDING = 3;
+
+// rsdNamespace.ON = "1";
+// rsdNamespace.OFF = "2";
+// rsdNamespace.TIPPER= "1";
+// rsdNamespace.LINE_FOLLOWING = "2";
+// rsdNamespace.GPS = "3";
+// rsdNamespace.COLLECTING_BRICKS = "4";
+// rsdNamespace.INSIDE_BOX = "5";
+// rsdNamespace.CHARGING = "6";
+
 rsdNamespace.StartListening = function() {
-
-    // $('#main_title').text( port );
-
-    //create a new WebSocket object.
-    // var ws = new WebSocket( "ws://localhost:" + port );
-    // ws.onopen = function( evt ) {
-    //
-    //     ws.send('client> Hello!');
-    //     console.log( 'WS started listening on port: ' + port );
-    //
-    // }; //on open event
-    // ws.onclose = function( evt ) { console.log( 'WS has been closed.' ); }; //on close event
-    // ws.onmessage = function( evt ) { console.log( evt.data ); }; //on message event
-    // ws.onerror = function( evt ) { console.log( evt.data ); }; //on error event
 
     rsdNamespace.connection = new WebSocket( 'ws://' + rsdNamespace.commAddr + ':' + rsdNamespace.commPort );
 
@@ -66,31 +79,60 @@ rsdNamespace.StartListening = function() {
         console.log( 'Server: ' + e.data );
 
         switch( messageIn.messageType ) {
+
             case 'status_response':
-                var location = messageIn.data.location;
-                if( location ) {
-
-                    if( rsdNamespace.zoneSelected != location ) {
-
-                        rsdNamespace.ToggleHighlighting( rsdNamespace.zoneSelected );
-                        rsdNamespace.ToggleHighlighting( location );
-
-                    }
-
-                }
 
                 var log = messageIn.data.log;
+
                 if( log ) {
 
                     var messages = String( log ).split(",");
 
-                    if( messages.length > 3 ) {
+                    if( messages.length > 2 ) {
 
-                        for( i = 0; i < messages.length; i += 4 ) {
+                        for( i = 0; i < messages.length; i += 3 ) {
 
-                            if( messages[i] === "Message" ) rsdNamespace.IndicateStatus( messages[i + 3] );
-                            else if( messages[i] === "Error" ) rsdNamespace.SetAvailabilitySwitch( false );
-                            rsdNamespace.UpdateLog( messages[i], messages[i + 1], messages[i + 2] );
+                            // If message contains displayable content...
+                            // var message_code = messages[i][3];
+                            var message_code = messages[i][0];
+                            if( message_code != rsdNamespace.IGNORE ) {
+
+                                // If there was an error,
+                                if( message_code == rsdNamespace.ERROR ) {
+
+                                    // The SetAvailabilitySwitch method will take care of the
+                                    // notification of the MES server
+                                    rsdNamespace.SetAvailabilitySwitch( false );
+
+                                }
+
+                                rsdNamespace.UpdateLog( message_code, messages[i + 1], messages[i + 2] );
+
+                            }
+
+                            // If message contains location related information...
+                            // var location_code = messages[i][2];
+                            var location_code = messages[i][1];
+                            if( location_code != rsdNamespace.IGNORE ) {
+
+                                var location = parseInt( location_code, 10 );
+
+                                if( rsdNamespace.zoneSelected != location ) {
+
+                                    rsdNamespace.ToggleHighlighting( rsdNamespace.zoneSelected );
+                                    rsdNamespace.ToggleHighlighting( location );
+
+                                }
+
+                            }
+
+                            // If message contains activity information...
+                            var activity_code = messages[i].substr(2, 2);
+                            if( activity_code != rsdNamespace.IGNORE ) {
+
+                                rsdNamespace.IndicateStatus( activity_code );
+
+                            }
 
                         }
 

@@ -14,6 +14,7 @@ from geometry_msgs.msg import Twist, TwistStamped
 from msgs.msg import BoolStamped
 from std_msgs.msg import String, Bool
 from mr_tip_controller.srv import *
+from mr_hmi.srv import *
 
 STATUS_REQUEST = "status_request"
 REMOTE_UPDATE = "remote_update"
@@ -33,7 +34,7 @@ address = ""
 
 direction = 0
 button = 0
-logMessages = "0000,Robot has entered the box,0002,Robot is charging,0002,Robot is burning,"
+logMessages = ""
 
 subStatus = 0
 
@@ -115,13 +116,14 @@ class MyServerProtocol( WebSocketServerProtocol ):
                 elif leftButton == u"l":
                     drive( 0.0, angularVelocity )
                 elif rightButton == u"x":
-                    tip( True )
+                    tipper( True )
                 elif rightButton == u"y":
-                    tip( False )
+                    tipper( False )
                 elif rightButton == u"a":
                     setManualMode( False )
                     publishCommand( pubModeUpdate, u"start" )
                 elif rightButton == u"b":
+                    setManualMode( False )
                     publishCommand( pubModeUpdate, u"stop" )
 
     def onClose( self, wasClean, code, reason ):
@@ -156,6 +158,11 @@ class actuationThread( threading.Thread ):
         self.lock = threading.Lock()
         self.threadID = threadID
         self.name = name
+        self._stop = threading.Event()
+
+    def stop( self ):
+        print "Stoping " + self.name
+        self._stop.set()
 
     def run( self ):
 
@@ -163,14 +170,14 @@ class actuationThread( threading.Thread ):
         while not rospy.is_shutdown():
 
             self.publishActuationEna()
-            time.sleep(0.05)
+            time.sleep(0.033)
 
         stopServer()
 
     def publishActuationEna( self ):
         global actuationEna
 
-        # print "actuationEna: " + str(actuationEna)
+        print "actuationEna: " + str(actuationEna)
 
         self.lock.acquire()
         msg = createBoolStampedMessage( actuationEna )
@@ -194,14 +201,25 @@ def createBoolStampedMessage( data ):
 
 def setManualMode( newState ):
     global isManual
+    global pubCmdVelUpdate
+    global pubActuationEna
+    global aThread
+    global actuationEna
 
     if( isManual != newState ):
         print( "Manual mode CHANGED" )
         isManual = newState
         if( isManual ):
+            pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 1 )
+            pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
+            aThread.start()
             publishCommand( pubModeUpdate, u"manual" )
             print( "Manual mode is ON" )
         else:
+            actuationEna = False
+            aThread.stop()
+            pubCmdVelUpdate.unregister()
+            pubActuationEna.unregister()
             print( "Manual mode is OFF" )
 
 def drive( linearX, angularZ ):
@@ -212,8 +230,8 @@ def drive( linearX, angularZ ):
     # print( "Msg *to be published: " + str(msg.twist.linear.x) )
     publishCommand( pubCmdVelUpdate, msg )
     # print( "Msg published OK")
-
-def tip( direction ):
+    
+def tipper( direction ):
     """ Method discription
     Calls the tipping service with a direction specified with a boolean ergument
 
@@ -223,8 +241,7 @@ def tip( direction ):
 
     global srvTipper
 
-    req = mr_hmi.srv.tip( direction )
-    resp = srvTipper( req ) # Request tipping (just ignore the response for now)
+    srvTipper(direction)# req ) # Request tipping (just ignore the response for now)
 
 def logCallback( data ):
     """ Method Description
@@ -234,6 +251,7 @@ def logCallback( data ):
     Input message format: "code,message,"
     Output message format: "code,timestamp,message,"
     """
+    #print(data.data)
     global logMessages
 
     s = "-"
@@ -243,12 +261,16 @@ def logCallback( data ):
 
     now = datetime.datetime.now()
     logTimestamp = now.strftime("%Y-%m-%d %H:%M:%S")
+    # print(logTimestamp)
 
     newData = ""
     for i in range( 0, len( temp ), 2 ):
-        newData = newData + temp[i] + d + logTimestamp + d + temp[i + 1] + d
+        newData += temp[i] + d + logTimestamp + d + temp[i + 1] + d
 
     logMessages = logMessages + newData
+    # print(data.data)
+    # print(logMessages)
+    # print(newData)
 
 def publishCommand( rosPublisher, command ):
     rosPublisher.publish( command )
@@ -256,7 +278,7 @@ def publishCommand( rosPublisher, command ):
 def stopServer():
     reactor.stop()
 
-def initProxy():
+def initHMI():
 
     global MR_HMI_SUB
 
@@ -275,12 +297,14 @@ def initProxy():
 
     global srvTipper
 
+    global aThread
+
     # In ROS, nodes are uniquely named. If two nodes with the same
     # node are launched, the previous one is kicked off. The
     # anonymous=True flag means that rospy will choose a unique
     # name for our 'talker' node so that multiple talkers can
     # run simultaneously.
-    rospy.init_node( 'proxy', anonymous = True )
+    rospy.init_node( 'mr_hmi', anonymous = True )
 
     # Read parameters
     MR_HMI_SUB = rospy.get_param( "~mr_hmi_status_sub", MR_HMI_SUB )
@@ -296,19 +320,14 @@ def initProxy():
 
     # Register Publisers
     pubModeUpdate = rospy.Publisher( MODE_UPDATE_PUB, String, queue_size = 1 )
-    # pubTipperUpdate = rospy.Publisher( TIPPER_UPDATE_SRV, Bool, queue_size = 1 )
-    pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 1 )
-    pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
 
     # Service Deffinitions
-    srvTipper = rospy.ServiceProxy( TIPPER_UPDATE_SRV, mr_hmi.srv.tip )
+    rospy.wait_for_service(TIPPER_UPDATE_SRV)
+    srvTipper = rospy.ServiceProxy( TIPPER_UPDATE_SRV, tip )
 
-    # Register Listeners
-    rospy.Subscriber( "hmi_mobile", String, callback )
-
-    # Start publishing the activationEna sygnal in a separate thread
+    # Prepare the actuation in another thread
     aThread = actuationThread( 1, "actuation_thread" )
-    aThread.start()
+
 
     log.startLogging(sys.stdout)
 
@@ -324,5 +343,4 @@ def initProxy():
     rospy.spin()
 
 if __name__ == '__main__':
-    initProxy()
-
+    initHMI()

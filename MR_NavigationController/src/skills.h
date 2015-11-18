@@ -16,50 +16,55 @@
 class Skills
 {
 public:
-	/**
-	 * 
-	 */
-	Skills(ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move, 
-		   ros::Publisher * pub_status);
-	
-	/**
-	 * 
-	 */
-	~Skills();
-	
+    /**
+     *
+     */
+    Skills (ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move,
+            ros::Publisher* pub_status);
+
+    /**
+     *
+     */
+    ~Skills();
+
     /**
      * Follows the line with the camera until it finds the specified qr
      * @param qr the qr code to find
      */
-    bool lineUntilQR(std::string qr);
+    bool lineUntilQR (std::string qr);
 
     /**
      * Moves the robot for an specified distance
      * @param distance the distance to move straight. It can be positive or negative
      */
-    bool linearMove(double distance);
+    bool linearMove (double distance);
 
     /**
      * Turns a defined angle
      * @param angle The angle to turn. NEED to be in radians
      */
-    bool angularMove(double angle);
+    bool angularMove (double angle);
 
 
     /**
      *
      */
-    bool goToFreePosition(double x, double y, double yaw);
+    bool goToFreePosition (double x, double y, double yaw);
+
+    /**
+     *
+     */
+    bool setInitialPoseAMCL (double x, double y, double yaw);
 
 private:
-	ros::ServiceClient* srv_lineUntilQR_;
-	ros::ServiceClient* srv_move_;
-	ros::Publisher* pub_status_;
+    ros::ServiceClient* srv_lineUntilQR_;
+    ros::ServiceClient* srv_move_;
+    ros::Publisher* pub_status_;
 
-	mr_go::move move_call_;
-	mr_line_follower::followUntilQR lineFollowerCall;
+    mr_go::move move_call_;
+    mr_line_follower::followUntilQR lineFollowerCall;
 
-    actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> *move_base_actionclient_;
+    actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>* move_base_actionclient_;
     int goal_id_;
 };
 

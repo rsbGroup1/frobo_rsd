@@ -6,8 +6,9 @@
 #include <fstream>
 #include <string>
 
-namespace GMapping{
-	void printmemusage();
+namespace GMapping
+{
+void printmemusage();
 };
 
 #endif

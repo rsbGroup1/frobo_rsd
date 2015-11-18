@@ -6,9 +6,19 @@ rsdNamespace.logWarningFlag = false;
 rsdNamespace.UpdateLog = function( type, timestamp, message ) {
 
     var highlighting = "";
+    var type_to_display = "Info";
 
-    if( type === "Error" ) highlighting = " error_message";
-    else if( type === "Warning" ) highlighting = " warning_message";
+    if( type == 3 ) {
+
+        type_to_display = "Error"
+        highlighting = " error_message";
+
+    } else if( type == 2 ) {
+
+        type_to_display = "Warning"
+        highlighting = " warning_message";
+
+    }
 
     var entry = '<div class="log_entry' + highlighting + '">' +
         '<span class="log_title"><h5 class="log_title">' + type + '</h5> - ' + timestamp + '</span>' +
@@ -20,7 +30,7 @@ rsdNamespace.UpdateLog = function( type, timestamp, message ) {
     if( rsdNamespace.logErrorFlag ) rsdNamespace.FilterMessages( '.log_entry', 'error_message' );
     else if( rsdNamespace.logWarningFlag ) rsdNamespace.FilterMessages( '.log_entry', 'warning_message' );
 
-    rsdNamespace.RemoveOldEntries( ".log_entry", 30 );
+    rsdNamespace.RemoveOldEntries( ".log_entry", 50 );
 
 };
 
@@ -75,36 +85,26 @@ rsdNamespace.RemoveFilters = function( selector ) {
 rsdNamespace.IndicateStatus = function( code ) {
 
     selector = "#indicator_" + code[0];
+    $(selector).toggleClass( "statusActiveNormal" );
 
-    if( code[1] == 1 ) {
+    if( code[2] != rsdNamespace.IGNORE ) {
 
-        rsdNamespace.ActivateIndicator( selector );
+        if( code[2] == rsdNamespace.SAFE ) {
 
-    } else {
+            $('#indicator_7').removeClass( "statusActiveWarning statusActiveError" );
 
-        rsdNamespace.DeactivateIndicator( selector );
+        } else if( code[2] == rsdNamespace.PROXIMITY_ALERT ) {
 
-    }
+            $('#indicator_7').removeClass( "statusActiveError" ).addClass( "statusActiveWarning" );
 
-};
+        } else if( code[2] == rsdNamespace.COLLIDING ) {
 
-rsdNamespace.ActivateIndicator = function( selector ) {
+            // If there was an error,react:
+            //     The SetAvailabilitySwitch method will take care of the
+            //     notification of the MES server
+            rsdNamespace.SetAvailabilitySwitch( false );
 
-    if( !$(selector).hasClass( "statusActive" ) ) {
-
-        $(selector).addClass( "statusActive" );
-
-    }
-
-};
-
-rsdNamespace.DeactivateIndicator= function( selector ) {
-
-    alert(selector);
-
-    if( $(selector).hasClass( "statusActive" ) ) {
-
-        $(selector).removeClass( "statusActive" );
+            $('#indicator_7').removeClass( "statusActiveWarning" ).addClass( "statusActiveError" );
 
     }
 

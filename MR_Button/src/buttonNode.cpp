@@ -18,50 +18,50 @@
 template <typename T>
 class SynchronisedQueue
 {
-    private:
-        std::queue<T> m_queue;              // Use STL queue to store data
-        boost::mutex m_mutex;               // The mutex to synchronise on
-        boost::condition_variable m_cond;   // The condition to wait for
+private:
+    std::queue<T> m_queue;              // Use STL queue to store data
+    boost::mutex m_mutex;               // The mutex to synchronise on
+    boost::condition_variable m_cond;   // The condition to wait for
 
-    public:
-        // Add data to the queue and notify others
-        void enqueue(const T& data)
-        {
-            // Acquire lock on the queue
-            boost::unique_lock<boost::mutex> lock(m_mutex);
+public:
+    // Add data to the queue and notify others
+    void enqueue (const T& data)
+    {
+        // Acquire lock on the queue
+        boost::unique_lock<boost::mutex> lock (m_mutex);
 
-            // Add the data to the queue
-            m_queue.push(data);
+        // Add the data to the queue
+        m_queue.push (data);
 
-            // Notify others that data is ready
-            m_cond.notify_one();
-        }
+        // Notify others that data is ready
+        m_cond.notify_one();
+    }
 
-        // Get data from the queue. Wait for data if not available
-        T dequeue()
-        {
-            // Acquire lock on the queue
-            boost::unique_lock<boost::mutex> lock(m_mutex);
+    // Get data from the queue. Wait for data if not available
+    T dequeue()
+    {
+        // Acquire lock on the queue
+        boost::unique_lock<boost::mutex> lock (m_mutex);
 
-            // When there is no data, wait till someone fills it.
-            // Lock is automatically released in the wait and obtained
-            // again after the wait
-            while(m_queue.size()==0)
-                m_cond.wait(lock);
+        // When there is no data, wait till someone fills it.
+        // Lock is automatically released in the wait and obtained
+        // again after the wait
+        while (m_queue.size() == 0)
+            m_cond.wait (lock);
 
-            // Retrieve the data from the queue
-            T result = m_queue.front();
-            m_queue.pop();
+        // Retrieve the data from the queue
+        T result = m_queue.front();
+        m_queue.pop();
 
-            return result;
-        }
+        return result;
+    }
 
-        int size()
-        {
-            // Acquire lock on the queue
-            boost::unique_lock<boost::mutex> lock(m_mutex);
-            return m_queue.size();
-        }
+    int size()
+    {
+        // Acquire lock on the queue
+        boost::unique_lock<boost::mutex> lock (m_mutex);
+        return m_queue.size();
+    }
 };
 
 // System mode enum
@@ -78,7 +78,7 @@ enum MODES
 
 // Global var
 bool _running = false;
-serial::Serial *_serialConnection;
+serial::Serial* _serialConnection;
 ros::Publisher _buttonPublisher;
 MODES _errorMode = M_NORMAL, _runMode = M_OFF;
 SynchronisedQueue<std::string> _writeQueue;
@@ -87,73 +87,73 @@ boost::mutex _modeMutex;
 // Functions
 void changeMode()
 {
-    if(_runMode == M_OFF)
+    if (_runMode == M_OFF)
     {
-        _writeQueue.enqueue("off\n");
+        _writeQueue.enqueue ("off\n");
     }
-    else if(_runMode == M_IDLE)
+    else if (_runMode == M_IDLE)
     {
-        switch(_errorMode)
+        switch (_errorMode)
         {
-            case M_NORMAL:
-                _writeQueue.enqueue("idle\n");
-                break;
+        case M_NORMAL:
+            _writeQueue.enqueue ("idle\n");
+            break;
 
-            case M_SLOW:
-                _writeQueue.enqueue("idleSlow\n");
-                break;
+        case M_SLOW:
+            _writeQueue.enqueue ("idleSlow\n");
+            break;
 
-            case M_STOP:
-                _writeQueue.enqueue("idleStop\n");
-                break;
+        case M_STOP:
+            _writeQueue.enqueue ("idleStop\n");
+            break;
 
-            default:
-                break;
+        default:
+            break;
         }
     }
-    else if(_runMode == M_RUN)
+    else if (_runMode == M_RUN)
     {
-        switch(_errorMode)
+        switch (_errorMode)
         {
-            case M_NORMAL:
-                _writeQueue.enqueue("run\n");
-                break;
+        case M_NORMAL:
+            _writeQueue.enqueue ("run\n");
+            break;
 
-            case M_SLOW:
-                _writeQueue.enqueue("runSlow\n");
-                break;
+        case M_SLOW:
+            _writeQueue.enqueue ("runSlow\n");
+            break;
 
-            case M_STOP:
-                _writeQueue.enqueue("runStop\n");
-                break;
+        case M_STOP:
+            _writeQueue.enqueue ("runStop\n");
+            break;
 
-            default:
-                break;
+        default:
+            break;
         }
     }
-    else if(_runMode == M_MANUAL)
+    else if (_runMode == M_MANUAL)
     {
-        switch(_errorMode)
+        switch (_errorMode)
         {
-            case M_NORMAL:
-                _writeQueue.enqueue("manual\n");
-                break;
+        case M_NORMAL:
+            _writeQueue.enqueue ("manual\n");
+            break;
 
-            case M_SLOW:
-                _writeQueue.enqueue("manualSlow\n");
-                break;
+        case M_SLOW:
+            _writeQueue.enqueue ("manualSlow\n");
+            break;
 
-            case M_STOP:
-                _writeQueue.enqueue("manualStop\n");
-                break;
+        case M_STOP:
+            _writeQueue.enqueue ("manualStop\n");
+            break;
 
-            default:
-                break;
+        default:
+            break;
         }
     }
 }
 
-void changeErrorMode(MODES errorMode)
+void changeErrorMode (MODES errorMode)
 {
     _modeMutex.lock();
 
@@ -163,7 +163,7 @@ void changeErrorMode(MODES errorMode)
     _modeMutex.unlock();
 }
 
-void changeRunMode(MODES runMode)
+void changeRunMode (MODES runMode)
 {
     _modeMutex.lock();
 
@@ -173,54 +173,56 @@ void changeRunMode(MODES runMode)
     _modeMutex.unlock();
 }
 
-void buttonCallback(std_msgs::Bool msg)
+void buttonCallback (std_msgs::Bool msg)
 {
-    if(msg.data)
-        changeRunMode(M_RUN);
+    if (msg.data)
+        changeRunMode (M_RUN);
     else
-        changeRunMode(M_IDLE);
+        changeRunMode (M_IDLE);
 }
 
-void collisionCallback(std_msgs::String msg)
+void collisionCallback (std_msgs::String msg)
 {
     static MODES oldMode = M_NORMAL;
     MODES newMode = M_NORMAL;
 
-    if(msg.data == "stop")
+    if (msg.data == "collision")
         newMode = M_STOP;
-    else if(msg.data == "slow")
+    else if (msg.data == "proximityAlert")
         newMode = M_SLOW;
-    else if(msg.data == "normal")
+    else if (msg.data == "safe")
         newMode = M_NORMAL;
 
-    if(newMode != oldMode)
+    if (newMode != oldMode)
     {
-        changeErrorMode(newMode);
+        changeErrorMode (newMode);
         oldMode = newMode;
     }
 }
 
-void HMICallback(std_msgs::String msg)
+void HMICallback (std_msgs::String msg)
 {
-    if(msg.data == "start")
-        changeRunMode(M_RUN);
-    else if(msg.data == "stop")
-        changeRunMode(M_IDLE);
-    else if(msg.data == "manual")
-        changeRunMode(M_MANUAL);
+    if (msg.data == "start")
+        changeRunMode (M_RUN);
+    else if (msg.data == "stop")
+        changeRunMode (M_IDLE);
+    else if (msg.data == "manual")
+        changeRunMode (M_MANUAL);
 }
 
-bool compareMsg(char* msg, char* command)
+bool compareMsg (char* msg, char* command)
 {
     int i = 0;
-    while(msg[i] != '\n' && command[i] != '\n')
+
+    while (msg[i] != '\n' && command[i] != '\n')
     {
-        if(tolower(msg[i]) != tolower(command[i]))
+        if (tolower (msg[i]) != tolower (command[i]))
             return false;
+
         i++;
     }
 
-    if(i == 0)
+    if (i == 0)
         return false;
 
     return true;
@@ -228,16 +230,16 @@ bool compareMsg(char* msg, char* command)
 
 void writeSerialThread()
 {
-    while(true)
+    while (true)
     {
         try
         {
-            _serialConnection->write(_writeQueue.dequeue());
+            _serialConnection->write (_writeQueue.dequeue());
 
             // Signal interrupt point
             boost::this_thread::interruption_point();
         }
-        catch(const boost::thread_interrupted&)
+        catch (const boost::thread_interrupted&)
         {
             break;
         }
@@ -247,35 +249,35 @@ void writeSerialThread()
 void readSerialThread()
 {
     std::string tempString;
-    char msg[DATA_LENGTH+1];
+    char msg[DATA_LENGTH + 1];
     msg[DATA_LENGTH] = '\n';
     int i = 0;
 
-    while(true)
+    while (true)
     {
         try
         {
-            tempString = _serialConnection->read(1);
+            tempString = _serialConnection->read (1);
 
-            if(tempString.size() == 1)
+            if (tempString.size() == 1)
             {
                 msg[i] = tempString[0];
 
-                if(msg[i] == '\n')
+                if (msg[i] == '\n')
                 {
-                    if(compareMsg(msg, "run\n"))
+                    if (compareMsg (msg, "run\n"))
                     {
                         std_msgs::Bool msg;
                         msg.data = true;
-                        _buttonPublisher.publish(msg);
-                        ROS_INFO("btn run");
+                        _buttonPublisher.publish (msg);
+                        ROS_INFO ("btn run");
                     }
-                    else if(compareMsg(msg, "idle\n"))
+                    else if (compareMsg (msg, "idle\n"))
                     {
                         std_msgs::Bool msg;
                         msg.data = false;
-                        _buttonPublisher.publish(msg);
-                        ROS_INFO("btn idle");
+                        _buttonPublisher.publish (msg);
+                        ROS_INFO ("btn idle");
                     }
 
                     // Clear data
@@ -287,11 +289,13 @@ void readSerialThread()
             else
             {
                 // Clear if buffer is full without newline
-                if(i == DATA_LENGTH-1)
+                if (i == DATA_LENGTH - 1)
                 {
                     i = 0;
-                    for(int k=0; k<DATA_LENGTH; k++)
+
+                    for (int k = 0; k < DATA_LENGTH; k++)
                         msg[k] = ' ';
+
                     msg[DATA_LENGTH] = '\n';
                 }
             }
@@ -299,7 +303,7 @@ void readSerialThread()
             // Signal interrupt point
             boost::this_thread::interruption_point();
         }
-        catch(const boost::thread_interrupted&)
+        catch (const boost::thread_interrupted&)
         {
             break;
         }
@@ -313,60 +317,60 @@ int main()
     int argc = 0;
 
     // Init ROS Node
-    ros::init(argc, argv, "MR_Button");
+    ros::init (argc, argv, "MR_Button");
     ros::NodeHandle nh;
-    ros::NodeHandle pNh("~");
+    ros::NodeHandle pNh ("~");
 
     // Topic names
     std::string obstaclePub, hmiSub, buttonPub, buttonSub;
-    pNh.param<std::string>("mr_collision_sub", obstaclePub, "/mrObstacleDetector/status");
-    pNh.param<std::string>("mr_hmi_sub", hmiSub, "/mrHMI/run");
-    pNh.param<std::string>("mr_button_pub", buttonPub, "/mrButton/run");
-    pNh.param<std::string>("mr_button_sub", buttonSub, "/mrButton/status");
+    pNh.param<std::string> ("mr_collision_sub", obstaclePub, "/mrObstacleDetector/status");
+    pNh.param<std::string> ("mr_hmi_sub", hmiSub, "/mrHMI/run");
+    pNh.param<std::string> ("mr_button_pub", buttonPub, "/mrButton/run");
+    pNh.param<std::string> ("mr_button_sub", buttonSub, "/mrButton/status");
 
     // Publisher
-    _buttonPublisher = nh.advertise<std_msgs::Bool>(buttonPub, 1);
+    _buttonPublisher = nh.advertise<std_msgs::Bool> (buttonPub, 1);
 
     // Subscriber
-    ros::Subscriber subCollision = nh.subscribe(obstaclePub, 1, collisionCallback);
-    ros::Subscriber subHMI = nh.subscribe(hmiSub, 1, HMICallback);
-    ros::Subscriber subButton = nh.subscribe(buttonSub, 1, buttonCallback);
+    ros::Subscriber subCollision = nh.subscribe (obstaclePub, 1, collisionCallback);
+    ros::Subscriber subHMI = nh.subscribe (hmiSub, 1, HMICallback);
+    ros::Subscriber subButton = nh.subscribe (buttonSub, 1, buttonCallback);
 
     // Get serial data parameters
     int baudRate;
     std::string port;
-    pNh.param<int>("baud_rate", baudRate, 115200);
-    pNh.param<std::string>("port", port, "/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00");
+    pNh.param<int> ("baud_rate", baudRate, 115200);
+    pNh.param<std::string> ("port", port, "/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00");
 
     // Open connection
-    _serialConnection = new serial::Serial(port.c_str(), baudRate, serial::Timeout::simpleTimeout(50));
+    _serialConnection = new serial::Serial (port.c_str(), baudRate, serial::Timeout::simpleTimeout (50));
 
     // Check if connection is ok
-    if(!_serialConnection->isOpen())
+    if (!_serialConnection->isOpen())
     {
-        ROS_ERROR("Error opening connection!");
+        ROS_ERROR ("Error opening connection!");
         _serialConnection->close();
         return 0;
     }
     else
-        ROS_INFO("Successfully connected!");
+        ROS_INFO ("Successfully connected!");
 
     // Start serial threads
-    boost::thread _readThread(readSerialThread);
-    boost::thread _writeThread(writeSerialThread);
+    boost::thread _readThread (readSerialThread);
+    boost::thread _writeThread (writeSerialThread);
 
     // Sleep for a second
-    ros::Duration(2).sleep();
+    ros::Duration (2).sleep();
 
     // Change mode to idle
-    changeRunMode(M_IDLE);
+    changeRunMode (M_IDLE);
 
     // ROS Spin: Handle callbacks
     ros::spin();
 
     // Close connection
-    changeRunMode(M_OFF);
-    ros::Duration(1).sleep();
+    changeRunMode (M_OFF);
+    ros::Duration (1).sleep();
     _readThread.interrupt();
     _writeThread.interrupt();
     _serialConnection->close();

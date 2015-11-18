@@ -307,14 +307,39 @@ rsdNamespace.RegisterTouchSurfaces = function() {
 
     });
 
+    $('.statusIndicator').on( "mouseover click touchstart", function() {
+
+        var id = $(this).attr('id');
+        var selector = '#indicator_message_' + id.substr(id.length - 1);
+
+        $(selector).addClass('show_label');
+
+    }).on( "mouseup mouseout touchend", function() {
+
+        var id = $(this).attr('id');
+        var selector = '#indicator_message_' + id.substr(id.length - 1);
+
+        $(selector).removeClass('show_label');
+
+    });
+
 };
 
 rsdNamespace.ToggleAvailabilityState = function() {
 
     if( rsdNamespace.commState == 1 ) {
 
-        if( rsdNamespace.availability ) rsdNamespace.SetAvailabilitySwitch( false );
-        else rsdNamespace.SetAvailabilitySwitch( true );
+        if( rsdNamespace.availability ) {
+
+            // TODO Invoke mergency stop protocol
+            rsdNamespace.SetAvailabilitySwitch( false );
+
+        } else {
+
+            // TODO Tell the MES server, that everything is OK
+            rsdNamespace.SetAvailabilitySwitch( true );
+
+        }
 
     }
 

@@ -25,12 +25,12 @@
 /frobo_rsd/slam_gmapping/gmapping
 /frobo_rsd/slam_gmapping/slam_gmapping
 /frobo_rsd/MR_TFBroadcaster
-#/frobo_rsd/MR_NavigationController
+/frobo_rsd/MR_NavigationController
 /frobo_rsd/MR_ObstacleDetector
 /frobo_rsd/MR_TipController
 /frobo_rsd/MR_HMI
 /frobo_rsd/MR_MESClient
-#/frobo_rsd/MR_Camera
+/frobo_rsd/MR_Camera
 /frobo_rsd/MR_GPS
 /frobo_rsd/twist_to_twist_stamped
 /frobo_rsd/MR_DeadManPriority
@@ -39,3 +39,4 @@
 /frobo_rsd/MR_Go
 /frobo_rsd/MR_Main
 /frobo_rsd/MR_Button
+/frobo_rsd/MR_FrobitInterface

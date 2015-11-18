@@ -13,14 +13,19 @@ import rospy
 from geometry_msgs.msg import Twist, TwistStamped
 from msgs.msg import BoolStamped
 from std_msgs.msg import String, Bool
+#from mr_tip_controller.srv import *
+from mr_hmi.srv import *
 
 STATUS_REQUEST = "status_request"
 REMOTE_UPDATE = "remote_update"
 
-MODE_UPDATE_PUB = "/mrHMI/start_stop"
+MR_HMI_SUB = "/mrHMI/status" # receiving location and status updates here
+
+MODE_UPDATE_PUB = "/mrHMI/run"
 ACTUATION_ENA_PUB = "/fmSafe/deadman" # a BoolStamped msg. deadman_msg.data = True enables actuation
 CMD_VEL_UPDATE_PUB = "/fmCommand/cmd_vel"
-TIPPER_UPDATE_PUB = "/mrMainController/tipper"
+
+TIPPER_UPDATE_SRV = "/mrTipController/tip"
 
 WEB_SOCKET_HOSTNAME = "localhost"
 #WEB_SOCKET_HOSTNAME = "10.125.11.201"
@@ -29,13 +34,16 @@ address = ""
 
 direction = 0
 button = 0
-location = 0
-logMessages = "Message,12:32 28.10.15,Robot has entered the box,11,Message,12:33 28.10.15,Robot is charging,01,Error,12:33 28.10.15,Robot is burning,01,"
+logMessages = ""
+
+subStatus = 0
 
 pubModeUpdate = 0
-pubTipperUpdate = 0
+# pubTipperUpdate = 0
 pubCmdVelUpdate = 0
 pubActuationEna = 0
+
+srvTipper = 0
 
 linearVelocity = 0.4
 angularVelocity = 0.8
@@ -79,7 +87,6 @@ class MyServerProtocol( WebSocketServerProtocol ):
                 massageOutRaw = {
                     "messageType":"status_response",
                     "data":{
-                        "location":str(location),
                         "log":[logMessages[:-1]]
                     }
                 }
@@ -208,27 +215,47 @@ def drive( linearX, angularZ ):
     # print( "Msg published OK")
 
 def tip( direction ):
-    global pubTipperUpdate
-    global tipperTilted
+    """ Method Description
+    Calls the tipping service with a direction specified with a boolean ergument
 
-    publishCommand( pubTipperUpdate, direction )
+    True = up
+    False = down
+    """
 
-def callback( data ):
-    global location
-    location = data.data
-    rospy.loginfo( rospy.get_caller_id() + "I heard %s", location )
+    global srvTipper
+
+    #mr_hmi.srv.
+    #req = tip( direction )
+    #srvTipper(direction)# req ) # Request tipping (just ignore the response for now)
 
 def logCallback( data ):
+    """ Method Description
+    Adds a timestamp to all received messages, and concatenates them to the
+    logMessages container that is to be sent to the client at a regular bases.
+
+    Input message format: "code,message,"
+    Output message format: "code,timestamp,message,"
+    """
+    #print(data.data)
     global logMessages
 
-    # TODO Adjust method to input
-
-    logType = data.type
-    logTimestamp = data.timestamp
-    logMessage = data.message
+    s = "-"
     d = ","
 
-    logMessages = logMessages + logType + d + logTimestamp + d + logMessage + d
+    temp = data.data[:-1].split( d )
+
+    now = datetime.datetime.now()
+    logTimestamp = now.strftime("%Y-%m-%d %H:%M:%S")
+    # print(logTimestamp)
+
+    newData = ""
+    for i in range( 0, len( temp ), 2 ):
+        newData += temp[i] + d + logTimestamp + d + temp[i + 1] + d
+
+    logMessages = logMessages + newData
+    # print(data.data)
+    # print(logMessages)
+    # print(newData)
 
 def publishCommand( rosPublisher, command ):
     rosPublisher.publish( command )
@@ -236,40 +263,51 @@ def publishCommand( rosPublisher, command ):
 def stopServer():
     reactor.stop()
 
-def initProxy():
+def initHMI():
+
+    global MR_HMI_SUB
 
     global MODE_UPDATE_PUB
-    global TIPPER_UPDATE_PUB
     global CMD_VEL_UPDATE_PUB
     global ACTUATION_ENA_PUB
 
+    global TIPPER_UPDATE_SRV
+
+    global subStatus
+
     global pubModeUpdate
-    global pubTipperUpdate
+    # global pubTipperUpdate
     global pubCmdVelUpdate
     global pubActuationEna
+
+    global srvTipper
 
     # In ROS, nodes are uniquely named. If two nodes with the same
     # node are launched, the previous one is kicked off. The
     # anonymous=True flag means that rospy will choose a unique
     # name for our 'talker' node so that multiple talkers can
     # run simultaneously.
-    rospy.init_node( 'proxy', anonymous = True )
+    rospy.init_node( 'mr_hmi', anonymous = True )
 
     # Read parameters
+    MR_HMI_SUB = rospy.get_param( "~mr_hmi_status_sub", MR_HMI_SUB )
 
-    MODE_UPDATE_PUB = rospy.get_param( "~missionplanner_pub", MODE_UPDATE_PUB )
-    TIPPER_UPDATE_PUB = rospy.get_param( "~tipper_pub", TIPPER_UPDATE_PUB )
+    MODE_UPDATE_PUB = rospy.get_param( "~mr_hmi_run_pub", MODE_UPDATE_PUB )
     CMD_VEL_UPDATE_PUB = rospy.get_param( "~cmd_pub", CMD_VEL_UPDATE_PUB )
     ACTUATION_ENA_PUB = rospy.get_param( "~deadman_pub", ACTUATION_ENA_PUB )
 
+    TIPPER_UPDATE_SRV = rospy.get_param( "~tipper_srv", TIPPER_UPDATE_SRV )
+
+    # Register subscribers
+    subStatus = rospy.Subscriber( MR_HMI_SUB, String, logCallback )
+
     # Register Publisers
     pubModeUpdate = rospy.Publisher( MODE_UPDATE_PUB, String, queue_size = 1 )
-    pubTipperUpdate = rospy.Publisher( TIPPER_UPDATE_PUB, Bool, queue_size = 1 )
     pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 1 )
     pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
 
-    # Register Listeners
-    rospy.Subscriber( "hmi_mobile", String, callback )
+    # Service Deffinitions
+    #srvTipper = rospy.ServiceProxy( TIPPER_UPDATE_SRV, tip )
 
     # Start publishing the activationEna sygnal in a separate thread
     aThread = actuationThread( 1, "actuation_thread" )
@@ -289,4 +327,4 @@ def initProxy():
     rospy.spin()
 
 if __name__ == '__main__':
-    initProxy()
+    initHMI()

@@ -48,6 +48,8 @@ bool connectToServer()
     addr.sin_addr.s_addr = inet_addr (_serverIP.c_str());
     addr.sin_port = htons (_serverPort);
 
+    std::cout << _serverIP << " " << _serverPort << std::endl;
+
     // Create socket
     _socket = socket (AF_INET, SOCK_STREAM, 0);
 
@@ -83,8 +85,8 @@ int main()
     std::string mesSub, mesPub;
     pNh.param<std::string>("mesPub", mesPub, "/mrMESClient/msgFromServer");
     pNh.param<std::string>("mesSub", mesSub, "/mrMESClient/msgToServer");
-    pNh.param<std::string>("server_ip", _serverIP, "127.0.0.1");//10.115.253.233");
-    pNh.param<int>("server_port", _serverPort, 21240);
+    pNh.param<std::string>("serverIP", _serverIP, "10.115.253.233"); //"127.0.0.1"
+    pNh.param<int>("serverPort", _serverPort, 21240);
 
     // Publishers
     _mesMessagePub = nh.advertise<mr_mes_client::server> (mesPub, 100);

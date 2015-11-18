@@ -356,11 +356,11 @@ int main()
         ROS_INFO ("Successfully connected!");
 
     // Start serial threads
-    boost::thread _readThread (readSerialThread);
-    boost::thread _writeThread (writeSerialThread);
+    boost::thread readThread(readSerialThread);
+    boost::thread writeThread(writeSerialThread);
 
     // Sleep for a second
-    ros::Duration (2).sleep();
+    ros::Duration(2).sleep();
 
     // Change mode to idle
     changeRunMode (M_IDLE);
@@ -370,9 +370,9 @@ int main()
 
     // Close connection
     changeRunMode (M_OFF);
-    ros::Duration (1).sleep();
-    _readThread.interrupt();
-    _writeThread.interrupt();
+    ros::Duration(2).sleep();
+    readThread.interrupt();
+    writeThread.interrupt();
     _serialConnection->close();
 
     // Return

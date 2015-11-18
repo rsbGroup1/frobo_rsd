@@ -5,8 +5,8 @@
 		<node pkg="mr_mes_client" name="mr_mes_client" type="mr_mes_client">
 			<param name="mesPub" value="/mrMESClient/msgFromServer"/>
 			<param name="mesSub" value="/mrMESClient/msgToServer"/>
-			<param name="server_ip" value="10.115.253.233"/>
-			<param name="server_port" value="21240"/>
+			<param name="serverIP" value="10.115.253.233"/>
+			<param name="serverPort" value="21240"/>
 		</node>
 	</group>
 </launch> 

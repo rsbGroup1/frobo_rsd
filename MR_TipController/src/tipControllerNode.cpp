@@ -69,17 +69,18 @@ public:
 // Global var
 serial::Serial* _serialConnection;
 SynchronisedQueue<std::string> _queue;
-boost::thread* _writeThread;
+bool _tipperDone = false;
+boost::mutex _waitMutex;
 
 // Functions
-bool tipCallback (mr_tip_controller::tip::Request& req, mr_tip_controller::tip::Response& res)
+bool tipCallback(mr_tip_controller::tip::Request& req, mr_tip_controller::tip::Response& res)
 {
-    if (req.direction)
+    if(req.direction)
     {
         ROS_INFO ("Tipper goes UP");
         _queue.enqueue ("u");
     }
-    else if (req.direction == false)
+    else if(req.direction == false)
     {
         ROS_INFO ("Tipper goes DOWN");
         _queue.enqueue ("d");
@@ -87,9 +88,19 @@ bool tipCallback (mr_tip_controller::tip::Request& req, mr_tip_controller::tip::
 
    
     std::string read;
-    while (_serialConnection->read (read) != 'd') ; // Wait for answer 'd'
+    while(_serialConnection->read (read) != 'd') ; // Wait for answer 'd'
     std::cout << "Read: " << read << std::endl;
-   
+
+    _waitMutex.lock();
+    bool tipperDone = _tipperDone;
+    _waitMutex.unlock();
+    while(tipperDone == false)
+    {
+        _waitMutex.lock();
+        tipperDone = _tipperDone;
+        _waitMutex.unlock();
+        usleep(100);
+    }
 
     res.status = true;
     return true;
@@ -97,7 +108,7 @@ bool tipCallback (mr_tip_controller::tip::Request& req, mr_tip_controller::tip::
 
 void writeSerialThread()
 {
-    while (true)
+    while(true)
     {
         try
         {
@@ -107,7 +118,81 @@ void writeSerialThread()
             // Signal interrupt point
             boost::this_thread::interruption_point();
         }
-        catch (const boost::thread_interrupted&)
+        catch(const boost::thread_interrupted&)
+        {
+            break;
+        }
+    }
+}
+
+bool compareMsg (char* msg, char* command)
+{
+    int i = 0;
+
+    while (msg[i] != '\n' && command[i] != '\n')
+    {
+        if (tolower (msg[i]) != tolower (command[i]))
+            return false;
+
+        i++;
+    }
+
+    if (i == 0)
+        return false;
+
+    return true;
+}
+
+void readSerialThread()
+{
+    std::string tempString;
+    char msg[DATA_LENGTH + 1];
+    msg[DATA_LENGTH] = '\n';
+    int i = 0;
+
+    while(true)
+    {
+        try
+        {
+            tempString = _serialConnection->read(10);
+
+            if(tempString.size() == 1)
+            {
+                msg[i] = tempString[0];
+
+                if(msg[i] == '\n')
+                {
+                    if(compareMsg (msg, "d\n"))
+                    {
+                        _waitMutex.lock();
+                        _tipperDone = true;
+                        _waitMutex.unlock();
+                    }
+
+                    // Clear data
+                    i = 0;
+                }
+                else	// Wait for new character
+                    i++;
+            }
+            else
+            {
+                // Clear if buffer is full without newline
+                if(i == DATA_LENGTH - 1)
+                {
+                    i = 0;
+
+                    for(unsigned int k = 0; k < DATA_LENGTH; k++)
+                        msg[k] = ' ';
+
+                    msg[DATA_LENGTH] = '\n';
+                }
+            }
+
+            // Signal interrupt point
+            boost::this_thread::interruption_point();
+        }
+        catch(const boost::thread_interrupted&)
         {
             break;
         }
@@ -121,9 +206,9 @@ int main()
     int argc = 0;
 
     // Init ROS Node
-    ros::init (argc, argv, "MR_Tip_Controller");
+    ros::init(argc, argv, "MR_Tip_Controller");
     ros::NodeHandle nh;
-    ros::NodeHandle pNh ("~");
+    ros::NodeHandle pNh("~");
 
     // Subscriber
     ros::ServiceServer tipServer = nh.advertiseService ("mrTipController/tip", tipCallback);
@@ -131,14 +216,14 @@ int main()
     // Get serial data parameters
     int baudRate;
     std::string port;
-    pNh.param<int> ("baud_rate", baudRate, 115200);
-    pNh.param<std::string> ("port", port, "/dev/serial/by-id/usb-Arduino_Srl_Arduino_Uno_7543932393535120F172-if00");
+    pNh.param<int>("baud_rate", baudRate, 115200);
+    pNh.param<std::string>("port", port, "/dev/serial/by-id/usb-Arduino_Srl_Arduino_Uno_7543932393535120F172-if00");
 
     // Open connection
     _serialConnection = new serial::Serial (port.c_str(), baudRate, serial::Timeout::simpleTimeout (50));
 
     // Check if connection is ok
-    if (!_serialConnection->isOpen())
+    if(!_serialConnection->isOpen())
     {
         ROS_ERROR ("Error opening connection!");
         _serialConnection->close();
@@ -147,15 +232,17 @@ int main()
     else
         ROS_INFO ("Successfully connected!");
 
-    // Start serial read thread
-    _writeThread = new boost::thread (writeSerialThread);
+    // Start serial threads
+    boost::thread readThread(readSerialThread);
+    boost::thread writeThread(writeSerialThread);
 
     // ROS Spin: Handle callbacks
-    while (ros::ok())
+    while(ros::ok())
         ros::spinOnce();
 
     // Close connection
-    _writeThread->interrupt();
+    writeThread.interrupt();
+    readThread.interrupt();
     _serialConnection->close();
 
     // Return

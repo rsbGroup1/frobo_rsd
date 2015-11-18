@@ -293,7 +293,6 @@ public:
 			}
 	
 			// Go to charge position
-			mr_navigation_controller::performAction perform_action_obj;
 			perform_action_obj.request.action = "charge";
 			_servicePerformAction.call (perform_action_obj);
 			

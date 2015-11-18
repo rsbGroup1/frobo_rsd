@@ -83,7 +83,7 @@ public:
                                 initalize.call(srv);
 
                                 // Load initialization
-                                initalizePub_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>("initialpose",1);
+                                //initalizePub_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>("initialpose",1);
                                 geometry_msgs::PoseWithCovarianceStamped p;
                                 localisationFile >> p.pose.pose.position.x;
                                 localisationFile >> p.pose.pose.position.y;
@@ -293,6 +293,7 @@ public:
         charge_TO_pre_charge.push_back (std::bind (&Graph::setCurrentNode, graph_, "pre_charge"));
 
         std::vector<std::function<void() >> line_start_TO_box;
+        line_start_TO_box.push_back (std::bind (&Skills::setInitialPoseAMCL, &skills_, 0.1, 0.7 , 1.3));
         line_start_TO_box.push_back (std::bind (&Skills::goToFreePosition, &skills_, 0.1, 0.7 , -1.9));
         line_start_TO_box.push_back (std::bind (&Skills::goToFreePosition, &skills_, -0.5, -1.5 , -1.9));
         line_start_TO_box.push_back (std::bind (&Graph::setCurrentNode, graph_, "box"));
@@ -391,7 +392,7 @@ private:
     ros::ServiceClient srv_lineUntilQR_, srv_move_;
     ros::ServiceServer srv_action_;
     ros::Subscriber poseSubscribe_;
-    ros::Publisher initalizePub_;
+    //ros::Publisher initalizePub_;
 
     std::string srv_lineUntilQR_name_, srv_move_name_, pub_status_name_,
         srv_action_name_, pub_current_node_name_;

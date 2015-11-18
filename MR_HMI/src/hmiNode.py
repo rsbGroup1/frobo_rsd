@@ -160,10 +160,10 @@ class MyServerProtocol( WebSocketServerProtocol ):
         if posession == False:
             self.updateActuation( enaSignal )
 
-        if enaSignal == True and posession == True:
-            print "Actuation enabled. [NOT PUBLISHED]"
-        else:
-            print "Actuation disabled. [NOT PUBLISHED]"
+        #if enaSignal == True and posession == True:
+            #print "Actuation enabled. [NOT PUBLISHED]"
+        #else:
+            #print "Actuation disabled. [NOT PUBLISHED]"
 
 class actuationThread( threading.Thread ):
 
@@ -187,12 +187,10 @@ class actuationThread( threading.Thread ):
             self.publishActuationEna()
             time.sleep(0.033)
 
-        # stopServer()
-
     def publishActuationEna( self ):
         global actuationEna
 
-        print "actuationEna: " + str(actuationEna) + " [PUBLISHED]"
+        #print "actuationEna: " + str(actuationEna) + " [PUBLISHED]"
 
         self.lock.acquire()
         msg = createBoolStampedMessage( actuationEna )
@@ -367,9 +365,9 @@ def initHMI():
     subStatus = rospy.Subscriber( MR_HMI_SUB, String, logCallback )
 
     # Register Publisers
-    pubModeUpdate = rospy.Publisher( MODE_UPDATE_PUB, String, queue_size = 1 )
-    pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 1 )
-    pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
+    pubModeUpdate = rospy.Publisher( MODE_UPDATE_PUB, String, queue_size = 10 )
+    pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 10 )
+    pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 10 )
 
     # Service Deffinitions
     rospy.wait_for_service(TIPPER_UPDATE_SRV)

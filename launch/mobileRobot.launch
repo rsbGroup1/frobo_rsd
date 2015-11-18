@@ -173,8 +173,7 @@
 			<param name="nav_perform_srv" value="MR_NavigationController/performAction"/> 
 			<param name="nav_status_sub" value="mrNavigationController/status"/> 
 			<param name="nav_currentnode_sub" value="mrNavigationController/currentNode"/>	
-			<param name="button_sub" value="mrButton/run"/> 
-			<param name="button_pub" value="mrButton/status"/> 
+			<param name="button_sub" value="/mrButton/run"/> 
 			<param name="hmi_sub" value="mrHMI/run"/> 
 			<param name="hmi_pub" value="mrHMI/status"/> 
 			<param name="tipper_srv" value="mrTipController/tip"/> 

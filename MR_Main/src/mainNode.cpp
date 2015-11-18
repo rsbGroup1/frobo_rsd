@@ -61,7 +61,6 @@ public:
         _pNh.param<std::string> ("nav_status_sub", _navStatusSub, "/mrNavigationController/status");
         _pNh.param<std::string> ("nav_currentnode_sub", _navCurrentnodeSub, "/mrNavigationController/currentNode");
         _pNh.param<std::string> ("button_sub", _buttonSub, "/mrButton/run");
-        _pNh.param<std::string> ("button_pub", _buttonPub, "/mrButton/status");
         _pNh.param<std::string> ("hmi_sub", _hmiSub, "/mrHMI/run");
         _pNh.param<std::string> ("hmi_pub", _hmiPub, "/mrHMI/status");
         _pNh.param<std::string> ("tipper_srv", _tipperString, "/mrTipController/tip");
@@ -80,7 +79,6 @@ public:
         // Publishers
         _hmiPublisher = _nh.advertise<std_msgs::String> (_hmiPub, 10);
         _mesPublisher = _nh.advertise<std_msgs::String> (_mesPub, 10);
-        _buttonPublisher = _nh.advertise<std_msgs::Bool> (_buttonPub, 10);
 
         // Subscribers
         _buttonSubriber = _nh.subscribe<std_msgs::Bool> (_buttonSub, 5, &MainNode::buttonCallback, this);
@@ -177,6 +175,7 @@ public:
     {
         boost::unique_lock<boost::mutex> lock (_runMutex);
         _buttonAuto = msg.data;
+        std::cout << _buttonAuto << std::endl;
     }
 
     /**
@@ -185,7 +184,6 @@ public:
     void hmiCallback (std_msgs::String msg)
     {
         boost::unique_lock<boost::mutex> lock (_runMutex);
-
         if (msg.data == "start")
             _hmiAuto = true;
         else if (msg.data == "stop" || msg.data == "manual")
@@ -231,7 +229,7 @@ public:
 			mr_navigation_controller::performAction perform_action_obj;
 			mr_tip_controller::tip tip_obj;
 			std::string action;
-			
+			/*
 			// Stores the current position just in case the battery is in
 			// the critic level
 			action = _currentNode;
@@ -239,23 +237,23 @@ public:
 			//checkBattery (_batteryCritic, action);
 			
 			// Go to the dispenser position
-			//action = "bricks";
-			//perform_action_obj.request.action = action;
-			//_servicePerformAction.call (perform_action_obj);
-			
-			// Checks if the battery is the critic level
-			//checkBattery (_batteryCritic, action);
-			
-			// Send the robot to the correct wc conveyor
-			if (msg.cell == 1)
-				action = "wc1_conveyor";
-			if (msg.cell == 2)
-				action = "wc2_conveyor";
-			if (msg.cell == 3)
-				action = "wc3_conveyor";
+			action = "bricks";
 			perform_action_obj.request.action = action;
 			_servicePerformAction.call (perform_action_obj);
 			
+			// Checks if the battery is the critic level
+			checkBattery (_batteryCritic, action);
+			*/
+            
+            // Send the robot to the correct wc conveyor
+            if (msg.cell == 1)
+                action = "wc1_conveyor";
+            if (msg.cell == 2)
+                action = "wc2_conveyor";
+            if (msg.cell == 3)
+                action = "wc3_conveyor";
+            perform_action_obj.request.action = action;
+            _servicePerformAction.call (perform_action_obj);
 			// Tip Up
 			HMIUpdateIcons (tipper);
 			tip_obj.request.direction = true;
@@ -265,9 +263,9 @@ public:
 			_serviceTipper.call (tip_obj);
 			HMIUpdateIcons (null);
 			
-			// Checks if the battery is the critic level
-			checkBattery (_batteryCritic, action);
-			
+			/*
+            // Checks if the battery is the critic level
+            checkBattery (_batteryCritic, action);
 			// Go to the robot
 			if (msg.cell == 1)
 				action = "wc1_robot";
@@ -299,6 +297,7 @@ public:
 			
 			// Charges the battery until the threshold
 			chargeBattery (_batteryLow);
+            */
 			
 			_new_MESmsg.unlock();
 			_newOrder = false;
@@ -447,7 +446,7 @@ private:
     ros::ServiceClient _servicePerformAction, _serviceTipper;
     ros::Subscriber _buttonSubriber, _hmiSubscriber, _navStatusSubscriber, _navCurrentSubscriber,
         _mesSubscriber, _obstacleDetectorSubscriber, _batterySubscriber;
-    ros::Publisher _hmiPublisher, _mesPublisher, _buttonPublisher;
+    ros::Publisher _hmiPublisher, _mesPublisher;
     bool _buttonAuto, _hmiAuto, _newOrder;
     std::string safety_status_prev, _currentNode;
     double _batteryLevel, _batteryLow, _batteryCritic, _desiredCharge;

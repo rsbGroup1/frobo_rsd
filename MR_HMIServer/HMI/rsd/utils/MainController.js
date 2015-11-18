@@ -53,30 +53,29 @@ rsdNamespace.SetTarget = function() {
 rsdNamespace.ToggleHighlighting = function( selector ) {
 
     var id;
-
-    //console.log( 'selector:' + selector );
+    console.log( 'selector:' + selector );
 
     switch( selector ) {
 
-        case '0':
+        case 0:
             id = rsdNamespace.robotCellThree;
             break;
-        case '1':
+        case 1:
             id = rsdNamespace.robotCellTwo;
             break;
-        case '2':
+        case 2:
             id = rsdNamespace.robotCellOne;
             break;
-        case '3':
+        case 3:
             id = rsdNamespace.trackZoneOne;
             break;
-        case '4':
+        case 4:
             id = rsdNamespace.trackZoneTwo;
             break;
-        case '5':
+        case 5:
             id = rsdNamespace.cameraZone;
             break;
-        case '6':
+        case 6:
             id = rsdNamespace.box;
             break;
         default:
@@ -85,7 +84,7 @@ rsdNamespace.ToggleHighlighting = function( selector ) {
 
     }
 
-    //console.log( "id: " + id );
+    console.log( "id: " + id );
 
     var style = $( '#' + id ).attr( 'style' );
     var textStyle = $( '#' + id + 'Label' ).attr( 'style' );
@@ -166,6 +165,9 @@ rsdNamespace.RegisterTouchSurfaces = function() {
     // Button Left
 
     $('#button_l').on( "mousedown touchstart", function() {
+
+        rsdNamespace.actuationEnable = true;
+
         $('#remoteLeftLayer1').attr('style', 'display:none');
         $('#remoteLeftLayerL').attr('style', 'display:inline');
         rsdNamespace.activeButtonLeft = 'l';
@@ -180,6 +182,8 @@ rsdNamespace.RegisterTouchSurfaces = function() {
 
     // Button Right
     $('#button_r').on( "mousedown touchstart", function() {
+
+        rsdNamespace.actuationEnable = true;
 
         $('#remoteLeftLayer1').attr('style', 'display:none');
         $('#remoteLeftLayerR').attr('style', 'display:inline');
@@ -196,6 +200,8 @@ rsdNamespace.RegisterTouchSurfaces = function() {
     // Button Up
     $('#button_u').on( "mousedown touchstart", function() {
 
+        rsdNamespace.actuationEnable = true;
+
         $('#remoteLeftLayer1').attr('style', 'display:none');
         $('#remoteLeftLayerU').attr('style', 'display:inline');
       rsdNamespace.activeButtonLeft = 'u';
@@ -210,6 +216,8 @@ rsdNamespace.RegisterTouchSurfaces = function() {
 
     // Button Down
     $('#button_d').on( "mousedown touchstart", function() {
+
+        rsdNamespace.actuationEnable = true;
 
         $('#remoteLeftLayer1').attr('style', 'display:none');
         $('#remoteLeftLayerD').attr('style', 'display:inline');
@@ -229,6 +237,8 @@ rsdNamespace.RegisterTouchSurfaces = function() {
     // Button X
     $('#button_x').on( "mousedown touchstart", function() {
 
+        rsdNamespace.actuationEnable = false;
+
         $('#remoteRightLayer1').attr('style', 'display:none');
         $('#remoteRightLayerX').attr('style', 'display:inline');
         rsdNamespace.activeButtonRight = 'x';
@@ -244,6 +254,8 @@ rsdNamespace.RegisterTouchSurfaces = function() {
     // Button Y
     $('#button_y').on( "mousedown touchstart", function() {
 
+        rsdNamespace.actuationEnable = false;
+
         $('#remoteRightLayer1').attr('style', 'display:none');
         $('#remoteRightLayerY').attr('style', 'display:inline');
         rsdNamespace.activeButtonRight = 'y';
@@ -257,6 +269,8 @@ rsdNamespace.RegisterTouchSurfaces = function() {
     });
     // Button A
     $('#button_a').on( "mousedown touchstart", function() {
+
+        rsdNamespace.actuationEnable = false;
 
         $('#remoteRightLayer1').attr('style', 'display:none');
         $('#remoteRightLayerA').attr('style', 'display:inline');
@@ -273,6 +287,8 @@ rsdNamespace.RegisterTouchSurfaces = function() {
     // Button B
 
     $('#button_b').on( "mousedown touchstart", function() {
+
+        rsdNamespace.actuationEnable = false;
 
         $('#remoteRightLayer1').attr('style', 'display:none');
         $('#remoteRightLayerB').attr('style', 'display:inline');
@@ -386,7 +402,7 @@ rsdNamespace.CallDashboard = function() {
 
     rsdNamespace.DismissDialog();
 
-    rsdNamespace.actuationEnable = true;
+    // rsdNamespace.actuationEnable = true;
 
     // Displaying dashboard
     $('#remote').css( 'z-index', '10' );

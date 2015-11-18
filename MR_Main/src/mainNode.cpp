@@ -90,6 +90,7 @@ public:
         _mesSubscriber = _nh.subscribe<mr_mes_client::server> (_mesSub, 1, &MainNode::mesCallback, this);
         _obstacleDetectorSubscriber = _nh.subscribe<std_msgs::String> (_obstacleDetectorSub, 10, &MainNode::obstacleCallback, this);
         _batterySubscriber = _nh.subscribe<std_msgs::Float32> (_batterySub, 1, &MainNode::_batteryCallback, this);
+
     }
 
     ~MainNode()
@@ -477,11 +478,12 @@ int main()
     MainNode* mn = new MainNode();
 
     // Rate
-    ros::Rate rate (30);
+    ros::Rate rate (0.5);
 
     // Multithreading
     ros::AsyncSpinner spinner (0);
 
+    int i = 0;
     // ROS Spin: Handle callbacks
     while (!ros::isShuttingDown())
     {
@@ -489,7 +491,13 @@ int main()
 		
 		// Spin
         spinner.start();
+    	//mn.HMIUpdateIcons((HMI_ICONS)i);
+    	//mn.HMIUpdateSafety((HMI_SAFETY) i);
+        //mn.HMISendError("BURNING!!!");
+        //mn.HMISendInfo("Ready to rollllll");
+        //mn.HMISendWarning("Almost burning");
         rate.sleep();
+	    //(i<3)?i++:i=0;
     }
 
     // Return

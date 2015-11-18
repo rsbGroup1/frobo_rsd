@@ -21,7 +21,7 @@ rsdNamespace.UpdateLog = function( type, timestamp, message ) {
     }
 
     var entry = '<div class="log_entry' + highlighting + '">' +
-        '<span class="log_title"><h5 class="log_title">' + type + '</h5> - ' + timestamp + '</span>' +
+        '<span class="log_title"><h5 class="log_title">' + type_to_display + '</h5> - ' + timestamp + '</span>' +
         '<p class="log_message">' + message + '</p>' +
     '</div>';
 

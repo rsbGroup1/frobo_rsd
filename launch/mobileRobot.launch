@@ -243,17 +243,6 @@
 	</group>
 
 	<!-- MR Navigation Controller -->
-<<<<<<< HEAD
-	<group ns="MR_NavigationController">
-		<node pkg="mr_navigation_controller" name="mrNavigationController" type="mr_navigation_controller" output="screen">
-			<param name="lineFollowEnableService" value="mrLineFollower/lineUntilQR"/>
-			<param name="moveService" value="mrGo/move"/>
-			<param name="performAction" value="mrNavigationController/performAction"/>
-			<param name="status" value="mrNavigationController/status"/>
-			<param name="currentNode" value="mrNavigationController/currentNode"/>
-			<param name="searchLimit" value="100"/>
-		</node>
-	</group>
 
 	<!-- MR MES Client -->
 	<group ns="MR_MES_Client">
@@ -264,7 +253,7 @@
 			<param name="serverPort" value="21240"/>
 		</node>
 	</group>	
-=======
+
 	<node pkg="mr_navigation_controller" name="mrNavigationController" type="mr_navigation_controller" output="screen">
 		<param name="lineFollowEnableService" value="mrLineFollower/lineUntilQR"/>
 		<param name="moveService" value="mrGo/move"/>
@@ -308,7 +297,6 @@
 
     </node>
 -->
->>>>>>> ab107ba869b7b71cbfc976c1cbf52b15b43bfa9c
 
 </launch>
 

@@ -88,8 +88,10 @@ bool tipCallback(mr_tip_controller::tip::Request& req, mr_tip_controller::tip::R
 
    
     std::string read;
-    while(_serialConnection->read (read) != 'd') ; // Wait for answer 'd'
-    std::cout << "Read: " << read << std::endl;
+    while(_serialConnection->read (read) != 'd'){
+        std::cout << "Read: " << read << std::endl;
+        
+    } ; // Wait for answer 'd'
 
     _waitMutex.lock();
     bool tipperDone = _tipperDone;

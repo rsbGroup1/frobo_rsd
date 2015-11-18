@@ -236,15 +236,15 @@ public:
 			// the critic level
 			action = _currentNode;
 			// Checks if the battery is the critic level
-			checkBattery (_batteryCritic, action);
+			//checkBattery (_batteryCritic, action);
 			
 			// Go to the dispenser position
-			action = "bricks";
-			perform_action_obj.request.action = action;
-			_servicePerformAction.call (perform_action_obj);
+			//action = "bricks";
+			//perform_action_obj.request.action = action;
+			//_servicePerformAction.call (perform_action_obj);
 			
 			// Checks if the battery is the critic level
-			checkBattery (_batteryCritic, action);
+			//checkBattery (_batteryCritic, action);
 			
 			// Send the robot to the correct wc conveyor
 			if (msg.cell == 1)

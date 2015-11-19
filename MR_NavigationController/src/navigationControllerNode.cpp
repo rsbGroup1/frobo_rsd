@@ -9,6 +9,7 @@
 #include <ros/ros.h>
 #include <ros/package.h>
 #include "mr_navigation_controller/performAction.h"
+#include "mr_navigation_controller/setCurrentNode.h"
 #include "mr_line_follower/followUntilQR.h"
 #include "mr_go/move.h"
 
@@ -54,69 +55,84 @@ public:
         pNh_.param<std::string> ("performAction", srv_action_name_, "mrNavigationController/performAction");
         pNh_.param<std::string> ("status", pub_status_name_, "mrNavigationController/status");
         pNh_.param<std::string> ("currentNode", pub_current_node_name_, "mrNavigationController/currentNode");
+        pNh_.param<std::string> ("setCurrentNode", srv_set_current_node_name_, "mrNavigationController/setCurrentNode");
         pNh_.param<int> ("searchLimit", search_limit_, 100);
-		//std::string path_to_node = ros::package::getPath("mrNavigationController");
+        //std::string path_to_node = ros::package::getPath("mrNavigationController");
 
         // Service
         srv_lineUntilQR_ = nh_.serviceClient<mr_line_follower::followUntilQR> (srv_lineUntilQR_name_);
         srv_move_ = nh_.serviceClient<mr_go::move> (srv_move_name_);
         srv_action_ = nh_.advertiseService (srv_action_name_, &NavigationController::performActionCallback, this);
-		
-		// Subscriber
-		sub_pose_ =nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>("amcl_pose",10,&NavigationController::poseReceived,this);
+        srv_set_current_node_ = nh_.advertiseService (srv_set_current_node_name_, &NavigationController::setCurrentNodeCallback, this);
+
+        // Subscriber
+        sub_pose_ = nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped> ("amcl_pose", 10, &NavigationController::poseReceived, this);
 
         // Publisher
         pub_status_ = nh_.advertise<std_msgs::String> (pub_status_name_, 10);
         pub_current_node_ = nh_.advertise<std_msgs::String> (pub_current_node_name_, 10);
-		pub_initialize_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>("initialpose",1);
+        pub_initialize_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped> ("initialpose", 1);
 
-        // Create the graph
+        // Create the graph and put the start node from the launch file
         graph_ = new Graph (&pub_current_node_);
+        std::string start_node;
+        nh_.param<std::string> ("start_node", start_node, "line_start");
+        graph_->setCurrentNode (start_node);
         createGraph();
         //graph_->showGraph();
-        
-		// Inialize AMCL
-		std::ifstream localisationFile;
-		//std::string path_to_file = path_to_node + 
-		localisationFile.open("localization.csv");
-		ROS_INFO("Waiting for global localisation");
-		ros::service::waitForService("global_localization",ros::Duration(5,0));
-		
-		
-		if(localisationFile.is_open())
-		{
-			ros::ServiceClient initalize = nh_.serviceClient<std_srvs::Empty>("global_localization");
-			std_srvs::Empty srv;
-			initalize.call(srv);
 
-			// Load initialization
-			geometry_msgs::PoseWithCovarianceStamped p;
-			localisationFile >> p.pose.pose.position.x;
-			localisationFile >> p.pose.pose.position.y;
-			localisationFile >> p.pose.pose.orientation.x;
-			localisationFile >> p.pose.pose.orientation.y;
-			localisationFile >> p.pose.pose.orientation.z;
-			localisationFile >> p.pose.pose.orientation.w;
-			p.header.frame_id = "map";
+        // Inialize AMCL
+        std::ifstream localisationFile;
+        //std::string path_to_file = path_to_node +
+        localisationFile.open ("localization.csv");
+        ROS_INFO ("Waiting for global localisation");
+        ros::service::waitForService ("global_localization", ros::Duration (5, 0));
 
-			ros::Duration d(6,0);
-			d.sleep();
-			pub_initialize_.publish(p);
 
-			localisationFile.close();
-		}
-		else
-		{
-			// global initialization
-			ros::ServiceClient initalize = nh_.serviceClient<std_srvs::Empty>("global_localization");
-			std_srvs::Empty srv;
-			initalize.call(srv);
-		}
+        if (localisationFile.is_open())
+        {
+            ros::ServiceClient initalize = nh_.serviceClient<std_srvs::Empty> ("global_localization");
+            std_srvs::Empty srv;
+            initalize.call (srv);
+
+            // Load initialization
+            geometry_msgs::PoseWithCovarianceStamped p;
+            localisationFile >> p.pose.pose.position.x;
+            localisationFile >> p.pose.pose.position.y;
+            localisationFile >> p.pose.pose.orientation.x;
+            localisationFile >> p.pose.pose.orientation.y;
+            localisationFile >> p.pose.pose.orientation.z;
+            localisationFile >> p.pose.pose.orientation.w;
+            p.header.frame_id = "map";
+
+            ros::Duration d (6, 0);
+            d.sleep();
+            pub_initialize_.publish (p);
+
+            localisationFile.close();
+        }
+        else
+        {
+            // global initialization
+            ros::ServiceClient initalize = nh_.serviceClient<std_srvs::Empty> ("global_localization");
+            std_srvs::Empty srv;
+            initalize.call (srv);
+        }
     }
 
     ~NavigationController()
     {
         //
+    }
+
+    bool setCurrentNodeCallback (mr_navigation_controller::setCurrentNode::Request& req,
+                                 mr_navigation_controller::setCurrentNode::Response& res)
+    {
+
+        graph_->setCurrentNode (req.node.c_str());
+        res.success = true;
+        return true;
+
     }
 
     /**
@@ -372,9 +388,9 @@ public:
     }
 
 
-	/**
-	 * Stores the current position in the localisation file
-	 */
+    /**
+     * Stores the current position in the localisation file
+     */
     void storePosition()
     {
         ROS_INFO ("Storing position");
@@ -395,13 +411,13 @@ public:
 
 private:
     ros::NodeHandle nh_, pNh_;
-	ros::Publisher pub_status_, pub_current_node_, pub_initialize_;
+    ros::Publisher pub_status_, pub_current_node_, pub_initialize_;
     ros::ServiceClient srv_lineUntilQR_, srv_move_;
-    ros::ServiceServer srv_action_;
+    ros::ServiceServer srv_action_, srv_set_current_node_;
     ros::Subscriber sub_pose_;
 
     std::string srv_lineUntilQR_name_, srv_move_name_, pub_status_name_,
-        srv_action_name_, pub_current_node_name_;
+        srv_action_name_, pub_current_node_name_, srv_set_current_node_name_;
     Skills skills_;
     Graph* graph_;
     std::vector<std::function<void() >> solution_;

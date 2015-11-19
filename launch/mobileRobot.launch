@@ -260,9 +260,11 @@
 		<param name="status" value="mrNavigationController/status"/>
 		<param name="currentNode" value="mrNavigationController/currentNode"/>
 		<param name="searchLimit" value="100"/>
+		<param name="start_node" value="line_start"/>
 	</node>
-<!--
 
+
+<!--
 	<node pkg="move_base" name="move_base" type="move_base" output="screen">
 		<rosparam file="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/move_base_config/move_base_params.yaml" command="load" />
     	<param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS " />  
@@ -273,6 +275,7 @@
 		<rosparam file="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/move_base_config/dwa_local_planner_params.yaml" command="load"/>
 	</node>
 -->
+
 	<!-- LIDAR TF-->
 <!--
 	<node pkg="tf" type="static_transform_publisher" name="laser_transform" args="0.25 0 0 0 0 0 base_footprint laser_frame 50"  >
@@ -284,18 +287,19 @@
     <node pkg="map_server" type="map_server" name="map_server" args="/home/frobit_pro_group1/roswork/src/frobo_rsd//Navigation_Setup/maps/frontal_map_big_edited.yaml" output="screen"/>
 
     <node pkg="amcl" type="amcl" name="amcl" output="screen">
-		<param name="odom_alpha1" value="0.8"/>
-		<param name="odom_alpha2" value="0.8"/>
-		<param name="odom_alpha3" value="0.8"/>
-		<param name="odom_alpha4" value="0.8"/>
-		<param name="min_particles" value="30"/>
+	<param name="odom_alpha1" value="0.8"/>
+	<param name="odom_alpha2" value="0.8"/>
+	<param name="odom_alpha3" value="0.8"/>
+	<param name="odom_alpha4" value="0.8"/>
+	<param name="min_particles" value="30"/>
 
-	      <param name="base_frame_id" value="/base_footprint"/>
-	      <param name="odom_frame_id" value="/odom_combined"/>
-	      <param name="initial_pose_a" value="-1.9"/>
+	<param name="base_frame_id" value="/base_footprint"/>
+	<param name="odom_frame_id" value="/odom_combined"/>
+	<param name="initial_pose_a" value="-1.9"/>
 
     </node>
 -->
+
 
 </launch>
 

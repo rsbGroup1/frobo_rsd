@@ -11,6 +11,7 @@ add_service_files(
 	DIRECTORY srv
 	FILES
 	performAction.srv
+	setCurrentNode.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

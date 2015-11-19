@@ -181,6 +181,7 @@
 			<param name="mes_sub" value="mrMESClient/msgFromServer"/> 
 			<param name="obstacle_detector_sub" value="/mrObstacleDetector/status"/> 
 			<param name="battery_sub" value="/fmInformation/battery"/>
+			<param name="check_battery" value="false"/>
 			<param name="battery_low" value="12.4"/> 
 			<param name="battery_critic" value="12.0"/> 
 			<param name="desired_charge" value="14.1"/> 

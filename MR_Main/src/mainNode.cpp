@@ -53,8 +53,8 @@ class MainNode
 public:
     MainNode() :
         _pNh ("~"),
-        _batteryLevel(0),
-		_newOrder(false)
+        _batteryLevel (0),
+        _newOrder (false)
     {
         // Get parameter names
         _pNh.param<std::string> ("nav_perform_srv", _performActionString, "/mrNavigationController/performAction");
@@ -68,6 +68,7 @@ public:
         _pNh.param<std::string> ("mes_sub", _mesSub, "/mrMESClient/msgFromServer");
         _pNh.param<std::string> ("obstacle_detector_sub", _obstacleDetectorSub, "/mrObstacleDetector/status");
         _pNh.param<std::string> ("battery_sub", _batterySub, "/fmInformation/battery");
+        _pNh.param<bool> ("check_battery", _check_battery , true);
         _pNh.param<double> ("battery_low", _batteryLow, 12.4);
         _pNh.param<double> ("battery_critic", _batteryCritic, 12.1);
         _pNh.param<double> ("desired_charge", _desiredCharge, 14.1);
@@ -184,6 +185,7 @@ public:
     void hmiCallback (std_msgs::String msg)
     {
         boost::unique_lock<boost::mutex> lock (_runMutex);
+
         if (msg.data == "start")
             _hmiAuto = true;
         else if (msg.data == "stop" || msg.data == "manual")
@@ -191,119 +193,123 @@ public:
     }
 
     /**
-	 * Copies the MES message to the internal msg
-	 */
+     * Copies the MES message to the internal msg
+     */
     void mesCallback (mr_mes_client::server msg)
     {
-		boost::unique_lock<boost::mutex> lock (_new_MESmsg);
-		_msg_last = msg;
-		_newOrder = true;
+        boost::unique_lock<boost::mutex> lock (_new_MESmsg);
+        _msg_last = msg;
+        _newOrder = true;
     }
-    
+
     /**
-     * Based on the last MES message, if status is false, 
-	 * which means that robotic arm hasn't finished the order do:
+     * Based on the last MES message, if status is false,
+     * which means that robotic arm hasn't finished the order do:
      * 1. Goes to pick some bricks to the dispenser
      * 2. Goes to the desired workcell coveyor
      * 3. Leave the bricks in the conveyor with the tipper
      * 4. Moves to the robot position of the same workcell
-	 * 	 * 1. Goes to charge
-	 * 2. Send an "Ok" to the MES Server indicating that we are ready
-	 * for another order
+     * 	 * 1. Goes to charge
+     * 2. Send an "Ok" to the MES Server indicating that we are ready
+     * for another order
      */
     void MESProcessOrder()
-	{
-		mr_mes_client::server msg;
-		_new_MESmsg.lock();
-		msg = _msg_last;
-		bool newOrder = _newOrder;
-		_new_MESmsg.unlock();
-		
-		_runMutex.lock();
-		bool automode = _buttonAuto | _hmiAuto;
-		_runMutex.unlock();
-		
-		if (msg.mobileRobot == 1 && automode && newOrder)
-		{
-			
-			mr_navigation_controller::performAction perform_action_obj;
-			mr_tip_controller::tip tip_obj;
-			std::string action;
-			/*
-			// Stores the current position just in case the battery is in
-			// the critic level
-			action = _currentNode;
-			// Checks if the battery is the critic level
-			//checkBattery (_batteryCritic, action);
-			
-			// Go to the dispenser position
-			action = "bricks";
-			perform_action_obj.request.action = action;
-			_servicePerformAction.call (perform_action_obj);
-			
-			// Checks if the battery is the critic level
-			checkBattery (_batteryCritic, action);
-			*/
-            
+    {
+        mr_mes_client::server msg;
+        _new_MESmsg.lock();
+        msg = _msg_last;
+        bool newOrder = _newOrder;
+        _new_MESmsg.unlock();
+
+        _runMutex.lock();
+        bool automode = _buttonAuto | _hmiAuto;
+        _runMutex.unlock();
+
+        if (msg.mobileRobot == 1 && automode && newOrder)
+        {
+
+            mr_navigation_controller::performAction perform_action_obj;
+            mr_tip_controller::tip tip_obj;
+            std::string action;
+
+            // Stores the current position just in case the battery is in
+            // the critic level
+            action = _currentNode;
+            // Checks if the battery is the critic level
+            if (_check_battery) checkBattery (_batteryCritic, action);
+
+            // Go to the dispenser position
+            //action = "bricks";
+            //perform_action_obj.request.action = action;
+            //_servicePerformAction.call (perform_action_obj);
+
+            // Checks if the battery is the critic level
+            if (_check_battery) checkBattery (_batteryCritic, action);
+
             // Send the robot to the correct wc conveyor
             if (msg.cell == 1)
                 action = "wc1_conveyor";
+
             if (msg.cell == 2)
                 action = "wc2_conveyor";
+
             if (msg.cell == 3)
                 action = "wc3_conveyor";
+
             perform_action_obj.request.action = action;
             _servicePerformAction.call (perform_action_obj);
-			// Tip Up
-			HMIUpdateIcons (tipper);
-			tip_obj.request.direction = true;
-			_serviceTipper.call (tip_obj);
-			// Tip Down
-			tip_obj.request.direction = false;
-			_serviceTipper.call (tip_obj);
-			HMIUpdateIcons (null);
-			
-			/*
+            // Tip Up
+            HMIUpdateIcons (tipper);
+            tip_obj.request.direction = true;
+            _serviceTipper.call (tip_obj);
+            // Tip Down
+            tip_obj.request.direction = false;
+            _serviceTipper.call (tip_obj);
+            HMIUpdateIcons (null);
+
+            /*
             // Checks if the battery is the critic level
-            checkBattery (_batteryCritic, action);
-			// Go to the robot
-			if (msg.cell == 1)
-				action = "wc1_robot";
-			if (msg.cell == 2)
-				action = "wc2_robot";
-			if (msg.cell == 3)
-				action = "wc3_robot";
-			perform_action_obj.request.action = action;
-			_servicePerformAction.call (perform_action_obj);
-			
-			_new_MESmsg.lock();
-			msg = _msg_last;
-			_new_MESmsg.unlock();
-			while(msg.status != 1) {
-				HMISendInfo("Waiting for robot to complete");
-				_new_MESmsg.lock();
-				msg = _msg_last;
-				_new_MESmsg.unlock();
-				usleep(5000);
-			}
-	
-			// Go to charge position
-			perform_action_obj.request.action = "charge";
-			_servicePerformAction.call (perform_action_obj);
-			
-			std_msgs::String msg;
-			msg.data = "Ok";
-			_mesPublisher.publish(msg);
-			
-			// Charges the battery until the threshold
-			chargeBattery (_batteryLow);
+            if (_check_battery) checkBattery (_batteryCritic, action);
+            // Go to the robot
+            if (msg.cell == 1)
+            	action = "wc1_robot";
+            if (msg.cell == 2)
+            	action = "wc2_robot";
+            if (msg.cell == 3)
+            	action = "wc3_robot";
+            perform_action_obj.request.action = action;
+            _servicePerformAction.call (perform_action_obj);
+            
+            if (_check_battery) checkBattery (_batteryCritic, action);
+
+            _new_MESmsg.lock();
+            msg = _msg_last;
+            _new_MESmsg.unlock();
+            while(msg.status != 1) {
+            	HMISendInfo("Waiting for robot to complete");
+            	_new_MESmsg.lock();
+            	msg = _msg_last;
+            	_new_MESmsg.unlock();
+            	usleep(5000);
+            }
+
+            // Go to charge position
+            perform_action_obj.request.action = "charge";
+            _servicePerformAction.call (perform_action_obj);
+
+            std_msgs::String msg;
+            msg.data = "Ok";
+            _mesPublisher.publish(msg);
             */
-			
-			_new_MESmsg.unlock();
-			_newOrder = false;
-			_new_MESmsg.lock();
-		}
-	}
+
+            // Charges the battery until the threshold
+            if (_check_battery) chargeBattery (_batteryLow);
+
+            _new_MESmsg.unlock();
+            _newOrder = false;
+            _new_MESmsg.lock();
+        }
+    }
 
     /**
      * Reads the navigation status and activate the icons in the HMI
@@ -421,24 +427,24 @@ public:
         perform_action_obj.request.action = prev_pos;
         _servicePerformAction.call (perform_action_obj);
     }
-    
+
     /**
-	 * Charge until it reaches the limit
-	 */
-	void chargeBattery (float threshold)
-	{
-		if (_batteryLevel == 0)
-			std::cout << "No battery level! Waiting..." << std::endl;
-		
-		while (_batteryLevel == 0) // Wait
-			;;
-		
-		if (_batteryLevel < threshold)
-		{
-			while (_batteryLevel < _desiredCharge)
-				; // Wait
-		}
-	}
+     * Charge until it reaches the limit
+     */
+    void chargeBattery (float threshold)
+    {
+        if (_batteryLevel == 0)
+            std::cout << "No battery level! Waiting..." << std::endl;
+
+        while (_batteryLevel == 0) // Wait
+            ;;
+
+        if (_batteryLevel < threshold)
+        {
+            while (_batteryLevel < _desiredCharge)
+                ; // Wait
+        }
+    }
 
 
 private:
@@ -447,13 +453,13 @@ private:
     ros::Subscriber _buttonSubriber, _hmiSubscriber, _navStatusSubscriber, _navCurrentSubscriber,
         _mesSubscriber, _obstacleDetectorSubscriber, _batterySubscriber;
     ros::Publisher _hmiPublisher, _mesPublisher;
-    bool _buttonAuto, _hmiAuto, _newOrder;
+    bool _buttonAuto, _hmiAuto, _newOrder, _check_battery;
     std::string safety_status_prev, _currentNode;
     double _batteryLevel, _batteryLow, _batteryCritic, _desiredCharge;
     boost::mutex _runMutex, _new_MESmsg;
     std::string _performActionString, _navStatusSub, _navCurrentnodeSub, _buttonSub, _buttonPub,
         _hmiSub, _tipperString, _hmiPub, _mesSub, _mesPub, _obstacleDetectorSub, _batterySub;
-	mr_mes_client::server _msg_last;
+    mr_mes_client::server _msg_last;
 };
 
 
@@ -479,12 +485,13 @@ int main()
     ros::AsyncSpinner spinner (0);
 
     int i = 0;
+
     // ROS Spin: Handle callbacks
     while (!ros::isShuttingDown())
     {
-		mn->MESProcessOrder();
-		
-		// Spin
+        mn->MESProcessOrder();
+
+        // Spin
         spinner.start();
         rate.sleep();
     }

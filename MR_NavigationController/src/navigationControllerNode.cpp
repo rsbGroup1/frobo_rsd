@@ -128,18 +128,21 @@ public:
     bool setCurrentNodeCallback (mr_navigation_controller::setCurrentNode::Request& req,
                                  mr_navigation_controller::setCurrentNode::Response& res)
     {
-        bool node_exists;
-        bool already_here;
+        bool node_exists = false;
+        bool already_here = false;
 
+	// Check if the node exists
         for (auto & node : graph_->getNodes())
         {
             if (node.getName() == req.node.c_str())
                 node_exists = true;
-
-            if (node.getName() == graph_->getCurrentNode())
-                already_here = true;
         }
+        
+        // Check if it is already in the node
+	if (req.node.c_str() == graph_->getCurrentNode())
+	    already_here = true;
 
+	// Handle the output
         if (node_exists == true)
         {
             if (already_here)

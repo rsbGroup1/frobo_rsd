@@ -70,6 +70,11 @@ public:
      * Gets the current node in which the robot is located
      */
     std::string getCurrentNode();
+    
+    /**
+     * Get all the nodes in the graph
+     */
+    std::vector<Node> getNodes();
 
 private:
     std::vector<Node> nodes_;

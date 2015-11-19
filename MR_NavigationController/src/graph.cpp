@@ -90,6 +90,10 @@ void Graph::setCurrentNode (std::string name_of_current_node)
     pub_current_node_->publish (msg);
 }
 
+std::vector< Node > Graph::getNodes()
+{
+    return nodes_;
+}
 
 std::vector<std::function<void() >> Graph::bfs (const std::string node_end_name, int number_limit)
 {

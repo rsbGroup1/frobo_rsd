@@ -128,11 +128,37 @@ public:
     bool setCurrentNodeCallback (mr_navigation_controller::setCurrentNode::Request& req,
                                  mr_navigation_controller::setCurrentNode::Response& res)
     {
+        bool node_exists;
+        bool already_here;
 
-        graph_->setCurrentNode (req.node.c_str());
-        res.success = true;
-        return true;
+        for (auto & node : graph_->getNodes())
+        {
+            if (node.getName() == req.node.c_str())
+                node_exists = true;
 
+            if (node.getName() == graph_->getCurrentNode())
+                already_here = true;
+        }
+
+        if (node_exists == true)
+        {
+            if (already_here)
+            {
+                ROS_INFO ("I am already here!");
+            }
+            else
+            {
+                graph_->setCurrentNode (req.node.c_str());
+                res.success = true;
+                return true;
+            }
+        }
+        else
+        {
+            ROS_ERROR ("The node %s is NOT in the graph", req.node.c_str());
+            res.success = false;
+            return false;
+        }
     }
 
     /**

@@ -155,22 +155,16 @@ void changeMode()
 
 void changeErrorMode (MODES errorMode)
 {
-    _modeMutex.lock();
-
+    boost::unique_lock<boost::mutex> lock (_modeMutex);
     _errorMode = errorMode;
     changeMode();
-
-    _modeMutex.unlock();
 }
 
 void changeRunMode (MODES runMode)
 {
-    _modeMutex.lock();
-
+    boost::unique_lock<boost::mutex> lock (_modeMutex);
     _runMode = runMode;
     changeMode();
-
-    _modeMutex.unlock();
 }
 
 void buttonCallback (std_msgs::Bool msg)

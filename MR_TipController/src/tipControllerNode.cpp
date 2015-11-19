@@ -120,30 +120,9 @@ void writeSerialThread()
     }
 }
 
-bool compareMsg (char* msg, char* command)
-{
-    int i = 0;
-
-    while (msg[i] != '\n' && command[i] != '\n')
-    {
-        if (tolower (msg[i]) != tolower (command[i]))
-            return false;
-
-        i++;
-    }
-
-    if (i == 0)
-        return false;
-
-    return true;
-}
-
 void readSerialThread()
 {
     std::string tempString;
-    char msg[DATA_LENGTH + 1];
-    msg[DATA_LENGTH] = '\n';
-    int i = 0;
 
     while(true)
     {

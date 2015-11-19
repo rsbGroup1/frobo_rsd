@@ -373,9 +373,6 @@ def initHMI():
     rospy.wait_for_service(TIPPER_UPDATE_SRV)
     srvTipper = rospy.ServiceProxy( TIPPER_UPDATE_SRV, tip )
 
-    # Prepare the actuation in another thread
-    # aThread = actuationThread( 1, "actuation_thread" )
-
     log.startLogging(sys.stdout)
 
     # Establish WebSocket connection
@@ -386,8 +383,8 @@ def initHMI():
     reactor.listenTCP( int(WEB_SOCKET_PORT), factory )
     reactor.run()
 
-    # spin() simply keeps python from exiting until this node is stopped
-    rospy.spin()
+    while not rospy.is_shutdown():
+        rospy.spin()
 
 if __name__ == '__main__':
     initHMI()

@@ -95,7 +95,7 @@ int main()
     ros::Subscriber mesMessageSub = nh.subscribe (mesSub, 10, sendMsgCallback);
 
     // Sleep rate
-    ros::Rate r (10);
+    ros::Rate r (30);
 
     // Connect to server
     if (connectToServer() == false)
@@ -105,7 +105,7 @@ int main()
     }
 
     // Set loop rate
-    while (ros::ok())
+    while (!ros::isShuttingDown())
     {
         if(_waitForServer)
         {

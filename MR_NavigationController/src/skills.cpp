@@ -118,17 +118,15 @@ bool Skills::goToFreePosition (double x, double y, double yaw)
 
 bool Skills::setInitialPoseAMCL (double x, double y, double yaw)
 {
-    ROS_INFO ("setting initial pose for AMCL to(%f, %f, %f)", x, y, yaw);
-    std::cout << "setting initial pose for AMCL" << std::endl;
-    bool success = false;
+	ROS_INFO ("setting initial pose for AMCL to(%f, %f, %f)", x, y, yaw);
+	std::cout << "setting initial pose for AMCL" << std::endl;
 
-    geometry_msgs::PoseWithCovarianceStamped p;
+	geometry_msgs::PoseWithCovarianceStamped p;
 	p.pose.pose.position.x = x;
 	p.pose.pose.position.y = y;
 	p.pose.pose.orientation = tf::createQuaternionMsgFromYaw(yaw);
-    p.header.frame_id = "map";
+	p.header.frame_id = "map";
 
 	pub_initialize_->publish(p);
-	success = true;
 	return true;
 }

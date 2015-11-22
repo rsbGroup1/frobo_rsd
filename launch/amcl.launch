@@ -1,9 +1,33 @@
 <launch>
-
+<!--
     <node pkg="map_server" type="map_server" name="map_server" args="/home/frobit_pro_group1/roswork/src/frobo_rsd/Other\ files/map_lidar_front.yaml" output="screen"/>
 
     <node pkg="amcl" type="amcl" name="amcl" args="scan:=scan" output="screen">
-	      <param name="base_frame_id" value="/base_footprint"/>
+	      <param name="base_frame_id" value="/base_link"/>
 	      <param name="odom_frame_id" value="/odom"/>
     </node>
+-->
+	<node pkg="amcl" type="amcl" name="amcl" output="screen">
+		<param name="odom_alpha1" value="0.8"/>
+		<param name="odom_alpha2" value="0.8"/>
+		<param name="odom_alpha3" value="0.8"/>
+		<param name="odom_alpha4" value="0.8"/>
+		<param name="min_particles" value="30"/>
+
+		<param name="base_frame_id" value="/base_link"/>
+		<param name="odom_frame_id" value="/odom"/>
+		<param name="initial_pose_a" value="-1.9"/>
+
+	</node>
+
+
+	<node pkg="move_base" name="move_base" type="move_base" output="screen">
+		<rosparam file="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/move_base_config/move_base_params.yaml" command="load" />
+	<param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS " />  
+		<rosparam file="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/move_base_config/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+		<rosparam file="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/move_base_config/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+		<rosparam file="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/move_base_config/local_costmap_params.yaml" command="load"/>
+		<rosparam file="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/move_base_config/global_costmap_params.yaml" command="load"/>
+		<rosparam file="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/move_base_config/dwa_local_planner_params.yaml" command="load"/>
+	</node>
 </launch>

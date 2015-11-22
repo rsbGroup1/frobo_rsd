@@ -84,8 +84,8 @@
 			<param name="imu_sub" value="/fmInformation/imu" />
 			<param name="odom_reset_sub" value="/fmInformation/odom_reset" />
 			<param name="odom_pub" value="/fmKnowledge/pose" />
-			<param name="odom_estimate_frame" value="/odom_combined" />
-			<param name="vehicle_frame" value="base_footprint" />
+			<param name="odom_estimate_frame" value="/odom" />
+			<param name="vehicle_frame" value="/base_link" />
 			<param name="encoder_output" value="absolute" />
 			<param name="max_ticks_per_update" value="200" />
 			<param name="yaw_angle_source" value="/imu_angular_velocity" />
@@ -119,7 +119,7 @@
 	    <param name="max_ang" type="double" value="1.6" />
 	    <param name="intensity" type="bool" value="True" />
 	    <param name="skip" type="int" value="0" />
-	    <param name="frame_id" type="str" value="laser_frame" />
+	    <param name="frame_id" type="str" value="base_laser_link" />
 	    <param name="time_offset" type="double" value="-0.001" />
 	    <param name="publish_datagram" type="bool" value="False" />
 	    <param name="port" type="str" value="/dev/lidar" />
@@ -264,6 +264,28 @@
 		<param name="start_node" value="line_start"/>
 	</node>
 
+	<node pkg="tf" type="static_transform_publisher" name="laser_transform" args="0.25 0 0 0 0 0 base_link base_laser_link 50"  >
+	</node>
+
+	<node pkg="tf" type="static_transform_publisher" name="imu_transform" args="0.10 0 0 0 0 0 base_link imu_link 50"  >
+	</node>
+
+
+
+	<node pkg="map_server" type="map_server" name="map_server" args="/home/frobit_pro_group1/roswork/src/frobo_rsd//Navigation_Setup/maps/frontal_map_big_edited.yaml" output="screen"/>
+<!--
+	<node pkg="amcl" type="amcl" name="amcl" output="screen">
+		<param name="odom_alpha1" value="0.8"/>
+		<param name="odom_alpha2" value="0.8"/>
+		<param name="odom_alpha3" value="0.8"/>
+		<param name="odom_alpha4" value="0.8"/>
+		<param name="min_particles" value="30"/>
+
+		<param name="base_frame_id" value="/base_link"/>
+		<param name="odom_frame_id" value="/odom"/>
+		<param name="initial_pose_a" value="-1.9"/>
+
+	</node>
 
 
 	<node pkg="move_base" name="move_base" type="move_base" output="screen">
@@ -275,32 +297,7 @@
 		<rosparam file="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/move_base_config/global_costmap_params.yaml" command="load"/>
 		<rosparam file="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/move_base_config/dwa_local_planner_params.yaml" command="load"/>
 	</node>
-
-
-	<!-- LIDAR TF-->
-
-	<node pkg="tf" type="static_transform_publisher" name="laser_transform" args="0.25 0 0 0 0 0 base_footprint laser_frame 50"  >
-	</node>
-
-	<node pkg="tf" type="static_transform_publisher" name="imu_transform" args="0.10 0 0 0 0 0 base_footprint imu_link 50"  >
-	</node>
-
-    <node pkg="map_server" type="map_server" name="map_server" args="/home/frobit_pro_group1/roswork/src/frobo_rsd//Navigation_Setup/maps/frontal_map_big_edited.yaml" output="screen"/>
-
-    <node pkg="amcl" type="amcl" name="amcl" output="screen">
-	<param name="odom_alpha1" value="0.8"/>
-	<param name="odom_alpha2" value="0.8"/>
-	<param name="odom_alpha3" value="0.8"/>
-	<param name="odom_alpha4" value="0.8"/>
-	<param name="min_particles" value="30"/>
-
-	<param name="base_frame_id" value="/base_footprint"/>
-	<param name="odom_frame_id" value="/odom_combined"/>
-	<param name="initial_pose_a" value="-1.9"/>
-
-    </node>
-
-
+-->
 
 </launch>
 

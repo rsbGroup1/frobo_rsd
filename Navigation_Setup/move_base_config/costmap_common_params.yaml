@@ -10,7 +10,7 @@ track_unknown_space: false
 publish_cost_grid: true
 
 #Set the tolerance we're willing to have for tf transforms
-transform_tolerance: 0.2
+transform_tolerance: 2.0
 
 #Obstacle marking parameters
 obstacle_range: 3.0 # only update add obstacle within this range

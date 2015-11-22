@@ -296,12 +296,14 @@ public:
 
 
         std::vector<std::function<void() >> line_end_TO_box;
-        line_end_TO_box.push_back (std::bind (&Skills::goToFreePosition, &skills_, -0.30, -2.5, 1.6));
+        line_end_TO_box.push_back (std::bind (&Skills::setInitialPoseAMCL, &skills_, 3.615, -2.046, 2.115));
+        line_end_TO_box.push_back (std::bind (&Skills::goToFreePosition, &skills_, 0.1, 0.7 , -1.9));
+        line_end_TO_box.push_back (std::bind (&Skills::goToFreePosition, &skills_, -0.5, -1.5 , -1.9));
         line_end_TO_box.push_back (std::bind (&Graph::setCurrentNode, graph_, "box"));
 
         std::vector<std::function<void() >> box_TO_line_start;
         box_TO_line_start.push_back (std::bind (&Skills::goToFreePosition, &skills_, 0.1, 0.7 , 1.3));
-        box_TO_line_start.push_back (std::bind (&Skills::goToFreePosition, &skills_, 3.3, -2 , -1.5));
+        box_TO_line_start.push_back (std::bind (&Skills::goToFreePosition, &skills_, 3.3, -2 , -1.2));
         box_TO_line_start.push_back (std::bind (&Graph::setCurrentNode, graph_, "line_start"));
 
 
@@ -316,10 +318,10 @@ public:
 
 
         std::vector<std::function<void() >> pre_bricks_TO_bricks;
-        pre_bricks_TO_bricks.push_back (std::bind (&Skills::linearMove, &skills_, 0.1));
+        pre_bricks_TO_bricks.push_back (std::bind (&Skills::linearMove, &skills_, 0.15));
         pre_bricks_TO_bricks.push_back (std::bind (&Graph::setCurrentNode, graph_, "bricks"));
         std::vector<std::function<void() >> bricks_TO_pre_bricks;
-        bricks_TO_pre_bricks.push_back (std::bind (&Skills::linearMove, &skills_, -0.1));
+        bricks_TO_pre_bricks.push_back (std::bind (&Skills::linearMove, &skills_, -0.15));
         bricks_TO_pre_bricks.push_back (std::bind (&Graph::setCurrentNode, graph_, "pre_bricks"));
 
 

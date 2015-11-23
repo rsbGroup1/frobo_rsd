@@ -42,8 +42,11 @@ public:
         pNh_.param<std::string> ("srv_move", srv_move_name_, "mrGo/move");
 
         // Publishers, subscribers, services
-
         srv_move_ = nh_.advertiseService (srv_move_name_, &Go::moveCallback, this);
+
+        pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
+        pub_twist_ = nh_.advertise<geometry_msgs::TwistStamped> (pub_twist_name_, 1);
+        sub_odom_ = nh_.subscribe<nav_msgs::Odometry> (sub_odom_name_, 1, &Go::odometryCallback, this);
 
         // Twist stop
         twist_stop_msg_.twist.linear.x = 0;
@@ -55,7 +58,6 @@ public:
      */
     ~Go()
     {
-        stopDeadman();
     }
 
     /**
@@ -80,11 +82,7 @@ public:
     bool moveCallback (mr_go::move::Request& req, mr_go::move::Response& res)
     {
         // Starts the publishers, subscribers and the deadman
-        pub_twist_ = nh_.advertise<geometry_msgs::TwistStamped> (pub_twist_name_, 1);
-        pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
         deadmanThread_ = new boost::thread (&Go::enableDeadman, this);
-        sub_odom_ = nh_.subscribe<nav_msgs::Odometry> (sub_odom_name_, 1, &Go::odometryCallback, this);
-
 
         // Twist msg
         twist_msg_.twist.linear.x = 0;
@@ -122,8 +120,6 @@ public:
         {
             // Change the sign
             req.angular = -req.angular;
-            // Deadman thread
-            deadmanThread_->start_thread();
             // Desired
             double angle_desired = angular_pos_current_ + req.angular;
 
@@ -141,12 +137,10 @@ public:
             }
         }
 
-        // Stop the robot, the publishers and the deadman
+        // Stop the robot and the deadman
         stopDeadman();
         pub_twist_.publish (twist_stop_msg_);
-        pub_twist_.shutdown();
-        pub_deadman_.shutdown();
-        sub_odom_.shutdown();
+        delete deadmanThread_;
 
         res.done = true;
         return true;
@@ -172,6 +166,7 @@ public:
             }
             catch (const boost::thread_interrupted&)
             {
+                //pub_deadman_.shutdown();
                 break;
             }
         }

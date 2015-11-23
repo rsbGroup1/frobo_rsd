@@ -35,7 +35,7 @@ class ROSnode():
 		rospy.Subscriber(self.topic_deadman, BoolStamped, self.on_deadman_msg)
 		self.critfault_state = False
 		self.critfault_next_tout = 0.0
-		rospy.Subscriber(self.topic_critical_fault, IntStamped, self.on_critfault_msg)
+		rospy.Subscriber(self.topic_critical_fault, BoolStamped, self.on_critfault_msg)
 		self.obstacle_state = False
 		self.obstacle_next_tout = 0.0
 		rospy.Subscriber(self.topic_obstacle, IntStamped, self.on_obstacle_msg)

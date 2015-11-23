@@ -7,7 +7,7 @@
 #include <ros/ros.h>
 #include "mr_line_follower/followUntilQR.h"
 #include "mr_line_follower/followUntilLidar.h"
-//#include "mr_obstacle_detector/enabler.h"
+#include "mr_obstacle_detector/enabler.h"
 #include "mr_go/move.h"
 
 #include <move_base/move_base.h>
@@ -86,6 +86,7 @@ private:
     mr_go::move move_call_;
     mr_line_follower::followUntilQR lineFollowerCall;
     mr_line_follower::followUntilLidar followUntilLidarCall;
+	mr_obstacle_detector::enabler detectObstaclesCall;
 
     actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>* move_base_actionclient_;
     int goal_id_;

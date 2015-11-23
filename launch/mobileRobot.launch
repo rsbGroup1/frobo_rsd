@@ -141,6 +141,7 @@
 			<param name="threshold_ignore" value="0.05" />
 			<param name="laser_scan" value="/scan" />
 			<param name="publishTopic" value="/mrObstacleDetector/status" />
+			<param name="enabler" value="/mrObstacleDetector/enabler" />
 		</node>
 	</group>
 
@@ -251,7 +252,6 @@
 		</node>
 	</group>
 
-	<!-- MR Navigation Controller -->
 
 	<!-- MR MES Client -->
 	<group ns="MR_MES_Client">
@@ -263,9 +263,11 @@
 		</node>
 	</group>	
 
+	<!-- MR Navigation Controller -->
 	<node pkg="mr_navigation_controller" name="mrNavigationController" type="mr_navigation_controller" output="screen">
 		<param name="lineFollowEnableService" value="mrLineFollower/lineUntilQR"/>
 		<param name="lineFollowEnableLidarService" value="mrLineFollower/lineUntilLidar"/>
+		<param name="obstacleDetectorService" value="/mrObstacleDetector/enabler"/>
 		<param name="moveService" value="mrGo/move"/>
 		<param name="performAction" value="mrNavigationController/performAction"/>
 		<param name="status" value="mrNavigationController/status"/>

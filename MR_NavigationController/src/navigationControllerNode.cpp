@@ -58,7 +58,7 @@ public:
         pNh_.param<std::string> ("status", pub_status_name_, "mrNavigationController/status");
         pNh_.param<std::string> ("currentNode", pub_current_node_name_, "mrNavigationController/currentNode");
         pNh_.param<std::string> ("setCurrentNode", srv_set_current_node_name_, "mrNavigationController/setCurrentNode");
-	pNh_.param<std::string> ("obstacleDetectorService", srv_detect_obstacles_name_, "/mrObstacleDetector/enabler");
+		pNh_.param<std::string> ("obstacleDetectorService", srv_detect_obstacles_name_, "/mrObstacleDetector/enabler");
         pNh_.param<int> ("searchLimit", search_limit_, 100);
 	pNh_.param<std::string> ("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
         //std::string path_to_node = ros::package::getPath("mrNavigationController");
@@ -231,8 +231,10 @@ public:
          */
 
         std::vector<std::function<void() >> line_start_TO_wc1;
+		line_start_TO_wc1.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
         line_start_TO_wc1.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_1_entrance"));
         line_start_TO_wc1.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc1"));
+		line_start_TO_wc1.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
 
         std::vector<std::function<void() >> wc1_TO_wc1_conveyor;
         wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::linearMove, &skills_, 0.6));

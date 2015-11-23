@@ -154,7 +154,9 @@ bool Skills::setInitialPoseAMCL (double x, double y, double yaw)
 
 bool Skills::detectObstacles (bool state)
 {
-      
+	detectObstaclesCall.request.enable = state;
+	srv_detect_obstacles_->call(detectObstaclesCall);
+	return detectObstaclesCall.response.done;
 }
 
 

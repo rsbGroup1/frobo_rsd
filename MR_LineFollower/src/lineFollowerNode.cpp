@@ -58,6 +58,13 @@ public:
 
         srv_lidar_enable_ = nh_.advertiseService (
                           srv_lineUntilLidar_name_, &lineFollower::lineUntilLidarCallback, this);
+		
+		pub_twist_ = nh_.advertise<geometry_msgs::TwistStamped> (pub_twist_name_, 1);
+		pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
+		
+		sub_line_ = nh_.subscribe<geometry_msgs::Point> (sub_line_name_, 1, &lineFollower::lineCallback, this);
+		sub_qr_ = nh_.subscribe<std_msgs::String> (sub_qr_name_, 1, &lineFollower::qrCallback, this);
+		
     }
 
     /**
@@ -173,14 +180,6 @@ public:
     }
 
     /**
-     * Returns the frecuency of the Node
-     */
-    double getFrequency()
-    {
-        return 1 / pid_dt_;
-    }
-
-    /**
      * Enables or disables the line following
      */
     bool lineUntilQRCallback (mr_line_follower::followUntilQR::Request& req, mr_line_follower::followUntilQR::Response& res)
@@ -198,8 +197,6 @@ public:
         }
 
         // Starts the deadman and publishers
-        pub_twist_ = nh_.advertise<geometry_msgs::TwistStamped> (pub_twist_name_, 1);
-        pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
         deadmanThread_ = new boost::thread (&lineFollower::enableDeadman, this);
 
         // Reset the PID and qr
@@ -209,10 +206,6 @@ public:
         /*
          * Starts the line line follower
          */
-
-        // Starts the subscribers
-        sub_line_ = nh_.subscribe<geometry_msgs::Point> (sub_line_name_, 1, &lineFollower::lineCallback, this);
-        sub_qr_ = nh_.subscribe<std_msgs::String> (sub_qr_name_, 1, &lineFollower::qrCallback, this);
 
         // Waits until it finds it or the time is more than the limit
         qr_detected_ = "";
@@ -236,15 +229,9 @@ public:
             res.success = false;
         }
 
-
-        // Stops the subscribers
-        sub_line_.shutdown();
-        sub_qr_.shutdown();
-        pub_twist_.shutdown();
-        pub_deadman_.shutdown();
-
         // Disables the deadman
         stopDeadman();
+		delete deadmanThread_;
 
         // Disables the camera processing
         enableCameraProcessing.request.enable = false;
@@ -259,7 +246,6 @@ public:
 
         // Ends!
         return true;
-
     }
 
     /**
@@ -281,21 +267,8 @@ public:
      */
     bool lineUntilLidarCallback (mr_line_follower::followUntilLidar::Request& req, mr_line_follower::followUntilLidar::Response& res)
     {
-        // Start the camera processing
-        mr_camera_processing::enable enableCameraProcessing;
-        enableCameraProcessing.request.enable = true;
-        srv_mr_camera_processing_enable_.call (enableCameraProcessing);
-
-        while (enableCameraProcessing.response.status != true)
-        {
-            ROS_INFO ("Not possible to start camera processing, trying againg");
-            enableCameraProcessing.request.enable = true;
-            srv_mr_camera_processing_enable_.call (enableCameraProcessing);
-        }
 
         // Starts the deadman and publishers
-        pub_twist_ = nh_.advertise<geometry_msgs::TwistStamped> (pub_twist_name_, 1);
-        pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
         deadmanThread_ = new boost::thread (&lineFollower::enableDeadman, this);
 
         // Reset the PID and qr
@@ -332,26 +305,9 @@ public:
             res.success = false;
         }
 
-
-        // Stops the subscribers
-        sub_line_.shutdown();
-        sub_lidar_.shutdown();
-        pub_twist_.shutdown();
-        pub_deadman_.shutdown();
-
         // Disables the deadman
         stopDeadman();
-
-        // Disables the camera processing
-        enableCameraProcessing.request.enable = false;
-        srv_mr_camera_processing_enable_.call (enableCameraProcessing);
-
-        while (enableCameraProcessing.response.status != false)
-        {
-            ROS_INFO ("Not possible to stop camera processing, trying againg");
-            enableCameraProcessing.request.enable = false;
-            srv_mr_camera_processing_enable_.call (enableCameraProcessing);
-        }
+		delete deadmanThread_;
 
         // Ends!
         return true;

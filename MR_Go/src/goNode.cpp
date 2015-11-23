@@ -166,7 +166,6 @@ public:
             }
             catch (const boost::thread_interrupted&)
             {
-                //pub_deadman_.shutdown();
                 break;
             }
         }

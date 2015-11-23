@@ -45,7 +45,7 @@
 
 	<!-- SAFETY MODULE -->
 	<group ns="fmSafety">
-		<node pkg="basic_incident_handler" name="incident_handler" type="basic_incident_handler_node.py" output="screen">
+		<node pkg="mr_incident_handler" name="incident_handler" type="incidentHandlerNode.py" output="screen">
     		<param name="deadman_enable" value="True" />
     		<param name="deadman_timeout" value="0.100" />
     		<param name="deadman_sub" value="/fmSafe/deadman" />

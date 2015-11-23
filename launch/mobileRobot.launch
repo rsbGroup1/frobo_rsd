@@ -49,13 +49,13 @@
     		<param name="deadman_enable" value="True" />
     		<param name="deadman_timeout" value="0.100" />
     		<param name="deadman_sub" value="/fmSafe/deadman" />
-    		<param name="critical_fault_enable" value="False" />
+    		<param name="critical_fault_enable" value="True" />
     		<param name="critical_fault_timeout" value="0.100" />
     		<param name="critical_fault_sub" value="/fmSafe/critical_fault" />
-	    	<param name="obstacle_enable" value="False" />
-	    	<param name="obstacle_timeout" value="0.100" />
-	    	<param name="obstacle_sub" value="/fmSafe/obstacle" />
+	    	<param name="obstacle_enable" value="True" />
+	    	<param name="obstacle_sub" value="/mrObstacleDetector/status" />
 			<param name="actuation_enable_pub" value="/fmSafe/actuation_enable"/>
+			<param name="nav_currentnode_sub" value="/mrNavigationController/currentNode"/>
 		</node>
 	</group>
 

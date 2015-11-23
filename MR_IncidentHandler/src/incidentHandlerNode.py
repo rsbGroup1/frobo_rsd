@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 import rospy
-from msgs.msg import BoolStamped, IntStamped
+from msgs.msg import BoolStamped
+from std_msgs.msg import String, Bool
 
 class ROSnode():
 	def __init__(self):
@@ -12,17 +13,16 @@ class ROSnode():
 		self.update_rate = 50 # set update frequency [Hz]
 
 		# get parameters
-		self.deadman_en = rospy.get_param("~deadman_enable", True)
-		self.critfault_en = rospy.get_param("~critical_fault_enable", True) 
-		self.obstacle_en = rospy.get_param("~obstacle_enable", True) 
-		self.deadman_timeout = rospy.get_param("~deadman_timeout", 0.050) # [s]
-		self.critfault_timeout = rospy.get_param("~critical_fault_timeout", 0.050) # [s]
-		self.obstacle_timeout = rospy.get_param("~critical_fault_timeout", 0.050) # [s]
+		self.deadman_en = rospy.get_param("~deadman_enable", False)
+		self.critfault_en = rospy.get_param("~critical_fault_enable", False) 
+		self.deadman_timeout = rospy.get_param("~deadman_timeout", 0.100) # [s]
+		self.critfault_timeout = rospy.get_param("~critical_fault_timeout", 0.100) # [s]
 
 		# get topic names
 		self.topic_deadman = rospy.get_param("~deadman_sub",'/fmSafe/deadman')
 		self.topic_critical_fault = rospy.get_param("~critical_fault_sub",'/fmSafe/critical_fault')
-		self.topic_obstacle = rospy.get_param("~obstacle_sub",'/fmSafe/obstacle')
+		self.topic_obstacle = rospy.get_param("~obstacle_sub",'/mrObstacleDetector/status')
+		self.topic_obstacle_en = rospy.get_param("~obstacle_en_sub",'/mrNavigationController/obstacle_detector')
 		self.topic_act_en = rospy.get_param("~actuation_enable_pub",'/fmSafe/actuation_enable')
 
 		# setup topic publishers
@@ -33,16 +33,23 @@ class ROSnode():
 		self.deadman_state = False
 		self.deadman_next_tout = 0.0
 		rospy.Subscriber(self.topic_deadman, BoolStamped, self.on_deadman_msg)
+		
 		self.critfault_state = False
 		self.critfault_next_tout = 0.0
 		rospy.Subscriber(self.topic_critical_fault, BoolStamped, self.on_critfault_msg)
-		self.obstacle_state = False
-		self.obstacle_next_tout = 0.0
-		rospy.Subscriber(self.topic_obstacle, IntStamped, self.on_obstacle_msg)
+		
+		self.obstacle_state = ""
+		rospy.Subscriber(self.topic_obstacle, String, self.on_obstacle_msg)
+
+		self.obstacle_en = False
+		rospy.Subscriber(self.topic_obstacle_en, Bool, self.on_obstacle_en)
 
 		# call updater function
 		self.r = rospy.Rate(self.update_rate)
 		self.updater()
+
+	def on_obstacle_en(self, msg):
+		self.obstacle_en = msg.data
 
 	def on_deadman_msg(self, msg):
 		# save current state and determine next timeout
@@ -52,12 +59,11 @@ class ROSnode():
 	def on_critfault_msg(self, msg):
 		# save current state and determine next timeout
 		self.critfault_state = msg.data
-		self.critfault_next_tout = rospy.get_time()  + self.critfault_timeout
+		self.critfault_next_tout = rospy.get_time() + self.critfault_timeout
 
 	def on_obstacle_msg(self, msg):
 		# save current state and determine next timeout
 		self.obstacle_state = msg.data
-		self.obstacle_next_tout = rospy.get_time()  + self.obstacle_timeout
 
 	def updater(self):
 		while not rospy.is_shutdown():
@@ -67,12 +73,16 @@ class ROSnode():
 
 			# obstacle if true or too old
 			if self.obstacle_en == True:
-				if self.obstacle_state != 0 or self.obstacle_next_tout < rospy.get_time():
+				if self.obstacle_state == "proximityAlert":
+					rospy.logwarn("Proximity Alert")
+					# Reduce the speed
+				elif self.obstacle_state == "colliding":
+					rospy.logerr("Obstacle!")
 					self.act_en_msg.data = False
 
-			# cricital fault if true or too old
+			# critical fault if true or too old
 			if self.critfault_en == True:
-				if self.critfault_state != 0 or self.critfault_next_tout < rospy.get_time():
+				if self.critfault_state == False or self.critfault_next_tout < rospy.get_time():
 					self.act_en_msg.data = False
 
 			# deadman fault if false or too old

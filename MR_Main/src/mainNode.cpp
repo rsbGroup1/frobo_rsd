@@ -183,15 +183,23 @@ public:
      */
     void buttonCallback (std_msgs::Bool msg)
     {
-        boost::unique_lock<boost::mutex> lock (_runMutex);
-	if (msg.data)
-        {
-	    _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
-            _autoMode = true;
-	    
-	} else {
-	    _criticalFaultSignalThread->interrupt();
-            _autoMode = false;
+	if (msg.data != _button_msg_last) 
+	{
+	    boost::unique_lock<boost::mutex> lock (_runMutex);
+	    if (msg.data)
+	    {
+		_criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
+		HMISendWarning("Auto mode enabled");
+		HMIUpdateSafety(safe);
+		_autoMode = true;
+		
+	    } else {
+		_criticalFaultSignalThread->interrupt();
+		HMISendError("Emergency stop");
+		HMIUpdateSafety(colliding);
+		_autoMode = false;
+	    }
+	    _button_msg_last = msg.data;
 	}
     }
 
@@ -200,19 +208,29 @@ public:
      */
     void hmiCallback (std_msgs::String msg)
     {
-        boost::unique_lock<boost::mutex> lock (_runMutex);
-        if (msg.data == "start") 
+	if (msg.data != _hmi_msg_last)
 	{
-	    _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
-            _autoMode = true;
-	}
-	else if (msg.data == "manual"){
-	    _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
-	    _autoMode = false;
-	}
-        else if (msg.data == "stop") {
-	    _criticalFaultSignalThread->interrupt();
-            _autoMode = false;
+	    boost::unique_lock<boost::mutex> lock (_runMutex);
+	    if (msg.data == "start") 
+	    {
+		_criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
+		HMISendWarning("Auto mode enabled");
+		HMIUpdateSafety(safe);
+		_autoMode = true;
+	    }
+	    else if (msg.data == "manual"){
+		_criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
+		HMISendWarning("Manual mode");
+		HMIUpdateSafety(proximityAlert);
+		_autoMode = false;
+	    }
+	    else if (msg.data == "stop") {
+		_criticalFaultSignalThread->interrupt();
+		HMISendError("Emergency stop");
+		HMIUpdateSafety(colliding);
+		_autoMode = false;
+	    }
+	    _hmi_msg_last = msg.data;
 	}
     }
 
@@ -476,14 +494,14 @@ public:
      */
     void enableCriticalFaultSignal()
     {
+        msgs::BoolStamped critical_fault;
         while (true)
         {
             try
             {
-                msgs::BoolStamped deadman;
-                deadman.data = true;
-                deadman.header.stamp = ros::Time::now();
-                _criticalFaultSignalPublisher.publish (deadman);
+                critical_fault.data = true;
+                critical_fault.header.stamp = ros::Time::now();
+                _criticalFaultSignalPublisher.publish (critical_fault);
                 // Sleep for 50 ms = 20Hz
                 boost::this_thread::sleep_for (boost::chrono::milliseconds (75));
                 // Signal interrupt point
@@ -491,6 +509,10 @@ public:
             }
             catch (const boost::thread_interrupted&)
             {
+		critical_fault.data = false;
+                critical_fault.header.stamp = ros::Time::now();
+                _criticalFaultSignalPublisher.publish (critical_fault);
+		std::cout << "Interrupted!!" << std::endl;
                 break;
             }
         }
@@ -510,6 +532,8 @@ private:
     std::string _performActionString, _navStatusSub, _navCurrentnodeSub, _buttonSub, _buttonPub,
         _hmiSub, _tipperString, _hmiPub, _mesSub, _mesPub, _obstacleDetectorSub, _batterySub, _criticalFaultSignalPub;
     mr_mes_client::server _msg_last;
+    std::string _hmi_msg_last;
+    bool _button_msg_last;
     
     boost::thread* _criticalFaultSignalThread;
 };

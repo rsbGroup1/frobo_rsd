@@ -92,8 +92,8 @@
 			<param name="imu_sub" value="/fmInformation/imu" />
 			<param name="odom_reset_sub" value="/fmInformation/odom_reset" />
 			<param name="odom_pub" value="/fmKnowledge/pose" />
-			<param name="odom_estimate_frame" value="/odom" />
-			<param name="vehicle_frame" value="/base_link" />
+			<param name="odom_estimate_frame" value="odom" />
+			<param name="vehicle_frame" value="base_link" />
 			<param name="encoder_output" value="absolute" />
 			<param name="max_ticks_per_update" value="200" />
 			<param name="yaw_angle_source" value="/imu_angular_velocity" />
@@ -232,15 +232,15 @@
 	<!-- MR Line Follower -->
 	<group ns="MR_LineFollower">
 		<node pkg="mr_line_follower" name="LineFollower" type="mr_line_follower" output="screen">
-			<param name="pid_p" value="1.0" />
-			<param name="pud_i" value="0" />
-			<param name="pid_d" value="0" />
+			<param name="pid_p" value="0.8" />
+			<param name="pud_i" value="0.5" />
+			<param name="pid_d" value="0.5" />
 			<param name="pid_dt" value="0.33" />
 			<param name="pid_max" value="320" />
 			<param name="pid_min" value="-320" />
 			<param name="reference_point_x" value="320" />
 			<param name="reference_point_y" value="240" />
-			<param name="robot_speed" value="0.2" />
+			<param name="robot_speed" value="0.14" />
 			<param name="lidar_distance" value="0.2" />
 		
 			<param name="srv_mr_camera_processing_enable_name" value="/mrCameraProcessing/enable" />
@@ -284,10 +284,10 @@
 
 	<node pkg="map_server" type="map_server" name="map_server" args="/home/frobit_pro_group1/roswork/src/frobo_rsd//Navigation_Setup/maps/frontal_map_big_edited.yaml" output="screen"/>
 
+
 <!--
-
 	<node pkg="map_server" type="map_server" name="map_server" args="/home/frobit_pro_group1/roswork/src/frobo_rsd//Navigation_Setup/maps/entire_map.yaml" output="screen"/>
-
+-->
 
 
 	<node pkg="amcl" type="amcl" name="amcl" output="screen">
@@ -296,9 +296,9 @@
 		<param name="odom_alpha3" value="0.8"/>
 		<param name="odom_alpha4" value="0.8"/>
 		<param name="min_particles" value="30"/>
-
-		<param name="base_frame_id" value="/base_link"/>
-		<param name="odom_frame_id" value="/odom"/>
+	
+		<param name="base_frame_id" value="base_link"/>
+		<param name="odom_frame_id" value="odom"/>
 
 	</node>
 
@@ -312,7 +312,7 @@
 		<rosparam file="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/move_base_config/global_costmap_params.yaml" command="load"/>
 		<rosparam file="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/move_base_config/dwa_local_planner_params.yaml" command="load"/>
 	</node>
--->
+
 
 </launch>
 

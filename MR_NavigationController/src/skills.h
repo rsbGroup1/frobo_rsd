@@ -7,6 +7,7 @@
 #include <ros/ros.h>
 #include "mr_line_follower/followUntilQR.h"
 #include "mr_line_follower/followUntilLidar.h"
+//#include "mr_obstacle_detector/enabler.h"
 #include "mr_go/move.h"
 
 #include <move_base/move_base.h>
@@ -21,7 +22,9 @@ public:
      *
      */
     Skills (ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move, ros::ServiceClient* srv_lineUntilLidar,
-			ros::Publisher* pub_status, ros::Publisher* pub_initialize );
+			ros::Publisher* pub_status, ros::Publisher* pub_initialize ,
+			ros::ServiceClient* srv_detect_obstacles
+ 	  );
 
     /**
      *
@@ -62,13 +65,19 @@ public:
      *
      */
     bool setInitialPoseAMCL (double x, double y, double yaw);
+    
+    /**
+     * Activates the obstacle detection
+     */
+    bool detectObstacles(bool state);
 
 private:
     ros::ServiceClient* srv_lineUntilQR_;
     ros::ServiceClient* srv_lineUntilLidar_;
     ros::ServiceClient* srv_move_;
+    ros::ServiceClient* srv_detect_obstacles_;
     ros::Publisher* pub_status_;
-	ros::Publisher* pub_initialize_;
+    ros::Publisher* pub_initialize_;
 
     mr_go::move move_call_;
     mr_line_follower::followUntilQR lineFollowerCall;

@@ -47,7 +47,9 @@ public:
      */
     NavigationController() :
         pNh_ ("~"),
-        skills_ (&srv_lineUntilQR_, &srv_move_, &srv_lineUntilLidar_, &pub_status_, &pub_initialize_)
+        skills_ (&srv_lineUntilQR_, &srv_move_, &srv_lineUntilLidar_, &pub_status_, &pub_initialize_,
+	  &srv_detect_obstacles_
+	)
     {
         // Get parameter names
         pNh_.param<std::string> ("lineFollowEnableService", srv_lineUntilQR_name_, "mrLineFollower/lineUntilQR");
@@ -57,6 +59,7 @@ public:
         pNh_.param<std::string> ("status", pub_status_name_, "mrNavigationController/status");
         pNh_.param<std::string> ("currentNode", pub_current_node_name_, "mrNavigationController/currentNode");
         pNh_.param<std::string> ("setCurrentNode", srv_set_current_node_name_, "mrNavigationController/setCurrentNode");
+	pNh_.param<std::string> ("obstacleDetectorService", srv_detect_obstacles_name_, "/mrObstacleDetector/enabler");
         pNh_.param<int> ("searchLimit", search_limit_, 100);
         //std::string path_to_node = ros::package::getPath("mrNavigationController");
 
@@ -445,11 +448,12 @@ public:
 private:
     ros::NodeHandle nh_, pNh_;
     ros::Publisher pub_status_, pub_current_node_, pub_initialize_;
-    ros::ServiceClient srv_lineUntilQR_, srv_move_, srv_lineUntilLidar_;
+    ros::ServiceClient srv_lineUntilQR_, srv_move_, srv_lineUntilLidar_, srv_detect_obstacles_;
     ros::ServiceServer srv_action_, srv_set_current_node_;
     ros::Subscriber sub_pose_;
     std::string srv_lineUntilQR_name_, srv_move_name_, pub_status_name_, srv_lineUntilLidar_name_,
-        srv_action_name_, pub_current_node_name_, srv_set_current_node_name_;
+        srv_action_name_, pub_current_node_name_, srv_set_current_node_name_,
+	srv_detect_obstacles_name_;
     Skills skills_;
     Graph* graph_;
     std::vector<std::function<void() >> solution_;

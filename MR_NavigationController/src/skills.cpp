@@ -9,13 +9,16 @@
 
 
 Skills::Skills (ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move, ros::ServiceClient* srv_lineUntilLidar,
-			ros::Publisher* pub_status, ros::Publisher* pub_initialize )
+			ros::Publisher* pub_status, ros::Publisher* pub_initialize,
+			ros::ServiceClient* srv_detect_obstacles
+ 	      )
 {
     srv_lineUntilQR_ = srv_lineUntilQR;
     srv_lineUntilLidar_ = srv_lineUntilLidar;
     srv_move_ = srv_move;
     pub_status_ = pub_status;
-	pub_initialize_ = pub_initialize;
+    pub_initialize_ = pub_initialize;
+    srv_detect_obstacles_ = srv_detect_obstacles;
 
     // action client for move_base
     move_base_actionclient_ = new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> ("move_base", true);
@@ -145,3 +148,11 @@ bool Skills::setInitialPoseAMCL (double x, double y, double yaw)
 	pub_initialize_->publish(p);
 	return true;
 }
+
+
+bool Skills::detectObstacles (bool state)
+{
+      
+}
+
+

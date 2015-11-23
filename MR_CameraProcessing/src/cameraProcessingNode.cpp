@@ -24,7 +24,7 @@
 class ImageConverter
 {
 public:
-    ImageConverter() : it_ (nh_)
+    ImageConverter() : it_ (nh_), enabled_(false)
     {
         ros::NodeHandle pNh_ ("~");
         pNh_.param<std::string> ("sub_image", sub_image_name_, "/mrCamera/image");
@@ -40,6 +40,8 @@ public:
         pub_image_qr_ = it_.advertise (pub_image_qr_name_, 1);
 
         srv_enable_ = nh_.advertiseService (srv_enable_name_, &ImageConverter::enableCallback, this);
+		sub_image_ = it_.subscribe (sub_image_name_, 1, &ImageConverter::imageCb, this,
+									image_transport::TransportHints ("compressed"));
     }
 
     ~ImageConverter()
@@ -53,13 +55,8 @@ public:
     bool enableCallback (mr_camera_processing::enable::Request& req,
                          mr_camera_processing::enable::Response& res)
     {
-        if (req.enable == true)
-            sub_image_ = it_.subscribe (sub_image_name_, 1, &ImageConverter::imageCb, this,
-                                        image_transport::TransportHints ("compressed"));
-        else
-            sub_image_.shutdown();
-
-        res.status = req.enable;
+        enabled_ = req.enable;
+        res.status = enabled_;
         return true;
     }
 
@@ -68,23 +65,25 @@ public:
      */
     void imageCb (const sensor_msgs::ImageConstPtr& msg)
     {
-        // Transform the message to an OpenCV image
-        cv_bridge::CvImagePtr image_ptr;
-        image_ptr = cv_bridge::toCvCopy (msg, sensor_msgs::image_encodings::TYPE_8UC3);
+		if (enabled_) {
+			// Transform the message to an OpenCV image
+			cv_bridge::CvImagePtr image_ptr;
+			image_ptr = cv_bridge::toCvCopy (msg, sensor_msgs::image_encodings::TYPE_8UC3);
 
-        if (image_ptr->image.empty())
-        {
-            ROS_INFO ("No image being received");
-        }
-        else
-        {
-            // Flip
-            cv::flip (image_ptr->image, image_ptr->image, -1);
+			if (image_ptr->image.empty())
+			{
+				ROS_INFO ("No image being received");
+			}
+			else
+			{
+				// Flip
+				cv::flip (image_ptr->image, image_ptr->image, -1);
 
-            // Detection
-            lineThread_ = new boost::thread (&ImageConverter::lineDetector, this, image_ptr->image);
-            qrThread_ = new boost::thread (&ImageConverter::qrDetector, this, image_ptr->image);
-        }
+				// Detection
+				lineThread_ = new boost::thread (&ImageConverter::lineDetector, this, image_ptr->image);
+				qrThread_ = new boost::thread (&ImageConverter::qrDetector, this, image_ptr->image);
+			}
+		}
     }
 
     /**
@@ -232,6 +231,8 @@ private:
     std::string sub_image_name_;
     std::string pub_image_qr_name_, pub_image_line_name_, pub_line_name_, pub_qr_name_;
     std::string srv_enable_name_;
+	
+	bool enabled_;
 
     // Threads
     boost::thread* qrThread_;

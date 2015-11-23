@@ -448,8 +448,7 @@ private:
     ros::ServiceClient srv_lineUntilQR_, srv_move_, srv_lineUntilLidar_;
     ros::ServiceServer srv_action_, srv_set_current_node_;
     ros::Subscriber sub_pose_;
-
-    std::string srv_lineUntilQR_name_, srv_move_name_, pub_status_name_, srv_lineUntilLidar_name_
+    std::string srv_lineUntilQR_name_, srv_move_name_, pub_status_name_, srv_lineUntilLidar_name_,
         srv_action_name_, pub_current_node_name_, srv_set_current_node_name_;
     Skills skills_;
     Graph* graph_;

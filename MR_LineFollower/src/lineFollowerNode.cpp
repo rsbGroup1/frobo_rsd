@@ -11,7 +11,7 @@
 #include "msgs/BoolStamped.h"
 
 #include "mr_line_follower/followUntilQR.h"
-#include "mr_line_follower/followUntilDistance.h"
+#include "mr_line_follower/followUntilLidar.h"
 #include "mr_camera_processing/enable.h"
 
 #include <iostream>
@@ -376,6 +376,7 @@ private:
     double pid_i_;
     double pre_error_;
     double integral_;
+    double lidar_distance_;
     // Reference point
     int reference_point_x_;
     int reference_point_y_;

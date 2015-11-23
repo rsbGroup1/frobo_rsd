@@ -72,6 +72,7 @@ private:
 
     mr_go::move move_call_;
     mr_line_follower::followUntilQR lineFollowerCall;
+    mr_line_follower::followUntilLidar followUntilLidarCall;
 
     actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>* move_base_actionclient_;
     int goal_id_;

@@ -12,7 +12,7 @@ Skills::Skills (ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_mov
 			ros::Publisher* pub_status, ros::Publisher* pub_initialize )
 {
     srv_lineUntilQR_ = srv_lineUntilQR;
-	srv_lineUntilLidar_ = srv_lineUntilLidar;
+    srv_lineUntilLidar_ = srv_lineUntilLidar;
     srv_move_ = srv_move;
     pub_status_ = pub_status;
 	pub_initialize_ = pub_initialize;
@@ -43,15 +43,15 @@ bool Skills::lineUntilQR (std::string qr)
 bool Skills::lineUntilLidar (double distance)
 {
     std::cout << "Skill: Line until Lidar distance: " << distance << std::endl;
-    lineFollowerCall.request.qr = qr;
-    lineFollowerCall.request.time_limit = 300;
-    srv_lineUntilQR_->call (lineFollowerCall);
+    followUntilLidarCall.request.lidar_distance = distance;
+    followUntilLidarCall.request.time_limit = 300;
+    srv_lineUntilQR_->call (followUntilLidarCall);
 
     std_msgs::String msg;
     //msg.data = "following_line " + qr;
     msg.data = "following_line";
     pub_status_->publish (msg);
-    return lineFollowerCall.response.success;
+    return followUntilLidarCall.response.success;
 }
 
 bool Skills::linearMove (double distance)
@@ -60,7 +60,7 @@ bool Skills::linearMove (double distance)
     move_call_.request.linear = distance;
     move_call_.request.angular = 0;
     srv_move_->call (move_call_);
-
+    
     std_msgs::String msg;
     //msg.data = "linear_move " + std::to_string(distance);
     msg.data = "linear_move";

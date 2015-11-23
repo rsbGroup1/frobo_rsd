@@ -361,7 +361,7 @@ def initHMI():
 
     TIPPER_UPDATE_SRV = rospy.get_param( "~tipper_srv", TIPPER_UPDATE_SRV )
 
-    # Register subscribers
+    # Register Subscribers
     subStatus = rospy.Subscriber( MR_HMI_SUB, String, logCallback )
 
     # Register Publisers
@@ -369,7 +369,7 @@ def initHMI():
     pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 10 )
     pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 10 )
 
-    # Service Deffinitions
+    # Service Definitions
     rospy.wait_for_service(TIPPER_UPDATE_SRV)
     srvTipper = rospy.ServiceProxy( TIPPER_UPDATE_SRV, tip )
 

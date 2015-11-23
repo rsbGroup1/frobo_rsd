@@ -1,17 +1,23 @@
 // Includes
-#include <ros/ros.h>
 #include <cstdlib>
 #include <string>
 #include <iostream>
 #include <sstream>
-#include "mr_navigation_controller/performAction.h"
-#include "mr_tip_controller/tip.h"
+
 #include <boost/thread.hpp>
+#include <boost/chrono.hpp>
 #include <boost/thread/mutex.hpp>
+
+#include <ros/ros.h>
+
 #include "std_msgs/String.h"
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
 #include "std_msgs/Float32.h"
+#include "msgs/BoolStamped.h"
+
+#include "mr_navigation_controller/performAction.h"
+#include "mr_tip_controller/tip.h"
 #include "mr_mes_client/server.h"
 
 // Defines
@@ -67,6 +73,7 @@ public:
         _pNh.param<std::string> ("mes_pub", _mesPub, "/mrMESClient/msgToServer");
         _pNh.param<std::string> ("mes_sub", _mesSub, "/mrMESClient/msgFromServer");
         _pNh.param<std::string> ("obstacle_detector_sub", _obstacleDetectorSub, "/mrObstacleDetector/status");
+	_pNh.param<std::string> ("critical_fault_pub", _criticalFaultSignalPub, "/fmSafe/critical_fault");
         _pNh.param<std::string> ("battery_sub", _batterySub, "/fmInformation/battery");
         _pNh.param<bool> ("check_battery", _check_battery , true);
         _pNh.param<double> ("battery_low", _batteryLow, 12.4);
@@ -80,6 +87,7 @@ public:
         // Publishers
         _hmiPublisher = _nh.advertise<std_msgs::String> (_hmiPub, 10);
         _mesPublisher = _nh.advertise<std_msgs::String> (_mesPub, 10);
+	_criticalFaultSignalPublisher = _nh.advertise<msgs::BoolStamped>(_criticalFaultSignalPub, 10);
 
         // Subscribers
         _buttonSubriber = _nh.subscribe<std_msgs::Bool> (_buttonSub, 5, &MainNode::buttonCallback, this);
@@ -89,6 +97,7 @@ public:
         _mesSubscriber = _nh.subscribe<mr_mes_client::server> (_mesSub, 1, &MainNode::mesCallback, this);
         _obstacleDetectorSubscriber = _nh.subscribe<std_msgs::String> (_obstacleDetectorSub, 10, &MainNode::obstacleCallback, this);
         _batterySubscriber = _nh.subscribe<std_msgs::Float32> (_batterySub, 1, &MainNode::_batteryCallback, this);
+	
 
     }
 
@@ -175,8 +184,15 @@ public:
     void buttonCallback (std_msgs::Bool msg)
     {
         boost::unique_lock<boost::mutex> lock (_runMutex);
-        _buttonAuto = msg.data;
-        std::cout << _buttonAuto << std::endl;
+	if (msg.data)
+        {
+	    _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
+            _autoMode = true;
+	    
+	} else {
+	    _criticalFaultSignalThread->interrupt();
+            _autoMode = false;
+	}
     }
 
     /**
@@ -185,11 +201,19 @@ public:
     void hmiCallback (std_msgs::String msg)
     {
         boost::unique_lock<boost::mutex> lock (_runMutex);
-
-        if (msg.data == "start")
-            _hmiAuto = true;
-        else if (msg.data == "stop" || msg.data == "manual")
-            _hmiAuto = false;
+        if (msg.data == "start") 
+	{
+	    _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
+            _autoMode = true;
+	}
+	else if (msg.data == "manual"){
+	    _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
+	    _autoMode = false;
+	}
+        else if (msg.data == "stop") {
+	    _criticalFaultSignalThread->interrupt();
+            _autoMode = false;
+	}
     }
 
     /**
@@ -222,7 +246,7 @@ public:
         _new_MESmsg.unlock();
 
         _runMutex.lock();
-        bool automode = _buttonAuto | _hmiAuto;
+        bool automode = _autoMode;
         _runMutex.unlock();
 
         if (msg.mobileRobot == 1 && automode && newOrder)
@@ -445,6 +469,32 @@ public:
                 ; // Wait
         }
     }
+    
+    
+        /**
+     * Necessary to move the robot
+     */
+    void enableCriticalFaultSignal()
+    {
+        while (true)
+        {
+            try
+            {
+                msgs::BoolStamped deadman;
+                deadman.data = true;
+                deadman.header.stamp = ros::Time::now();
+                _criticalFaultSignalPublisher.publish (deadman);
+                // Sleep for 50 ms = 20Hz
+                boost::this_thread::sleep_for (boost::chrono::milliseconds (75));
+                // Signal interrupt point
+                boost::this_thread::interruption_point();
+            }
+            catch (const boost::thread_interrupted&)
+            {
+                break;
+            }
+        }
+    }
 
 
 private:
@@ -452,14 +502,16 @@ private:
     ros::ServiceClient _servicePerformAction, _serviceTipper;
     ros::Subscriber _buttonSubriber, _hmiSubscriber, _navStatusSubscriber, _navCurrentSubscriber,
         _mesSubscriber, _obstacleDetectorSubscriber, _batterySubscriber;
-    ros::Publisher _hmiPublisher, _mesPublisher;
-    bool _buttonAuto, _hmiAuto, _newOrder, _check_battery;
+    ros::Publisher _hmiPublisher, _mesPublisher, _criticalFaultSignalPublisher;
+    bool _newOrder, _check_battery, _autoMode;
     std::string safety_status_prev, _currentNode;
     double _batteryLevel, _batteryLow, _batteryCritic, _desiredCharge;
     boost::mutex _runMutex, _new_MESmsg;
     std::string _performActionString, _navStatusSub, _navCurrentnodeSub, _buttonSub, _buttonPub,
-        _hmiSub, _tipperString, _hmiPub, _mesSub, _mesPub, _obstacleDetectorSub, _batterySub;
+        _hmiSub, _tipperString, _hmiPub, _mesSub, _mesPub, _obstacleDetectorSub, _batterySub, _criticalFaultSignalPub;
     mr_mes_client::server _msg_last;
+    
+    boost::thread* _criticalFaultSignalThread;
 };
 
 

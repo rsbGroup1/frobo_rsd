@@ -22,9 +22,8 @@ public:
      *
      */
     Skills (ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move, ros::ServiceClient* srv_lineUntilLidar,
-			ros::Publisher* pub_status, ros::Publisher* pub_initialize ,
-			ros::ServiceClient* srv_detect_obstacles
- 	  );
+			ros::Publisher* pub_status, ros::Publisher* pub_initialize , ros::Publisher* pub_deadman,
+			ros::ServiceClient* srv_detect_obstacles);
 
     /**
      *
@@ -77,7 +76,12 @@ private:
     ros::ServiceClient* srv_move_;
     ros::ServiceClient* srv_detect_obstacles_;
     ros::Publisher* pub_status_;
+
     ros::Publisher* pub_initialize_;
+    ros::Publisher* pub_deadman_;
+
+    // Threads
+    boost::thread* deadmanThread_;
 
     mr_go::move move_call_;
     mr_line_follower::followUntilQR lineFollowerCall;
@@ -85,6 +89,8 @@ private:
 
     actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>* move_base_actionclient_;
     int goal_id_;
+
+    void enableDeadman();
 };
 
 #endif // SKILLS_H

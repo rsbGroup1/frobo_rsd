@@ -2,6 +2,7 @@
 
 #include "std_msgs/String.h"
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
+#include "msgs/BoolStamped.h"
 
 #define M_PI		3.14159265358979323846
 #define DEG_TO_RAD	(M_PI/180.0)
@@ -9,14 +10,14 @@
 
 
 Skills::Skills (ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move, ros::ServiceClient* srv_lineUntilLidar,
-			ros::Publisher* pub_status, ros::Publisher* pub_initialize )
+			ros::Publisher* pub_status, ros::Publisher* pub_initialize, ros::Publisher *pub_deadman )
 {
     srv_lineUntilQR_ = srv_lineUntilQR;
     srv_lineUntilLidar_ = srv_lineUntilLidar;
     srv_move_ = srv_move;
     pub_status_ = pub_status;
 	pub_initialize_ = pub_initialize;
-
+    pub_deadman_ = pub_deadman;
     // action client for move_base
     move_base_actionclient_ = new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> ("move_base", true);
 }
@@ -88,6 +89,8 @@ bool Skills::goToFreePosition (double x, double y, double yaw)
     ROS_INFO ("Go to free position called - goal(%f, %f, %f)", x, y, yaw);
     bool success = false;
 
+    deadmanThread_ = new boost::thread (&Skills::enableDeadman, this);
+
     move_base_msgs::MoveBaseGoal goal;
     goal.target_pose.pose.position.x = x;
     goal.target_pose.pose.position.y = y;
@@ -126,7 +129,7 @@ bool Skills::goToFreePosition (double x, double y, double yaw)
     {
         ROS_ERROR ("move_base action server not responding within timeout");
     }
-
+    deadmanThread_->interrupt();
     return success;
 }
 
@@ -144,4 +147,27 @@ bool Skills::setInitialPoseAMCL (double x, double y, double yaw)
 
 	pub_initialize_->publish(p);
 	return true;
+}
+
+void Skills::enableDeadman()
+{
+
+    while (true)
+    {
+        try
+        {
+            msgs::BoolStamped deadman;
+            deadman.data = true;
+            deadman.header.stamp = ros::Time::now();
+            pub_deadman_->publish (deadman);
+            // Sleep for 50 ms = 20Hz
+            boost::this_thread::sleep_for (boost::chrono::milliseconds (75));
+            // Signal interrupt point
+            boost::this_thread::interruption_point();
+        }
+        catch (const boost::thread_interrupted&)
+        {
+            break;
+        }
+    }
 }

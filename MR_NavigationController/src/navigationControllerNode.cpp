@@ -16,6 +16,7 @@
 #include "std_msgs/String.h"
 #include "std_msgs/Float64.h"
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
+#include "msgs/BoolStamped.h"
 
 
 #include <boost/thread.hpp>
@@ -47,7 +48,7 @@ public:
      */
     NavigationController() :
         pNh_ ("~"),
-        skills_ (&srv_lineUntilQR_, &srv_move_, &srv_lineUntilLidar_, &pub_status_, &pub_initialize_)
+        skills_ (&srv_lineUntilQR_, &srv_move_, &srv_lineUntilLidar_, &pub_status_, &pub_initialize_, &pub_deadman_)
     {
         // Get parameter names
         pNh_.param<std::string> ("lineFollowEnableService", srv_lineUntilQR_name_, "mrLineFollower/lineUntilQR");
@@ -59,6 +60,8 @@ public:
         pNh_.param<std::string> ("setCurrentNode", srv_set_current_node_name_, "mrNavigationController/setCurrentNode");
         pNh_.param<int> ("searchLimit", search_limit_, 100);
         //std::string path_to_node = ros::package::getPath("mrNavigationController");
+        std::string pub_deadman_name_ ;
+        pNh_.param<std::string> ("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
 
         // Service
         srv_lineUntilQR_ = nh_.serviceClient<mr_line_follower::followUntilQR> (srv_lineUntilQR_name_);
@@ -74,6 +77,7 @@ public:
         pub_status_ = nh_.advertise<std_msgs::String> (pub_status_name_, 10);
         pub_current_node_ = nh_.advertise<std_msgs::String> (pub_current_node_name_, 10);
         pub_initialize_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped> ("initialpose", 1);
+        pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
 
         // Create the graph and put the start node from the launch file
         graph_ = new Graph (&pub_current_node_);
@@ -444,7 +448,7 @@ public:
 
 private:
     ros::NodeHandle nh_, pNh_;
-    ros::Publisher pub_status_, pub_current_node_, pub_initialize_;
+    ros::Publisher pub_status_, pub_current_node_, pub_initialize_, pub_deadman_;
     ros::ServiceClient srv_lineUntilQR_, srv_move_, srv_lineUntilLidar_;
     ros::ServiceServer srv_action_, srv_set_current_node_;
     ros::Subscriber sub_pose_;

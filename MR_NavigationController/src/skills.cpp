@@ -8,10 +8,11 @@
 #define RAD_TO_DEG	(180.0/M_PI)
 
 
-Skills::Skills (ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move,
-                ros::Publisher* pub_status, ros::Publisher* pub_initialize )
+Skills::Skills (ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move, ros::ServiceClient* srv_lineUntilLidar,
+			ros::Publisher* pub_status, ros::Publisher* pub_initialize )
 {
     srv_lineUntilQR_ = srv_lineUntilQR;
+	srv_lineUntilLidar_ = srv_lineUntilLidar;
     srv_move_ = srv_move;
     pub_status_ = pub_status;
 	pub_initialize_ = pub_initialize;
@@ -28,6 +29,20 @@ Skills::~Skills()
 bool Skills::lineUntilQR (std::string qr)
 {
     std::cout << "Skill: Line until QR: " << qr << std::endl;
+    lineFollowerCall.request.qr = qr;
+    lineFollowerCall.request.time_limit = 300;
+    srv_lineUntilQR_->call (lineFollowerCall);
+
+    std_msgs::String msg;
+    //msg.data = "following_line " + qr;
+    msg.data = "following_line";
+    pub_status_->publish (msg);
+    return lineFollowerCall.response.success;
+}
+
+bool Skills::lineUntilLidar (double distance)
+{
+    std::cout << "Skill: Line until Lidar distance: " << distance << std::endl;
     lineFollowerCall.request.qr = qr;
     lineFollowerCall.request.time_limit = 300;
     srv_lineUntilQR_->call (lineFollowerCall);

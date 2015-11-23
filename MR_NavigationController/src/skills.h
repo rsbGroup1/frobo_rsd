@@ -6,6 +6,7 @@
 
 #include <ros/ros.h>
 #include "mr_line_follower/followUntilQR.h"
+#include "mr_line_follower/followUntilLidar.h"
 #include "mr_go/move.h"
 
 #include <move_base/move_base.h>
@@ -19,7 +20,7 @@ public:
     /**
      *
      */
-    Skills (ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move,
+    Skills (ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move, ros::ServiceClient* srv_lineUntilLidar,
 			ros::Publisher* pub_status, ros::Publisher* pub_initialize );
 
     /**
@@ -32,6 +33,12 @@ public:
      * @param qr the qr code to find
      */
     bool lineUntilQR (std::string qr);
+
+    /**
+     * Follows the line with the camera until the frontal lidar distance is less than 
+     * @param distance in 20 frontal lidar values
+     */
+    bool lineUntilLidar (double distance);
 
     /**
      * Moves the robot for an specified distance
@@ -58,6 +65,7 @@ public:
 
 private:
     ros::ServiceClient* srv_lineUntilQR_;
+    ros::ServiceClient* srv_lineUntilLidar_;
     ros::ServiceClient* srv_move_;
     ros::Publisher* pub_status_;
 	ros::Publisher* pub_initialize_;

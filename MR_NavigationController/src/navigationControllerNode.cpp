@@ -47,10 +47,11 @@ public:
      */
     NavigationController() :
         pNh_ ("~"),
-        skills_ (&srv_lineUntilQR_, &srv_move_, &pub_status_, &pub_initialize_)
+        skills_ (&srv_lineUntilQR_, &srv_move_, &srv_lineUntilLidar_, &pub_status_, &pub_initialize_)
     {
         // Get parameter names
         pNh_.param<std::string> ("lineFollowEnableService", srv_lineUntilQR_name_, "mrLineFollower/lineUntilQR");
+        pNh_.param<std::string> ("lineFollowEnableLidarService", srv_lineUntilLidar_name_, "mrLineFollower/lineUntilLidar");
         pNh_.param<std::string> ("moveService", srv_move_name_, "mrGo/move");
         pNh_.param<std::string> ("performAction", srv_action_name_, "mrNavigationController/performAction");
         pNh_.param<std::string> ("status", pub_status_name_, "mrNavigationController/status");
@@ -61,6 +62,7 @@ public:
 
         // Service
         srv_lineUntilQR_ = nh_.serviceClient<mr_line_follower::followUntilQR> (srv_lineUntilQR_name_);
+        srv_lineUntilLidar_ = nh_.serviceClient<mr_line_follower::followUntilLidar> (srv_lineUntilLidar_name_);
         srv_move_ = nh_.serviceClient<mr_go::move> (srv_move_name_);
         srv_action_ = nh_.advertiseService (srv_action_name_, &NavigationController::performActionCallback, this);
         srv_set_current_node_ = nh_.advertiseService (srv_set_current_node_name_, &NavigationController::setCurrentNodeCallback, this);
@@ -443,11 +445,11 @@ public:
 private:
     ros::NodeHandle nh_, pNh_;
     ros::Publisher pub_status_, pub_current_node_, pub_initialize_;
-    ros::ServiceClient srv_lineUntilQR_, srv_move_;
+    ros::ServiceClient srv_lineUntilQR_, srv_move_, srv_lineUntilLidar_;
     ros::ServiceServer srv_action_, srv_set_current_node_;
     ros::Subscriber sub_pose_;
 
-    std::string srv_lineUntilQR_name_, srv_move_name_, pub_status_name_,
+    std::string srv_lineUntilQR_name_, srv_move_name_, pub_status_name_, srv_lineUntilLidar_name_
         srv_action_name_, pub_current_node_name_, srv_set_current_node_name_;
     Skills skills_;
     Graph* graph_;

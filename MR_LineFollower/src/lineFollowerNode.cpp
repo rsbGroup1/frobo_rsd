@@ -11,11 +11,15 @@
 #include "msgs/BoolStamped.h"
 
 #include "mr_line_follower/followUntilQR.h"
+#include "mr_line_follower/followUntilDistance.h"
 #include "mr_camera_processing/enable.h"
 
 #include <iostream>
 #include <string>
 #include <boost/thread.hpp>
+
+// Lidar stuff
+#include <sensor_msgs/LaserScan.h>
 
 class lineFollower
 {
@@ -36,6 +40,7 @@ public:
         pNh_.param<int> ("reference_point_x", reference_point_x_, 320);
         pNh_.param<int> ("reference_point_y", reference_point_y_, 240);
         pNh_.param<double> ("robot_speed", robot_speed_, 0.1);
+        pNh_.param<double> ("lidar_distance", lidar_distance_, 0.1);
 
         // Get topics name
         pNh_.param<std::string> ("sub_line", sub_line_name_, "/mrCameraProcessing/line");
@@ -44,11 +49,15 @@ public:
         pNh_.param<std::string> ("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
         pNh_.param<std::string> ("srv_lineQr", srv_lineUntilQR_name_, "/mrLineFollower/lineUntilQR");
         pNh_.param<std::string> ("srv_mr_camera_processing_enable_name", srv_mr_camera_processing_enable_name_, "/mrCameraProcessing/enable");
+        pNh_.param<std::string> ("srv_lineLidar", srv_lineUntilLidar_name_, "/mrLineFollower/lineUntilLidar");
 
         srv_enable_ = nh_.advertiseService (
                           srv_lineUntilQR_name_, &lineFollower::lineUntilQRCallback, this);
 
         srv_mr_camera_processing_enable_ = nh_.serviceClient<mr_camera_processing::enable> (srv_mr_camera_processing_enable_name_);
+
+        srv_lidar_enable_ = nh_.advertiseService (
+                          srv_lineUntilLidar_name_, &lineFollower::lineUntilLidarCallback, this);
     }
 
     /**
@@ -253,12 +262,108 @@ public:
 
     }
 
+    /**
+     * Reads the detected qr and stores it in the object
+     */
+    void lidarCallback (const sensor_msgs::LaserScan lidar_in)
+    {
+		int start = (lidar_in.ranges.size()/2 - 10);
+		int stop = (lidar_in.ranges.size()/2 + 10);
+		double min = 99.0;
+        for (int i= start; i<stop;i++){
+			if (lidar_in.ranges[i] < min) min = lidar_in.ranges[i];
+		}
+		lidar_detected_ = min;
+    }
+
+    /**
+     * Enables or disables the line following based on Lidar
+     */
+    bool lineUntilLidarCallback (mr_line_follower::followUntilLidar::Request& req, mr_line_follower::followUntilLidar::Response& res)
+    {
+        // Start the camera processing
+        mr_camera_processing::enable enableCameraProcessing;
+        enableCameraProcessing.request.enable = true;
+        srv_mr_camera_processing_enable_.call (enableCameraProcessing);
+
+        while (enableCameraProcessing.response.status != true)
+        {
+            ROS_INFO ("Not possible to start camera processing, trying againg");
+            enableCameraProcessing.request.enable = true;
+            srv_mr_camera_processing_enable_.call (enableCameraProcessing);
+        }
+
+        // Starts the deadman and publishers
+        pub_twist_ = nh_.advertise<geometry_msgs::TwistStamped> (pub_twist_name_, 1);
+        pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
+        deadmanThread_ = new boost::thread (&lineFollower::enableDeadman, this);
+
+        // Reset the PID and qr
+        integral_ = 0;
+        pre_error_ = 0;
+
+        /*
+         * Starts the line line follower
+         */
+
+        // Starts the subscribers
+        sub_line_ = nh_.subscribe<geometry_msgs::Point> (sub_line_name_, 1, &lineFollower::lineCallback, this);
+        sub_lidar_ = nh_.subscribe<sensor_msgs::LaserScan> (sub_lidar_name_, 1, &lineFollower::lidarCallback, this);
+
+        // Waits until it finds it or the time is more than the limit
+        lidar_detected_ = -1.0;
+        ros::Time time_start;
+        time_start = ros::Time::now();
+
+        while (req.lidar_distance > lidar_detected_ &&
+                (ros::Time::now().toSec() - time_start.toSec()) < req.time_limit)
+        {
+            ros::spinOnce();
+        }
+
+        if (req.lidar_distance <= lidar_detected_)
+        {
+            std::cout << "Distance to Lidar " << lidar_detected_ << " reached!" << std::endl;
+            res.success = true;
+        }
+        else
+        {
+            ROS_ERROR ("Time limit following the line reached");
+            res.success = false;
+        }
+
+
+        // Stops the subscribers
+        sub_line_.shutdown();
+        sub_lidar_.shutdown();
+        pub_twist_.shutdown();
+        pub_deadman_.shutdown();
+
+        // Disables the deadman
+        stopDeadman();
+
+        // Disables the camera processing
+        enableCameraProcessing.request.enable = false;
+        srv_mr_camera_processing_enable_.call (enableCameraProcessing);
+
+        while (enableCameraProcessing.response.status != false)
+        {
+            ROS_INFO ("Not possible to stop camera processing, trying againg");
+            enableCameraProcessing.request.enable = false;
+            srv_mr_camera_processing_enable_.call (enableCameraProcessing);
+        }
+
+        // Ends!
+        return true;
+
+    }
+
 private:
     // ROS
     ros::NodeHandle nh_;
-    ros::Subscriber sub_line_, sub_qr_;
+    ros::Subscriber sub_line_, sub_qr_, sub_lidar_;
     ros::Publisher pub_twist_, pub_deadman_;
-    ros::ServiceServer srv_enable_;
+    ros::ServiceServer srv_enable_, srv_lidar_enable_;
     ros::ServiceClient srv_mr_camera_processing_enable_;
     // Threads
     boost::thread* deadmanThread_;
@@ -277,12 +382,15 @@ private:
     // Robot
     double robot_speed_;
     // Topics name
-    std::string sub_line_name_, sub_qr_name_;
+    std::string sub_line_name_, sub_qr_name_,sub_lidar_name_;
     std::string pub_deadman_name_, pub_twist_name_;
-    std::string srv_lineUntilQR_name_, srv_mr_camera_processing_enable_name_;
+    std::string srv_lineUntilQR_name_, srv_mr_camera_processing_enable_name_, srv_lineUntilLidar_name_;
     // QR
     std::string qr_desired_;
     std::string qr_detected_;
+	// Lidar
+	double lidar_detected_;
+	double lidar_desired_;
 };
 
 /**

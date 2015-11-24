@@ -298,9 +298,14 @@ public:
 
             if (msg.cell == 3)
                 action = "wc3_conveyor";
-
             perform_action_obj.request.action = action;
             _servicePerformAction.call (perform_action_obj);
+	    
+	    // Tell to the MES to move the conveyor
+	    std_msgs::String msg;
+            msg.data = "Ok";
+            _mesPublisher.publish(msg);
+	    
             // Tip Up
             HMIUpdateIcons (tipper);
             tip_obj.request.direction = true;

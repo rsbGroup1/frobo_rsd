@@ -97,7 +97,7 @@ public:
         // Inialize AMCL
         std::ifstream localisationFile;
         //std::string path_to_file = path_to_node +
-        localisationFile.open ("localization.csv");
+        localisationFile.open ("/home/frobit_pro_group1/Desktop/localization.csv");
         ROS_INFO ("Waiting for global localisation");
         ros::service::waitForService ("global_localization", ros::Duration (5, 0));
 
@@ -118,7 +118,9 @@ public:
             localisationFile >> p.pose.pose.orientation.w;
             p.header.frame_id = "map";
 
-            ros::Duration d (6, 0);
+            std::cout << "FROM LOADED FILE: " << p.pose.pose.position.x << " " << p.pose.pose.position.y << " " << p.pose.pose.orientation.x << " " << p.pose.pose.orientation.y << " " << p.pose.pose.orientation.z << " "  << p.pose.pose.orientation.w << std::endl;
+
+            ros::Duration d (3, 0);
             d.sleep();
             pub_initialize_.publish (p);
 
@@ -451,18 +453,21 @@ public:
     {
         ROS_INFO ("Storing position");
         // Store last known position
-        std::ofstream outputFile;
-        outputFile.open ("localization.csv");
+        if(!(currentPose_.pose.pose.position.x != currentPose_.pose.pose.position.x || currentPose_.pose.pose.position.y != currentPose_.pose.pose.position.y || currentPose_.pose.pose.orientation.x != currentPose_.pose.pose.orientation.x || currentPose_.pose.pose.orientation.y != currentPose_.pose.pose.orientation.y || currentPose_.pose.pose.orientation.z != currentPose_.pose.pose.orientation.z || currentPose_.pose.pose.orientation.w != currentPose_.pose.pose.orientation.w))
+        {
+            std::ofstream outputFile;
+            outputFile.open ("/home/frobit_pro_group1/Desktop/localization.csv");
 
-        outputFile << currentPose_.pose.pose.position.x << " ";
-        outputFile << currentPose_.pose.pose.position.y << " ";
-        outputFile << currentPose_.pose.pose.orientation.x << " ";
-        outputFile << currentPose_.pose.pose.orientation.y << " ";
-        outputFile << currentPose_.pose.pose.orientation.z << " ";
-        outputFile << currentPose_.pose.pose.orientation.w << " ";
+            outputFile << currentPose_.pose.pose.position.x << " ";
+            outputFile << currentPose_.pose.pose.position.y << " ";
+            outputFile << currentPose_.pose.pose.orientation.x << " ";
+            outputFile << currentPose_.pose.pose.orientation.y << " ";
+            outputFile << currentPose_.pose.pose.orientation.z << " ";
+            outputFile << currentPose_.pose.pose.orientation.w << " ";
 
-        outputFile.flush();
-        outputFile.close();
+            outputFile.flush();
+            outputFile.close();
+        }
     }
 
     void batteryCallback (std_msgs::Float32 battery)
@@ -511,7 +516,7 @@ int main (int argc, char** argv)
     }
 
     // Store position
-    //nc.storePosition();
+    nc.storePosition();
 
     // Return
     return 0;

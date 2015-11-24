@@ -104,7 +104,7 @@ public:
         cv::bilateralFilter (image_cropped, image_filtered, 15, 300, 300);
 
         // Color threshold
-        cv::inRange (image_filtered, cv::Scalar (0, 0, 0), cv::Scalar (30, 30, 30), image_filtered);
+        cv::inRange (image_filtered, cv::Scalar (0, 0, 0), cv::Scalar (50, 50, 50), image_filtered);
 
         // Canny edge
         unsigned char cannyMinThreshold = 50;

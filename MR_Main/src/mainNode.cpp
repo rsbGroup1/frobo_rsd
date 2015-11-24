@@ -274,6 +274,7 @@ public:
             mr_tip_controller::tip tip_obj;
             std::string action;
 
+	    /*
             // Stores the current position just in case the battery is in
             // the critic level
             action = _currentNode;
@@ -284,10 +285,10 @@ public:
             //action = "bricks";
             //perform_action_obj.request.action = action;
             //_servicePerformAction.call (perform_action_obj);
-
+	    
             // Checks if the battery is the critic level
             if (_check_battery) checkBattery (_batteryCritic, action);
-
+	      */
             // Send the robot to the correct wc conveyor
             if (msg.cell == 1)
                 action = "wc1_conveyor";

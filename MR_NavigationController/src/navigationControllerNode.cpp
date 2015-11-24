@@ -372,7 +372,8 @@ public:
         box_TO_pre_charge_line.push_back (std::bind (&Graph::setCurrentNode, graph_, "pre_charge_line"));
 
         std::vector<std::function<void() >> pre_charge_line_TO_charge_line;
-        pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, 0.1));
+        //pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, 0.1));
+	pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.2));
         pre_charge_line_TO_charge_line.push_back (std::bind (&Graph::setCurrentNode, graph_, "charge_line"));
 
         std::vector<std::function<void() >> pre_charge_line_TO_box;
@@ -380,7 +381,8 @@ public:
         pre_charge_line_TO_box.push_back (std::bind (&Graph::setCurrentNode, graph_, "box"));
 
         std::vector<std::function<void() >> charge_line_TO_pre_charge_line;
-        charge_line_TO_pre_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, -0.1));
+        //charge_line_TO_pre_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, -0.1));
+	charge_line_TO_pre_charge_line.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_1_load"));
         charge_line_TO_pre_charge_line.push_back (std::bind (&Graph::setCurrentNode, graph_, "pre_charge_line"));
 
 

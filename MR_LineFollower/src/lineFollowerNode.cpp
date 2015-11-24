@@ -44,6 +44,8 @@ public:
 
         // Get topics name
         pNh_.param<std::string> ("sub_line", sub_line_name_, "/mrCameraProcessing/line");
+        pNh_.param<std::string> ("sub_lidar", sub_lidar_name_, "/scan");
+
         pNh_.param<std::string> ("sub_qr", sub_qr_name_, "/mrCameraProcessing/QR");
         pNh_.param<std::string> ("pub_twist", pub_twist_name_, "/fmCommand/cmd_vel");
         pNh_.param<std::string> ("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
@@ -64,6 +66,7 @@ public:
 		
 		sub_line_ = nh_.subscribe<geometry_msgs::Point> (sub_line_name_, 1, &lineFollower::lineCallback, this);
 		sub_qr_ = nh_.subscribe<std_msgs::String> (sub_qr_name_, 1, &lineFollower::qrCallback, this);
+		sub_lidar_ = nh_.subscribe<sensor_msgs::LaserScan> (sub_lidar_name_, 1, &lineFollower::lidarCallback, this);
 		
     }
 
@@ -253,13 +256,14 @@ public:
      */
     void lidarCallback (const sensor_msgs::LaserScan lidar_in)
     {
-		int start = (lidar_in.ranges.size()/2 - 10);
-		int stop = (lidar_in.ranges.size()/2 + 10);
-		double min = 99.0;
-        for (int i= start; i<stop;i++){
-			if (lidar_in.ranges[i] < min) min = lidar_in.ranges[i];
-		}
-		lidar_detected_ = min;
+	int start = (lidar_in.ranges.size()/2 - 10);
+	int stop = (lidar_in.ranges.size()/2 + 10);
+	double min = 99.0;
+	for (int i= start; i<stop;i++){
+		if (lidar_in.ranges[i] < min && lidar_in.ranges[i] > 0) min = lidar_in.ranges[i];
+	}
+	lidar_detected_ = min;
+	//std::cout << start<<" " << stop << " " << lidar_in.ranges[90]<< " "<<lidar_detected_ << std::endl;
     }
 
     /**
@@ -267,6 +271,17 @@ public:
      */
     bool lineUntilLidarCallback (mr_line_follower::followUntilLidar::Request& req, mr_line_follower::followUntilLidar::Response& res)
     {
+        // Start the camera processing
+        mr_camera_processing::enable enableCameraProcessing;
+        enableCameraProcessing.request.enable = true;
+        srv_mr_camera_processing_enable_.call (enableCameraProcessing);
+
+        while (enableCameraProcessing.response.status != true)
+        {
+            ROS_INFO ("Not possible to start camera processing, trying againg");
+            enableCameraProcessing.request.enable = true;
+            srv_mr_camera_processing_enable_.call (enableCameraProcessing);
+        }
 
         // Starts the deadman and publishers
         deadmanThread_ = new boost::thread (&lineFollower::enableDeadman, this);
@@ -275,26 +290,17 @@ public:
         integral_ = 0;
         pre_error_ = 0;
 
-        /*
-         * Starts the line line follower
-         */
-
-        // Starts the subscribers
-        sub_line_ = nh_.subscribe<geometry_msgs::Point> (sub_line_name_, 1, &lineFollower::lineCallback, this);
-        sub_lidar_ = nh_.subscribe<sensor_msgs::LaserScan> (sub_lidar_name_, 1, &lineFollower::lidarCallback, this);
-
         // Waits until it finds it or the time is more than the limit
-        lidar_detected_ = -1.0;
+        lidar_detected_ = 99.0;
         ros::Time time_start;
         time_start = ros::Time::now();
-
-        while (req.lidar_distance > lidar_detected_ &&
+        while (req.lidar_distance < lidar_detected_ &&
                 (ros::Time::now().toSec() - time_start.toSec()) < req.time_limit)
         {
             ros::spinOnce();
         }
 
-        if (req.lidar_distance <= lidar_detected_)
+        if (req.lidar_distance >= lidar_detected_)
         {
             std::cout << "Distance to Lidar " << lidar_detected_ << " reached!" << std::endl;
             res.success = true;
@@ -308,6 +314,17 @@ public:
         // Disables the deadman
         stopDeadman();
 		delete deadmanThread_;
+
+        // Disables the camera processing
+        enableCameraProcessing.request.enable = false;
+        srv_mr_camera_processing_enable_.call (enableCameraProcessing);
+
+        while (enableCameraProcessing.response.status != false)
+        {
+            ROS_INFO ("Not possible to stop camera processing, trying againg");
+            enableCameraProcessing.request.enable = false;
+            srv_mr_camera_processing_enable_.call (enableCameraProcessing);
+        }
 
         // Ends!
         return true;
@@ -345,9 +362,9 @@ private:
     // QR
     std::string qr_desired_;
     std::string qr_detected_;
-	// Lidar
-	double lidar_detected_;
-	double lidar_desired_;
+    // Lidar
+    double lidar_detected_;
+    double lidar_desired_;
 };
 
 /**

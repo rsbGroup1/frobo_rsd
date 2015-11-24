@@ -116,6 +116,9 @@ public:
             localisationFile >> p.pose.pose.orientation.y;
             localisationFile >> p.pose.pose.orientation.z;
             localisationFile >> p.pose.pose.orientation.w;
+            for(int i = 0; i < 36 ;i+=7){
+		p.pose.covariance[i] = 0.3;
+	    }
             p.header.frame_id = "map";
 
             std::cout << "FROM LOADED FILE: " << p.pose.pose.position.x << " " << p.pose.pose.position.y << " " << p.pose.pose.orientation.x << " " << p.pose.pose.orientation.y << " " << p.pose.pose.orientation.z << " "  << p.pose.pose.orientation.w << std::endl;

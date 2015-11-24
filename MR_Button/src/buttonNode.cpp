@@ -94,6 +94,7 @@ void changeMode()
     }
     else if (_runMode == M_IDLE)
     {
+	ROS_INFO("Changed to IDLE");
         switch (_errorMode)
         {
         case M_SAFE:
@@ -114,6 +115,7 @@ void changeMode()
     }
     else if (_runMode == M_AUTO)
     {
+	ROS_INFO("Changed to AUTO");
         switch (_errorMode)
         {
         case M_SAFE:
@@ -134,6 +136,8 @@ void changeMode()
     }
     else if (_runMode == M_MANUAL)
     {
+      
+	ROS_INFO("Changed to MANUAL");
         switch (_errorMode)
         {
         case M_SAFE:
@@ -158,12 +162,14 @@ void changeRunMode (MODES runMode)
 {
     boost::unique_lock<boost::mutex> lock (_modeMutex);
     _runMode = runMode;
+    changeMode();
 }
 
 void changeErrorMode (MODES errorMode)
 {
     boost::unique_lock<boost::mutex> lock (_errorMutex);
     _errorMode = errorMode;
+    changeMode();
 }
 
 void buttonCallback (std_msgs::Bool msg)
@@ -186,6 +192,14 @@ void obstacleDetectorCallback (std_msgs::String msg) {
 	changeErrorMode(M_COLLIDING);
 }
 
+void mrMainModeCallback (std_msgs::String msg) {
+    if (msg.data == "auto")
+        changeRunMode (M_AUTO);
+    else if (msg.data == "idle")
+        changeRunMode (M_IDLE);
+    else
+	changeRunMode (M_MANUAL);
+}
 
 void writeSerialThread()
 {
@@ -251,10 +265,11 @@ int main()
     ros::NodeHandle pNh ("~");
 
     // Topic names
-    std::string buttonPub, buttonSub, obstacleDetectorSub;
+    std::string buttonPub, buttonSub, obstacleDetectorSub, mrMainModeSub;
     pNh.param<std::string> ("mr_button_pub", buttonPub, "/mrButton/run");
     pNh.param<std::string> ("mr_button_sub", buttonSub, "/mrButton/status");
     pNh.param<std::string> ("mr_obstacle_detector", obstacleDetectorSub, "/mrObstacleDetector/status");
+    pNh.param<std::string> ("mr_main_mode_sub", mrMainModeSub, "/mrMain/mode");
 
     // Publisher
     _buttonPublisher = nh.advertise<std_msgs::Bool> (buttonPub, 1);
@@ -262,6 +277,7 @@ int main()
     // Subscriber
     ros::Subscriber subButton = nh.subscribe (buttonSub, 1, buttonCallback);
     ros::Subscriber subObstacleDetector = nh.subscribe (obstacleDetectorSub, 1, obstacleDetectorCallback);
+    ros::Subscriber subMrMainMode = nh.subscribe (mrMainModeSub, 1, mrMainModeCallback);
 
     // Get serial data parameters
     int baudRate;
@@ -285,8 +301,7 @@ int main()
     // Start serial threads
     boost::thread readThread(readSerialThread);
     boost::thread writeThread(writeSerialThread);
-    boost::thread changeModeThread(changeMode);
-
+    
     // Sleep for a second
     ros::Duration(2).sleep();
 

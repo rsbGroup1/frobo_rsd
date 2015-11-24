@@ -242,11 +242,13 @@
 			<param name="reference_point_y" value="240" />
 			<param name="robot_speed" value="0.14" />
 			<param name="lidar_distance" value="0.2" />
+			<param name="relative_distance" value="0.2" />
 		
 			<param name="srv_mr_camera_processing_enable_name" value="/mrCameraProcessing/enable" />
 			<param name="sub_cross" value="/mrCameraProcessing/cross" />
 			<param name="sub_line" value="/mrCameraProcessing/line" />
 			<param name="sub_lidar" value="/scan" />
+			<param name="sub_odom" value="/fmKnowledge/pose" />
 			<param name="sub_qr" value="/mrCameraProcessing/QR" />
 			<param name="pub_twist" value="/fmCommand/cmd_vel" />
 			<param name="pub_deadman" value="/fmSafe/deadman" />
@@ -268,6 +270,7 @@
 	<node pkg="mr_navigation_controller" name="mrNavigationController" type="mr_navigation_controller" output="screen">
 		<param name="lineFollowEnableService" value="mrLineFollower/lineUntilQR"/>
 		<param name="lineFollowEnableLidarService" value="mrLineFollower/lineUntilLidar"/>
+		<param name="lineFollowEnableRelativeService" value="mrLineFollower/lineUntilRelative"/>
 		<param name="obstacleDetectorService" value="/mrObstacleDetector/enabler"/>
 		<param name="moveService" value="mrGo/move"/>
 		<param name="performAction" value="mrNavigationController/performAction"/>

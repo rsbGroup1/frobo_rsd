@@ -12,6 +12,7 @@
 
 #include "mr_line_follower/followUntilQR.h"
 #include "mr_line_follower/followUntilLidar.h"
+#include "mr_line_follower/followUntilRelative.h"
 #include "mr_camera_processing/enable.h"
 
 #include <iostream>
@@ -20,6 +21,9 @@
 
 // Lidar stuff
 #include <sensor_msgs/LaserScan.h>
+
+// Odom / Relative Stuff
+#include "nav_msgs/Odometry.h"
 
 class lineFollower
 {
@@ -41,10 +45,13 @@ public:
         pNh_.param<int> ("reference_point_y", reference_point_y_, 240);
         pNh_.param<double> ("robot_speed", robot_speed_, 0.1);
         pNh_.param<double> ("lidar_distance", lidar_distance_, 0.1);
+        pNh_.param<double> ("relative_distance", lidar_distance_, 0.1);
+        pNh_.param<double> ("linear_precision", linear_precision_, 0.005);
 
         // Get topics name
         pNh_.param<std::string> ("sub_line", sub_line_name_, "/mrCameraProcessing/line");
         pNh_.param<std::string> ("sub_lidar", sub_lidar_name_, "/scan");
+        pNh_.param<std::string> ("sub_odom", sub_odom_name_, "/fmKnowledge/pose");
 
         pNh_.param<std::string> ("sub_qr", sub_qr_name_, "/mrCameraProcessing/QR");
         pNh_.param<std::string> ("pub_twist", pub_twist_name_, "/fmCommand/cmd_vel");
@@ -52,6 +59,7 @@ public:
         pNh_.param<std::string> ("srv_lineQr", srv_lineUntilQR_name_, "/mrLineFollower/lineUntilQR");
         pNh_.param<std::string> ("srv_mr_camera_processing_enable_name", srv_mr_camera_processing_enable_name_, "/mrCameraProcessing/enable");
         pNh_.param<std::string> ("srv_lineLidar", srv_lineUntilLidar_name_, "/mrLineFollower/lineUntilLidar");
+        pNh_.param<std::string> ("srv_lineRelative", srv_lineUntilRelative_name_, "/mrLineFollower/lineUntilRelative");
 
         srv_enable_ = nh_.advertiseService (
                           srv_lineUntilQR_name_, &lineFollower::lineUntilQRCallback, this);
@@ -60,6 +68,8 @@ public:
 
         srv_lidar_enable_ = nh_.advertiseService (
                           srv_lineUntilLidar_name_, &lineFollower::lineUntilLidarCallback, this);
+        srv_relative_enable_ = nh_.advertiseService (
+                          srv_lineUntilRelative_name_, &lineFollower::lineUntilRelativeCallback, this);
 		
 		pub_twist_ = nh_.advertise<geometry_msgs::TwistStamped> (pub_twist_name_, 1);
 		pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
@@ -67,6 +77,7 @@ public:
 		sub_line_ = nh_.subscribe<geometry_msgs::Point> (sub_line_name_, 1, &lineFollower::lineCallback, this);
 		sub_qr_ = nh_.subscribe<std_msgs::String> (sub_qr_name_, 1, &lineFollower::qrCallback, this);
 		sub_lidar_ = nh_.subscribe<sensor_msgs::LaserScan> (sub_lidar_name_, 1, &lineFollower::lidarCallback, this);
+		sub_odom_ = nh_.subscribe<nav_msgs::Odometry> (sub_odom_name_, 1, &lineFollower::odometryCallback, this);
 		
     }
 
@@ -330,12 +341,93 @@ public:
 
     }
 
+    /**
+     * Odometry callback
+     */
+    void odometryCallback (const nav_msgs::Odometry odom)
+    {
+        linear_pos_current_x_ = odom.pose.pose.position.x;
+        linear_pos_current_y_ = odom.pose.pose.position.y;
+    }
+
+   /**
+     * Enables or disables the line following based on relative odometry position
+     */
+    bool lineUntilRelativeCallback (mr_line_follower::followUntilRelative::Request& req, mr_line_follower::followUntilRelative::Response& res)
+    {
+
+        // Start the camera processing
+        mr_camera_processing::enable enableCameraProcessing;
+        enableCameraProcessing.request.enable = true;
+        srv_mr_camera_processing_enable_.call (enableCameraProcessing);
+
+        while (enableCameraProcessing.response.status != true)
+        {
+            ROS_INFO ("Not possible to start camera processing, trying againg");
+            enableCameraProcessing.request.enable = true;
+            srv_mr_camera_processing_enable_.call (enableCameraProcessing);
+        }
+        // Starts the deadman and publishers
+        deadmanThread_ = new boost::thread (&lineFollower::enableDeadman, this);
+
+        // Reset the PID and qr
+        integral_ = 0;
+        pre_error_ = 0;
+
+        // Waits until it finds it or the time is more than the limit
+        lidar_detected_ = 99.0;
+        ros::Time time_start;
+        time_start = ros::Time::now();
+
+        double linear_desired = req.relative_distance;
+        double distance_moved = 0.0;
+        double start_x = linear_pos_current_x_;
+        double start_y = linear_pos_current_y_;
+        while (( (distance_moved - std::abs (linear_desired)) < linear_precision_) &&
+                ((ros::Time::now().toSec() - time_start.toSec()) < req.time_limit) )
+        {
+            distance_moved = sqrt (pow ( (start_x - linear_pos_current_x_), 2.0) +
+                       pow ( (start_y - linear_pos_current_y_), 2.0));
+            ros::spinOnce();
+        }
+
+        if ((distance_moved - std::abs (linear_desired)) >= linear_precision_)
+        {
+            std::cout << "Relative distance " << distance_moved << " moved" << std::endl;
+            res.success = true;
+        }
+        else
+        {
+            ROS_ERROR ("Time limit following the line reached");
+            res.success = false;
+        }
+
+        // Disables the deadman
+        stopDeadman();
+		delete deadmanThread_;
+
+        // Disables the camera processing
+        enableCameraProcessing.request.enable = false;
+        srv_mr_camera_processing_enable_.call (enableCameraProcessing);
+
+        while (enableCameraProcessing.response.status != false)
+        {
+            ROS_INFO ("Not possible to stop camera processing, trying againg");
+            enableCameraProcessing.request.enable = false;
+            srv_mr_camera_processing_enable_.call (enableCameraProcessing);
+        }
+
+        // Ends!
+        return true;
+
+    }
+
 private:
     // ROS
     ros::NodeHandle nh_;
-    ros::Subscriber sub_line_, sub_qr_, sub_lidar_;
+    ros::Subscriber sub_line_, sub_qr_, sub_lidar_,sub_odom_;
     ros::Publisher pub_twist_, pub_deadman_;
-    ros::ServiceServer srv_enable_, srv_lidar_enable_;
+    ros::ServiceServer srv_enable_, srv_lidar_enable_, srv_relative_enable_;
     ros::ServiceClient srv_mr_camera_processing_enable_;
     // Threads
     boost::thread* deadmanThread_;
@@ -349,21 +441,26 @@ private:
     double pre_error_;
     double integral_;
     double lidar_distance_;
+    double relative_distance_;
     // Reference point
     int reference_point_x_;
     int reference_point_y_;
     // Robot
     double robot_speed_;
     // Topics name
-    std::string sub_line_name_, sub_qr_name_,sub_lidar_name_;
+    std::string sub_line_name_, sub_qr_name_,sub_lidar_name_,sub_odom_name_;
     std::string pub_deadman_name_, pub_twist_name_;
-    std::string srv_lineUntilQR_name_, srv_mr_camera_processing_enable_name_, srv_lineUntilLidar_name_;
+    std::string srv_lineUntilQR_name_, srv_mr_camera_processing_enable_name_, srv_lineUntilLidar_name_, srv_lineUntilRelative_name_;
     // QR
     std::string qr_desired_;
     std::string qr_detected_;
     // Lidar
     double lidar_detected_;
     double lidar_desired_;
+    // Odomety
+    double linear_pos_current_x_;
+    double linear_pos_current_y_;
+    double linear_precision_;
 };
 
 /**

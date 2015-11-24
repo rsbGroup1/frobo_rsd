@@ -9,13 +9,14 @@
 #define RAD_TO_DEG	(180.0/M_PI)
 
 
-Skills::Skills (ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move, ros::ServiceClient* srv_lineUntilLidar,
+Skills::Skills (ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move, ros::ServiceClient* srv_lineUntilLidar, ros::ServiceClient* srv_lineUntilRelative,
 			ros::Publisher* pub_status, ros::Publisher* pub_initialize, ros::Publisher *pub_deadman,
 			ros::ServiceClient* srv_detect_obstacles
  	      )
 {
     srv_lineUntilQR_ = srv_lineUntilQR;
     srv_lineUntilLidar_ = srv_lineUntilLidar;
+    srv_lineUntilRelative_ = srv_lineUntilRelative;
     srv_move_ = srv_move;
     pub_status_ = pub_status;
     srv_detect_obstacles_ = srv_detect_obstacles;
@@ -55,6 +56,20 @@ bool Skills::lineUntilLidar (double distance)
     msg.data = "following_line";
     pub_status_->publish (msg);
     return followUntilLidarCall.response.success;
+}
+
+bool Skills::lineUntilRelative (double distance)
+{
+    std::cout << "Skill: Line until Relative distance: " << distance << std::endl;
+    followUntilRelativeCall.request.relative_distance = distance;
+    followUntilRelativeCall.request.time_limit = 300;
+    srv_lineUntilRelative_->call (followUntilRelativeCall);
+
+    std_msgs::String msg;
+    //msg.data = "following_line " + qr;
+    msg.data = "following_line";
+    pub_status_->publish (msg);
+    return followUntilRelativeCall.response.success;
 }
 
 bool Skills::linearMove (double distance)

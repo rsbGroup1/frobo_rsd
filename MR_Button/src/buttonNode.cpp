@@ -77,16 +77,17 @@ enum MODES
 };
 
 // Global var
-bool _running = false;
 serial::Serial* _serialConnection;
 ros::Publisher _buttonPublisher;
 MODES _errorMode = M_NORMAL, _runMode = M_OFF;
 SynchronisedQueue<std::string> _writeQueue;
 boost::mutex _modeMutex;
 
-// Functions
-void changeMode()
+void changeRunMode (MODES runMode)
 {
+    boost::unique_lock<boost::mutex> lock (_modeMutex);
+    _runMode = runMode;
+    
     if (_runMode == M_OFF)
     {
         _writeQueue.enqueue ("off\n");
@@ -153,38 +154,12 @@ void changeMode()
     }
 }
 
-void changeRunMode (MODES runMode)
-{
-    boost::unique_lock<boost::mutex> lock (_modeMutex);
-    _runMode = runMode;
-    changeMode();
-}
-
 void buttonCallback (std_msgs::Bool msg)
 {
     if (msg.data)
         changeRunMode (M_RUN);
     else
         changeRunMode (M_IDLE);
-}
-
-
-bool compareMsg (char* msg, char* command)
-{
-    int i = 0;
-
-    while (msg[i] != '\n' && command[i] != '\n')
-    {
-        if (tolower (msg[i]) != tolower (command[i]))
-            return false;
-
-        i++;
-    }
-
-    if (i == 0)
-        return false;
-
-    return true;
 }
 
 void writeSerialThread()
@@ -208,59 +183,29 @@ void writeSerialThread()
 void readSerialThread()
 {
     std::string tempString;
-    char msg[DATA_LENGTH + 1];
-    msg[DATA_LENGTH] = '\n';
-    int i = 0;
-
     while (true)
     {
         try
         {
-            tempString = _serialConnection->read (1);
-
-            if (tempString.size() == 1)
-            {
-                msg[i] = tempString[0];
-
-                if (msg[i] == '\n')
-                {
-                    if (compareMsg (msg, "run\n"))
-                    {
-                        std_msgs::Bool msg;
-                        msg.data = true;
-                        _buttonPublisher.publish (msg);
-                        ROS_INFO ("btn run");
-                    }
-                    else if (compareMsg (msg, "idle\n"))
-                    {
-                        std_msgs::Bool msg;
-                        msg.data = false;
-                        _buttonPublisher.publish (msg);
-                        ROS_INFO ("btn idle");
-                    }
-
-                    // Clear data
-                    i = 0;
-                }
-                else	// Wait for new character
-                    i++;
-            }
-            else
-            {
-                // Clear if buffer is full without newline
-                if (i == DATA_LENGTH - 1)
-                {
-                    i = 0;
-
-                    for (int k = 0; k < DATA_LENGTH; k++)
-                        msg[k] = ' ';
-
-                    msg[DATA_LENGTH] = '\n';
-                }
-            }
+            tempString = _serialConnection->read (10);
+	    if(tempString.size() > 1 && tempString.find("run")!=std::string::npos)
+	    {
+		std_msgs::Bool msg;
+		msg.data = true;
+		_buttonPublisher.publish (msg);
+		ROS_INFO ("Button run");
+	    }
+	    else if (tempString.find("idle")!=std::string::npos)
+	    {
+		std_msgs::Bool msg;
+		msg.data = false;
+		_buttonPublisher.publish (msg);
+		ROS_INFO ("Button idle");
+	    }
 
             // Signal interrupt point
             boost::this_thread::interruption_point();
+
         }
         catch (const boost::thread_interrupted&)
         {
@@ -281,9 +226,7 @@ int main()
     ros::NodeHandle pNh ("~");
 
     // Topic names
-    std::string obstaclePub, hmiSub, buttonPub, buttonSub;
-    pNh.param<std::string> ("mr_collision_sub", obstaclePub, "/mrObstacleDetector/status");
-    pNh.param<std::string> ("mr_hmi_sub", hmiSub, "/mrHMI/run");
+    std::string buttonPub, buttonSub;
     pNh.param<std::string> ("mr_button_pub", buttonPub, "/mrButton/run");
     pNh.param<std::string> ("mr_button_sub", buttonSub, "/mrButton/status");
 
@@ -323,7 +266,8 @@ int main()
     changeRunMode (M_IDLE);
 
     // ROS Spin: Handle callbacks
-    ros::spin();
+    while (!ros::isShuttingDown())
+	ros::spin();	
 
     // Close connection
     changeRunMode (M_OFF);

@@ -68,26 +68,26 @@ public:
 enum MODES
 {
     M_OFF = 0,
-    M_RUN,
+    
+    M_AUTO,
     M_IDLE,
     M_MANUAL,
-    M_NORMAL,
-    M_SLOW,
-    M_STOP
+    
+    M_SAFE,
+    M_PROXIMITYALERT,
+    M_COLLIDING
 };
 
 // Global var
 serial::Serial* _serialConnection;
 ros::Publisher _buttonPublisher;
-MODES _errorMode = M_NORMAL, _runMode = M_OFF;
+MODES _errorMode = M_SAFE, _runMode = M_OFF;
 SynchronisedQueue<std::string> _writeQueue;
-boost::mutex _modeMutex;
+boost::mutex _modeMutex, _errorMutex;
 
-void changeRunMode (MODES runMode)
+// Functions
+void changeMode()
 {
-    boost::unique_lock<boost::mutex> lock (_modeMutex);
-    _runMode = runMode;
-    
     if (_runMode == M_OFF)
     {
         _writeQueue.enqueue ("off\n");
@@ -96,15 +96,15 @@ void changeRunMode (MODES runMode)
     {
         switch (_errorMode)
         {
-        case M_NORMAL:
+        case M_SAFE:
             _writeQueue.enqueue ("idle\n");
             break;
 
-        case M_SLOW:
+        case M_PROXIMITYALERT:
             _writeQueue.enqueue ("idleSlow\n");
             break;
 
-        case M_STOP:
+        case M_COLLIDING:
             _writeQueue.enqueue ("idleStop\n");
             break;
 
@@ -112,19 +112,19 @@ void changeRunMode (MODES runMode)
             break;
         }
     }
-    else if (_runMode == M_RUN)
+    else if (_runMode == M_AUTO)
     {
         switch (_errorMode)
         {
-        case M_NORMAL:
+        case M_SAFE:
             _writeQueue.enqueue ("run\n");
             break;
 
-        case M_SLOW:
+        case M_PROXIMITYALERT:
             _writeQueue.enqueue ("runSlow\n");
             break;
 
-        case M_STOP:
+        case M_COLLIDING:
             _writeQueue.enqueue ("runStop\n");
             break;
 
@@ -136,15 +136,15 @@ void changeRunMode (MODES runMode)
     {
         switch (_errorMode)
         {
-        case M_NORMAL:
+        case M_SAFE:
             _writeQueue.enqueue ("manual\n");
             break;
 
-        case M_SLOW:
+        case M_PROXIMITYALERT:
             _writeQueue.enqueue ("manualSlow\n");
             break;
 
-        case M_STOP:
+        case M_COLLIDING:
             _writeQueue.enqueue ("manualStop\n");
             break;
 
@@ -154,13 +154,38 @@ void changeRunMode (MODES runMode)
     }
 }
 
+void changeRunMode (MODES runMode)
+{
+    boost::unique_lock<boost::mutex> lock (_modeMutex);
+    _runMode = runMode;
+}
+
+void changeErrorMode (MODES errorMode)
+{
+    boost::unique_lock<boost::mutex> lock (_errorMutex);
+    _errorMode = errorMode;
+}
+
 void buttonCallback (std_msgs::Bool msg)
 {
     if (msg.data)
-        changeRunMode (M_RUN);
+        changeRunMode (M_AUTO);
     else
         changeRunMode (M_IDLE);
 }
+
+void obstacleDetectorCallback (std_msgs::String msg) {
+    std::string msg_temp;
+    msg_temp = msg.data;
+    
+    if (msg_temp == "safe")
+	changeErrorMode(M_SAFE);
+    else if (msg_temp == "proximityAlert")
+	changeErrorMode(M_PROXIMITYALERT);
+    else if (msg_temp == "colliding")
+	changeErrorMode(M_COLLIDING);
+}
+
 
 void writeSerialThread()
 {
@@ -226,15 +251,17 @@ int main()
     ros::NodeHandle pNh ("~");
 
     // Topic names
-    std::string buttonPub, buttonSub;
+    std::string buttonPub, buttonSub, obstacleDetectorSub;
     pNh.param<std::string> ("mr_button_pub", buttonPub, "/mrButton/run");
     pNh.param<std::string> ("mr_button_sub", buttonSub, "/mrButton/status");
+    pNh.param<std::string> ("mr_obstacle_detector", obstacleDetectorSub, "/mrObstacleDetector/status");
 
     // Publisher
     _buttonPublisher = nh.advertise<std_msgs::Bool> (buttonPub, 1);
 
     // Subscriber
     ros::Subscriber subButton = nh.subscribe (buttonSub, 1, buttonCallback);
+    ros::Subscriber subObstacleDetector = nh.subscribe (obstacleDetectorSub, 1, obstacleDetectorCallback);
 
     // Get serial data parameters
     int baudRate;
@@ -258,6 +285,7 @@ int main()
     // Start serial threads
     boost::thread readThread(readSerialThread);
     boost::thread writeThread(writeSerialThread);
+    boost::thread changeModeThread(changeMode);
 
     // Sleep for a second
     ros::Duration(2).sleep();

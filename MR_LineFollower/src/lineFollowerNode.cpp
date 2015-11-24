@@ -124,6 +124,19 @@ public:
             pid_output = pid_max_;
         else if (pid_output < pid_min_)
             pid_output = pid_min_;
+	/*// And implements an Anti-Windup by not updating integral
+	if(pid_output > pid_max_)
+	{
+		pid_output = pid_max_;
+		integral_ -= pid_error * pid_dt_;
+	}
+	else{
+		if(pid_output < pid_min_)
+		{
+			pid_output = pid_min_;
+			integral_ -= pid_error * pid_dt_;
+		}
+	}*/
 
         // Save error to previous error
         pre_error_ = pid_error;

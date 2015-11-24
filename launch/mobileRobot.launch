@@ -170,9 +170,9 @@
 			<param name="baud_rate" value="115200"/>
 			<param name="port" value="/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00"/> 
 			<param name="mr_collision_sub" value="/mrObstacleDetector/status"/>
-			<param name="mr_hmi_sub" value="/mrHMI/run"/>
 			<param name="mr_button_pub" value="/mrButton/run"/> 
 			<param name="mr_button_sub" value="/mrButton/status"/> 	
+			<param name="mr_main_mode_sub" value="/mrMain/mode"/>
 		</node>
 	</group>
 
@@ -190,6 +190,7 @@
 			<param name="mes_sub" value="mrMESClient/msgFromServer"/> 
 			<param name="obstacle_detector_sub" value="/mrObstacleDetector/status"/> 
 			<param name="battery_sub" value="/fmInformation/battery"/>
+			<param name="mode_pub" value="/mrMain/mode"/>
 			<param name="check_battery" value="false"/>
 			<param name="battery_low" value="12.4"/> 
 			<param name="battery_critic" value="12.0"/> 

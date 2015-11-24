@@ -70,6 +70,13 @@ public:
      */
     bool detectObstacles(bool state);
 
+    /**
+     * checks battery level, if < @param threshold, we determine the robot is not charging
+     * and execute the backup behaviour
+     */
+    bool chargeDectectionAndBackupPlan(double battery_level, double threshold);
+    
+
 private:
     ros::ServiceClient* srv_lineUntilQR_;
     ros::ServiceClient* srv_lineUntilLidar_;

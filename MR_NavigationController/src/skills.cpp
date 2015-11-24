@@ -159,7 +159,6 @@ bool Skills::detectObstacles (bool state)
 	return detectObstaclesCall.response.done;
 }
 
-
 void Skills::enableDeadman()
 {
 
@@ -181,4 +180,16 @@ void Skills::enableDeadman()
             break;
         }
     }
+}
+
+bool Skills::chargeDectectionAndBackupPlan(double battery_level, double threshold)
+{   
+	if (battery_level < threshold){
+		linearMove(-0.2);
+		goToFreePosition(-0.56, -2.41 , -0.2);
+		lineUntilLidar(0.2);
+		linearMove(0.15);
+	}
+	return true;
+
 }

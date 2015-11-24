@@ -15,6 +15,7 @@
 
 #include "std_msgs/String.h"
 #include "std_msgs/Float64.h"
+#include "std_msgs/Float32.h"
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 #include "msgs/BoolStamped.h"
 
@@ -61,6 +62,7 @@ public:
 		pNh_.param<std::string> ("obstacleDetectorService", srv_detect_obstacles_name_, "/mrObstacleDetector/enabler");
         pNh_.param<int> ("searchLimit", search_limit_, 100);
 	pNh_.param<std::string> ("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
+        pNh_.param<std::string> ("sub_battery", sub_battery_name_, "/fmInformation/battery");
         //std::string path_to_node = ros::package::getPath("mrNavigationController");
 
         // Service
@@ -72,6 +74,7 @@ public:
 
         // Subscriber
         sub_pose_ = nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped> ("amcl_pose", 10, &NavigationController::poseReceived, this);
+        sub_battery_ = nh_.subscribe<std_msgs::Float32> (sub_battery_name_, 10, &NavigationController::batteryCallback, this);
 
         // Publisher
         pub_status_ = nh_.advertise<std_msgs::String> (pub_status_name_, 10);
@@ -349,10 +352,9 @@ public:
         pre_charge_TO_box.push_back (std::bind (&Skills::goToFreePosition, &skills_, -0.8, -2.1 , -0.6));
         pre_charge_TO_box.push_back (std::bind (&Graph::setCurrentNode, graph_, "box"));
 
-
-
         std::vector<std::function<void() >> pre_charge_TO_charge;
         pre_charge_TO_charge.push_back (std::bind (&Skills::linearMove, &skills_, 0.1));
+        pre_charge_TO_charge.push_back (std::bind (&Skills::chargeDectectionAndBackupPlan, &skills_, battery_level_, 13.0));
         pre_charge_TO_charge.push_back (std::bind (&Graph::setCurrentNode, graph_, "charge"));
 
         std::vector<std::function<void() >> charge_TO_pre_charge;
@@ -372,8 +374,9 @@ public:
         box_TO_pre_charge_line.push_back (std::bind (&Graph::setCurrentNode, graph_, "pre_charge_line"));
 
         std::vector<std::function<void() >> pre_charge_line_TO_charge_line;
-        //pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, 0.1));
-	pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.2));
+        pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::chargeDectectionAndBackupPlan, &skills_, battery_level_, 13.0));        
+	//pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, 0.1));
+	//pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.2));
         pre_charge_line_TO_charge_line.push_back (std::bind (&Graph::setCurrentNode, graph_, "charge_line"));
 
         std::vector<std::function<void() >> pre_charge_line_TO_box;
@@ -381,8 +384,8 @@ public:
         pre_charge_line_TO_box.push_back (std::bind (&Graph::setCurrentNode, graph_, "box"));
 
         std::vector<std::function<void() >> charge_line_TO_pre_charge_line;
-        //charge_line_TO_pre_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, -0.1));
-	charge_line_TO_pre_charge_line.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_1_load"));
+        charge_line_TO_pre_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, -0.1));
+	//charge_line_TO_pre_charge_line.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_1_load"));
         charge_line_TO_pre_charge_line.push_back (std::bind (&Graph::setCurrentNode, graph_, "pre_charge_line"));
 
 
@@ -457,6 +460,12 @@ public:
         outputFile.close();
     }
 
+    void batteryCallback (std_msgs::Float32 battery)
+    {
+        battery_level_ = battery.data;
+        std::cout<<battery_level_<<std::endl;
+    }
+
 private:
     ros::NodeHandle nh_, pNh_;
     ros::Publisher pub_status_, pub_current_node_, pub_initialize_, pub_deadman_;
@@ -472,6 +481,10 @@ private:
     int search_limit_;
     std::string status;
     geometry_msgs::PoseWithCovarianceStamped currentPose_;
+
+    ros::Subscriber sub_battery_;
+    std::string sub_battery_name_;
+    double battery_level_;
 };
 
 

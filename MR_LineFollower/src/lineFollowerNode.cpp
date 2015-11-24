@@ -263,7 +263,6 @@ public:
 		if (lidar_in.ranges[i] < min && lidar_in.ranges[i] > 0) min = lidar_in.ranges[i];
 	}
 	lidar_detected_ = min;
-	//std::cout << start<<" " << stop << " " << lidar_in.ranges[90]<< " "<<lidar_detected_ << std::endl;
     }
 
     /**

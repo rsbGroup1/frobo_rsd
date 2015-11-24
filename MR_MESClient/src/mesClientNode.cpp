@@ -22,11 +22,13 @@ std::string _serverIP;
 int _serverPort;
 int _socket;
 bool _connected = false;
-bool _waitForServer = true;
-bool _waitForStatus = false;
+
+bool _waitForServerMsg = true;
+bool _waitForStatusMsg = false;
+bool _waitForConveyerReach = true;
 
 // Functions
-void sendMsgCallback (std_msgs::String msg)
+void sendMsgCallback(std_msgs::String msg)
 {
     if(_connected)
     {
@@ -34,8 +36,16 @@ void sendMsgCallback (std_msgs::String msg)
         write(_socket, msg.data.c_str(), msg.data.size());
 
         // Reset
-        _waitForStatus = false;
-        _waitForServer = true;
+        if(_waitForConveyerReach)
+            std::cout << "Conveyer" << std::endl;
+        else
+            std::cout << "Home" << std::endl;
+
+        _waitForStatusMsg = _waitForConveyerReach;
+        _waitForServerMsg = true;
+        _waitForConveyerReach = !_waitForConveyerReach;
+
+        std::cout << msg.data << std::endl;
     }
 }
 
@@ -85,7 +95,7 @@ int main()
     std::string mesSub, mesPub;
     pNh.param<std::string>("mesPub", mesPub, "/mrMESClient/msgFromServer");
     pNh.param<std::string>("mesSub", mesSub, "/mrMESClient/msgToServer");
-    pNh.param<std::string>("serverIP", _serverIP, "10.115.253.233"); //"127.0.0.1"
+    pNh.param<std::string>("serverIP", _serverIP, "127.0.0.1"); // 127.0.0.1 - 10.115.253.233
     pNh.param<int>("serverPort", _serverPort, 21240);
 
     // Publishers
@@ -98,16 +108,16 @@ int main()
     ros::Rate r (30);
 
     // Connect to server
-    if (connectToServer() == false)
+    if(connectToServer() == false)
     {
         ROS_ERROR ("No connection to MES Server!");
         return -1;
     }
 
     // Set loop rate
-    while (!ros::isShuttingDown())
+    while(!ros::isShuttingDown())
     {
-        if(_waitForServer)
+        if(_waitForServerMsg)
         {
             char buffer[BUFFER_SIZE];
             int readSize = read(_socket, buffer, BUFFER_SIZE);
@@ -140,7 +150,7 @@ int main()
                 {
                     mr_mes_client::server msg;
 
-                    if(_waitForStatus)
+                    if(_waitForStatusMsg)
                     {
                         // Get stuff
                         status = atoi(doc.RootElement()->FirstChildElement("Status")->FirstChild()->Value());
@@ -148,8 +158,7 @@ int main()
                         msg.mobileRobot = 1;
                         msg.status = status;
 
-                        // Reset
-                        _waitForServer = false;
+                        std::cout << "Status" << std::endl;
                     }
                     else
                     {
@@ -166,9 +175,11 @@ int main()
                         msg.yellow = yellow;
                         msg.red = red;
 
-                        // Reset
-                        _waitForStatus = true;
+                        std::cout << "Order" << std::endl;
                     }
+
+                    // Reset
+                    _waitForServerMsg = false;
 
                     _mesMessagePub.publish(msg);
                 }
@@ -184,6 +195,6 @@ int main()
     }
 
     // Return
-    close (_socket);
+    close(_socket);
     return 0;
 }

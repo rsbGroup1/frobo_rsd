@@ -75,6 +75,7 @@ public:
         srv_move_ = nh_.serviceClient<mr_go::move> (srv_move_name_);
         srv_action_ = nh_.advertiseService (srv_action_name_, &NavigationController::performActionCallback, this);
         srv_set_current_node_ = nh_.advertiseService (srv_set_current_node_name_, &NavigationController::setCurrentNodeCallback, this);
+	srv_detect_obstacles_ = nh_.serviceClient<mr_obstacle_detector::enabler>(srv_detect_obstacles_name_);
 
         // Subscriber
         sub_pose_ = nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped> ("amcl_pose", 10, &NavigationController::poseReceived, this);

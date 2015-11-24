@@ -153,13 +153,6 @@ void changeMode()
     }
 }
 
-void changeErrorMode (MODES errorMode)
-{
-    boost::unique_lock<boost::mutex> lock (_modeMutex);
-    _errorMode = errorMode;
-    changeMode();
-}
-
 void changeRunMode (MODES runMode)
 {
     boost::unique_lock<boost::mutex> lock (_modeMutex);
@@ -175,34 +168,6 @@ void buttonCallback (std_msgs::Bool msg)
         changeRunMode (M_IDLE);
 }
 
-void collisionCallback (std_msgs::String msg)
-{
-    static MODES oldMode = M_NORMAL;
-    MODES newMode = M_NORMAL;
-
-    if (msg.data == "collision")
-        newMode = M_STOP;
-    else if (msg.data == "proximityAlert")
-        newMode = M_SLOW;
-    else if (msg.data == "safe")
-        newMode = M_NORMAL;
-
-    if (newMode != oldMode)
-    {
-        changeErrorMode (newMode);
-        oldMode = newMode;
-    }
-}
-
-void HMICallback (std_msgs::String msg)
-{
-    if (msg.data == "start")
-        changeRunMode (M_RUN);
-    else if (msg.data == "stop")
-        changeRunMode (M_IDLE);
-    else if (msg.data == "manual")
-        changeRunMode (M_MANUAL);
-}
 
 bool compareMsg (char* msg, char* command)
 {
@@ -326,8 +291,6 @@ int main()
     _buttonPublisher = nh.advertise<std_msgs::Bool> (buttonPub, 1);
 
     // Subscriber
-    ros::Subscriber subCollision = nh.subscribe (obstaclePub, 1, collisionCallback);
-    ros::Subscriber subHMI = nh.subscribe (hmiSub, 1, HMICallback);
     ros::Subscriber subButton = nh.subscribe (buttonSub, 1, buttonCallback);
 
     // Get serial data parameters

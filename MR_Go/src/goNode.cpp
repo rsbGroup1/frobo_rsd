@@ -28,12 +28,12 @@ public:
     Go()
     {
         ros::NodeHandle pNh_ ("~");
+
         // Get parameters
         pNh_.param<double> ("linear_speed", linear_speed_, 0.1);
         pNh_.param<double> ("angular_speed", angular_speed_, 0.1);
         pNh_.param<double> ("linear_precision", linear_precision_, 0.005);
         pNh_.param<double> ("angular_precision", angular_precision_, 0.500);
-
 
         // Get topics name
         pNh_.param<std::string> ("odometry", sub_odom_name_, "/fmKnowledge/pose");
@@ -43,7 +43,6 @@ public:
 
         // Publishers, subscribers, services
         srv_move_ = nh_.advertiseService (srv_move_name_, &Go::moveCallback, this);
-
         pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
         pub_twist_ = nh_.advertise<geometry_msgs::TwistStamped> (pub_twist_name_, 1);
         sub_odom_ = nh_.subscribe<nav_msgs::Odometry> (sub_odom_name_, 1, &Go::odometryCallback, this);
@@ -159,8 +158,10 @@ public:
                 deadman.data = true;
                 deadman.header.stamp = ros::Time::now();
                 pub_deadman_.publish (deadman);
+
                 // Sleep for 50 ms = 20Hz
                 boost::this_thread::sleep_for (boost::chrono::milliseconds (75));
+
                 // Signal interrupt point
                 boost::this_thread::interruption_point();
             }
@@ -211,14 +212,14 @@ private:
 
 int main (int argc, char** argv)
 {
-    ros::init (argc, argv, "mr_go");
+    ros::init (argc, argv, "MR_Go");
     Go go;
-    ros::Rate rate (10);
-    ros::AsyncSpinner spinner (3);
+    ros::Rate rate (30);
 
+    // ROS Spin: Handle callbacks
     while (!ros::isShuttingDown())
     {
-        spinner.start();
+        ros::spinOnce();
         rate.sleep();
     }
 

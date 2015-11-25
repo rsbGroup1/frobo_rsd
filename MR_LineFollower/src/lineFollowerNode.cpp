@@ -507,12 +507,15 @@ int main (int argv, char** argc)
 {
     ros::init (argv, argc, "MR_Line_Follower");
     lineFollower cn;
-    ros::Rate rate (30);
-    ros::AsyncSpinner spinner (3);
 
+    ros::Rate rate (30);
+
+    // ROS Spin: Handle callbacks
     while (!ros::isShuttingDown())
     {
-        spinner.start();
+        ros::spinOnce();
         rate.sleep();
     }
+
+    return 0;
 }

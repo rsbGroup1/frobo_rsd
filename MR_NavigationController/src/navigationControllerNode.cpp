@@ -518,7 +518,7 @@ private:
 int main (int argc, char** argv)
 {
     // Init ROS Node
-    ros::init (argc, argv, "mrNavigationController");
+    ros::init (argc, argv, "MR_Navigation_Controller");
     NavigationController nc;
     ros::Rate rate (30);
 

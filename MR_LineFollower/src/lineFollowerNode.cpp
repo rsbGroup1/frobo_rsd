@@ -21,6 +21,7 @@
 
 // Lidar stuff
 #include <sensor_msgs/LaserScan.h>
+#include <algorithm> 
 
 // Odom / Relative Stuff
 #include "nav_msgs/Odometry.h"
@@ -280,12 +281,25 @@ public:
      */
     void lidarCallback (const sensor_msgs::LaserScan lidar_in)
     {
-	int start = (lidar_in.ranges.size()/2 - 10);
-	int stop = (lidar_in.ranges.size()/2 + 10);
-	double min = 99.0;
+	int start = (lidar_in.ranges.size()/2 - 5);
+	int stop = (lidar_in.ranges.size()/2 + 5);
+	double min = 0;//99.0;
+	std::vector<double> scanValues;
 	for (int i= start; i<stop;i++){
-		if (lidar_in.ranges[i] < min && lidar_in.ranges[i] > 0) min = lidar_in.ranges[i];
+		//if (lidar_in.ranges[i] < min && lidar_in.ranges[i] > 0) min = lidar_in.ranges[i];
+		if(lidar_in.ranges[i] > 0)
+			scanValues.push_back(lidar_in.ranges[i]);
 	}
+
+	std::sort(scanValues.begin(),scanValues.end());	
+	// Calculate average
+	double count = 0;
+	for(int i = scanValues.size()*0.2;i  < scanValues.size()*0.8;i++)
+	{
+		min += scanValues[i];
+		count = count + 1;
+	}
+	min /=count;
 	lidar_detected_ = min;
     }
 

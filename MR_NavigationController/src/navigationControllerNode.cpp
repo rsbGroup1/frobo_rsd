@@ -270,9 +270,10 @@ public:
         wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::angularMove, &skills_, 180));
 	wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
         wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_1_exit"));
+	wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
 	wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::linearMove, &skills_, 0.7));
         wc1_robot_TO_wc_exit.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc_exit"));
-		wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
+		
 
 
         std::vector<std::function<void() >> wc1_TO_wc2;
@@ -335,6 +336,11 @@ public:
         line_end_TO_box.push_back (std::bind (&Skills::goToFreePosition, &skills_, 0.1, 0.7 , -1.9));
         line_end_TO_box.push_back (std::bind (&Skills::goToFreePosition, &skills_, -0.5, -1.5 , -1.9));
         line_end_TO_box.push_back (std::bind (&Graph::setCurrentNode, graph_, "box"));
+
+	std::vector<std::function<void() >> line_end_TO_line_start;
+	line_end_TO_line_start.push_back (std::bind (&Skills::setInitialPoseAMCL, &skills_, 3.615, -2.046, 2.115));
+	line_end_TO_line_start.push_back (std::bind (&Skills::goToFreePosition, &skills_, 3.3, -2 , -1.2));
+	line_end_TO_line_start.push_back (std::bind (&Graph::setCurrentNode, graph_, "line_start"));
 
         std::vector<std::function<void() >> box_TO_line_start;
         box_TO_line_start.push_back (std::bind (&Skills::goToFreePosition, &skills_, 0.1, 0.7 , 1.3));
@@ -415,7 +421,8 @@ public:
         graph_->addVertex ("line_start", "wc1", 1, line_start_TO_wc1);
         graph_->addVertex ("wc1", "wc2", 1, wc1_TO_wc2);
         graph_->addVertex ("wc2", "wc3", 1, wc2_TO_wc3);
-        graph_->addVertex ("wc_exit", "line_end", 1, wc_exit_TO_line_end);
+        graph_->addVertex ("wc_exit", "line_end", 1, wc_exit_TO_line_end);line_end_TO_line_start
+	
 
         graph_->addVertex ("wc1", "wc1_conveyor", 1, wc1_TO_wc1_conveyor);
         graph_->addVertex ("wc1_conveyor", "wc1_robot", 1, wc1_conveyor_TO_wc1_robot);
@@ -430,6 +437,7 @@ public:
         graph_->addVertex ("wc3_robot", "wc_exit", 1, wc3_robot_TO_wc_exit);
 
         graph_->addVertex ("line_end", "box", 1, line_end_TO_box);
+	graph_->addVertex ("line_end", "line_start", 1, line_end_TO_line_start;
         graph_->addVertex ("box", "line_start", 1, box_TO_line_start);
 
         graph_->addVertex ("box", "pre_charge", 1, box_TO_pre_charge);

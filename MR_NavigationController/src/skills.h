@@ -82,6 +82,11 @@ public:
      * and execute the backup behaviour
      */
     bool chargeDectectionAndBackupPlan(double battery_level, double threshold);
+
+    /**
+     * waits for @param seconds
+     */
+    bool wait(double seconds);
     
 
 private:

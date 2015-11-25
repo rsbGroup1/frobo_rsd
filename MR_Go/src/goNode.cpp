@@ -25,7 +25,7 @@ public:
     /**
      * Default constructor
      */
-    Go()
+    Go() : rate_(30)
     {
         ros::NodeHandle pNh_ ("~");
 
@@ -112,6 +112,9 @@ public:
 
                 // Publish the msg
                 pub_twist_.publish (twist_msg_);
+                
+                // Sleep
+                rate_.sleep();
             }
         }
 
@@ -134,6 +137,9 @@ public:
 
                 // Publish the msg
                 pub_twist_.publish (twist_msg_);
+
+                // Sleep
+                rate_.sleep();
             }
         }
 
@@ -161,7 +167,7 @@ public:
                 pub_deadman_.publish (deadman);
 
                 // Sleep for 50 ms = 20Hz
-                boost::this_thread::sleep_for (boost::chrono::milliseconds (75));
+                boost::this_thread::sleep_for (boost::chrono::milliseconds (50));
 
                 // Signal interrupt point
                 boost::this_thread::interruption_point();
@@ -209,6 +215,9 @@ private:
     double linear_speed_;
     double linear_precision_;
     double angular_precision_;
+
+    // Rate
+    ros::Rate rate_;
 };
 
 int main (int argc, char** argv)

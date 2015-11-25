@@ -11,12 +11,25 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include "mr_camera/enable.h"
 
 // Defines
 #define SSTR(x)                 dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
 
 // Global variables
 cv::VideoCapture* _camera;
+bool _enabled;
+
+/**
+ * Enables or disables the image processing by subscribing or
+ * shutingdown the image subscriber
+ */
+bool enableCallback(mr_camera::enable::Request& req, mr_camera::enable::Response& res)
+{
+    _enabled = req.enable;
+    res.done = _enabled;
+    return true;
+}
 
 int main()
 {
@@ -29,10 +42,11 @@ int main()
     ros::NodeHandle nh;
     ros::NodeHandle pNh ("~");
 
-    std::string imagePub;
+    std::string imagePub, enableSrv;
     int frameWidth, frameHeight, cameraFrequency, sharpness, brightness, whiteBalanceTemp;
     bool whiteBalanceAuto;
     pNh.param<std::string> ("image_pub", imagePub, "/mrCamera/image");
+    pNh.param<std::string> ("enable", enableSrv, "/mrCamera/enable");
     pNh.param<int> ("frameWidth", frameWidth, 640);
     pNh.param<int> ("frameHeight", frameHeight, 480);
     pNh.param<int> ("cameraFrequency", cameraFrequency, 30);
@@ -44,6 +58,9 @@ int main()
     // Create publisher topic
     image_transport::ImageTransport it (nh);
     image_transport::Publisher pub = it.advertise (imagePub, 1);
+
+    // Create the service
+    ros::ServiceServer srvEnabler = nh.advertiseService(enableSrv, enableCallback);
 
     // Set loop rate
     ros::Rate loop_rate (cameraFrequency);
@@ -88,9 +105,9 @@ int main()
     // Spin
     cv::Mat _image;
 
-    while (nh.ok())
+    while (!ros::isShuttingDown())
     {
-        if (_camera->read (_image))
+        if (_enabled && _camera->read (_image))
         {
             // Convert to ROS format
             sensor_msgs::ImagePtr msg = cv_bridge::CvImage (std_msgs::Header(), "bgr8", _image).toImageMsg();

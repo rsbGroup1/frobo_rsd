@@ -36,7 +36,7 @@ public:
         pNh_.param<double> ("angular_precision", angular_precision_, 0.500);
 
         // Get topics name
-        pNh_.param<std::string> ("odometry", sub_odom_name_, "/fmKnowledge/pose");
+		pNh_.param<std::string> ("odometry", sub_odom_name_, "/odom"/*/fmKnowledge/pose*/);
         pNh_.param<std::string> ("pub_twist", pub_twist_name_, "/fmCommand/cmd_vel");
         pNh_.param<std::string> ("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
         pNh_.param<std::string> ("srv_move", srv_move_name_, "mrGo/move");
@@ -105,7 +105,7 @@ public:
                 distance_moved = sqrt (pow ( (start_x - linear_pos_current_x_), 2.0) +
                                        pow ( (start_y - linear_pos_current_y_), 2.0));
 
-                if (req.linear > 0)
+				if (linear_desired - distance_moved  > 0)
                     twist_msg_.twist.linear.x = linear_speed_;
                 else
                     twist_msg_.twist.linear.x = -linear_speed_;
@@ -129,8 +129,8 @@ public:
             while (std::abs (angle_desired - angular_pos_current_) > angular_precision_)
             {
                 // Move the robot
-                //std::cout << "Angular distance: " << (angular_pos_current_ - angle_desired) << std::endl;
-                if (req.angular > 0)
+                std::cout << "Angular distance: " << (angular_pos_current_ - angle_desired) << std::endl;
+				if (angle_desired - angular_pos_current_ > 0)
                     twist_msg_.twist.angular.z = angular_speed_;
                 else
                     twist_msg_.twist.angular.z = -angular_speed_;

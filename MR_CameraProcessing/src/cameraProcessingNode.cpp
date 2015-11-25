@@ -16,6 +16,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <zbar.h>
 #include <boost/thread.hpp>
+#include "mr_camera/enable.h"
 
 class ImageConverter
 {
@@ -29,8 +30,9 @@ public:
         pNh_.param<std::string>("pub_qr", pub_qr_name_, "/mrCameraProcessing/qr");
         pNh_.param<std::string>("pub_line", pub_line_name_, "/mrCameraProcessing/line");
         pNh_.param<std::string>("srv_enable", srv_enable_name_, "/mrCameraProcessing/enable");
-        pNh_.param<double>("QR_min_area", minQRConArea_, 400.0);
-        pNh_.param<int>("QR_grayscale_threshold", qrSquareThresh_, 200);
+        pNh_.param<std::string>("mr_camera_srv_enable", srv_mr_camera_enable_name_, "/mrCamera/enable");
+        pNh_.param<double>("QR_min_area", minQRConArea_, 200.0);
+        pNh_.param<int>("QR_grayscale_treshold", qrSquareTresh_, 200);
 
         pub_line_ = nh_.advertise<geometry_msgs::Point>(pub_line_name_, 1);
         pub_qr_ = nh_.advertise<std_msgs::String>(pub_qr_name_, 1);
@@ -39,6 +41,7 @@ public:
 
         srv_enable_ = nh_.advertiseService(srv_enable_name_, &ImageConverter::enableCallback, this);
         sub_image_ = it_.subscribe(sub_image_name_, 1, &ImageConverter::imageCb, this, image_transport::TransportHints("compressed"));
+        srv_mr_camera_enable = nh_.serviceClient<mr_camera::enable>(srv_mr_camera_enable_name_);
     }
 
     ~ImageConverter()
@@ -51,8 +54,13 @@ public:
      */
     bool enableCallback(mr_camera_processing::enable::Request& req, mr_camera_processing::enable::Response& res)
     {
+        mr_camera::enable mr_camera_call;
+        mr_camera_call.request.enable = req.enable;
+        srv_mr_camera_enable.call(mr_camera_call);
+	
         enabled_ = req.enable;
         res.status = enabled_;
+	    
         return true;
     }
 
@@ -61,21 +69,23 @@ public:
      */
     void imageCb(const sensor_msgs::ImageConstPtr& msg)
     {
-        // Transform the message to an OpenCV image
-        cv::Mat image = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::TYPE_8UC3)->image;
+        if (enabled_) {
+            // Transform the message to an OpenCV image
+            cv::Mat image = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::TYPE_8UC3)->image;
 
-        if(image.empty())
-        {
-            ROS_INFO ("No image being received");
-        }
-        else
-        {
-            // Flip
-            cv::flip(image, image, -1);
+            if(image.empty())
+            {
+                ROS_INFO ("No image being received");
+            }
+            else
+            {
+                // Flip
+                cv::flip(image, image, -1);
 
-            // Detection
-            lineThread_ = new boost::thread(&ImageConverter::lineDetector, this, image);
-            qrThread_ = new boost::thread(&ImageConverter::qrDetector, this, image);
+                // Detection
+                lineThread_ = new boost::thread(&ImageConverter::lineDetector, this, image);
+                qrThread_ = new boost::thread(&ImageConverter::qrDetector, this, image);
+            }
         }
     }
 
@@ -272,9 +282,10 @@ private:
     image_transport::Publisher pub_image_qr_;
     ros::Publisher pub_line_, pub_qr_;
     ros::ServiceServer srv_enable_;
+    ros::ServiceClient srv_mr_camera_enable;
     std::string sub_image_name_;
     std::string pub_image_qr_name_, pub_image_line_name_, pub_line_name_, pub_qr_name_;
-    std::string srv_enable_name_;
+    std::string srv_enable_name_, srv_mr_camera_enable_name_;
 	
 	bool enabled_;
     double minQRConArea_;

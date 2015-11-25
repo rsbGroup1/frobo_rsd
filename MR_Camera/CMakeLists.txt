@@ -8,7 +8,21 @@ find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs cv_bridge genmsg i
 
 #generate_messages(DEPENDENCIES sensor_msgs)
 
-catkin_package()
+add_service_files(
+	FILES
+	enable.srv
+)
+
+generate_messages(
+	DEPENDENCIES
+	std_msgs
+)
+
+catkin_package(
+	#INCLUDE_DIRS include
+	CATKIN_DEPENDS message_runtime
+	#LIBRARIES 
+)
 
 # Use OpenCV
 LINK_DIRECTORIES(${OpenCV_LIB_DIR})

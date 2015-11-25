@@ -25,7 +25,7 @@ public:
     /**
      * Default constructor
      */
-    Go()
+    Go() : rate_(30)
     {
         ros::NodeHandle pNh_ ("~");
 
@@ -100,7 +100,8 @@ public:
             while ( (distance_moved - std::abs (linear_desired)) < linear_precision_)
             {
                 // Create the movement msg
-                //std::cout << "Linear distance: " << linear_desired - linear_pos_current_ << std::endl;
+                //std::cout << "Linear distance: " << linear_desired - sqrt (pow ( (start_x - linear_pos_current_x_), 2.0) +
+                //                       pow ( (start_y - linear_pos_current_y_), 2.0)) << std::endl;
                 distance_moved = sqrt (pow ( (start_x - linear_pos_current_x_), 2.0) +
                                        pow ( (start_y - linear_pos_current_y_), 2.0));
 
@@ -111,6 +112,9 @@ public:
 
                 // Publish the msg
                 pub_twist_.publish (twist_msg_);
+                
+                // Sleep
+                rate_.sleep();
             }
         }
 
@@ -133,6 +137,9 @@ public:
 
                 // Publish the msg
                 pub_twist_.publish (twist_msg_);
+
+                // Sleep
+                rate_.sleep();
             }
         }
 
@@ -160,7 +167,7 @@ public:
                 pub_deadman_.publish (deadman);
 
                 // Sleep for 50 ms = 20Hz
-                boost::this_thread::sleep_for (boost::chrono::milliseconds (75));
+                boost::this_thread::sleep_for (boost::chrono::milliseconds (50));
 
                 // Signal interrupt point
                 boost::this_thread::interruption_point();
@@ -208,6 +215,9 @@ private:
     double linear_speed_;
     double linear_precision_;
     double angular_precision_;
+
+    // Rate
+    ros::Rate rate_;
 };
 
 int main (int argc, char** argv)
@@ -216,10 +226,13 @@ int main (int argc, char** argv)
     Go go;
     ros::Rate rate (30);
 
+    ros::AsyncSpinner spinner (0);
+
     // ROS Spin: Handle callbacks
     while (!ros::isShuttingDown())
     {
-        ros::spinOnce();
+    	spinner.start();
+        //ros::spinOnce();
         rate.sleep();
     }
 

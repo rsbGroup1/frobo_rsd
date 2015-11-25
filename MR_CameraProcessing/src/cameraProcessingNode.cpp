@@ -69,7 +69,8 @@ public:
      */
     void imageCb(const sensor_msgs::ImageConstPtr& msg)
     {
-        if (enabled_) {
+        if (enabled_)
+        {
             // Transform the message to an OpenCV image
             cv::Mat image = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::TYPE_8UC3)->image;
 

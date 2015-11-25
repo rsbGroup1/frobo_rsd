@@ -36,11 +36,6 @@ void sendMsgCallback(std_msgs::String msg)
         write(_socket, msg.data.c_str(), msg.data.size());
 
         // Reset
-        if(_waitForConveyerReach)
-            std::cout << "Conveyer" << std::endl;
-        else
-            std::cout << "Home" << std::endl;
-
         _waitForStatusMsg = _waitForConveyerReach;
         _waitForServerMsg = true;
         _waitForConveyerReach = !_waitForConveyerReach;
@@ -157,8 +152,6 @@ int main()
 
                         msg.mobileRobot = 1;
                         msg.status = status;
-
-                        std::cout << "Status" << std::endl;
                     }
                     else
                     {
@@ -174,8 +167,7 @@ int main()
                         msg.mobileRobot = mobileRobot;
                         msg.yellow = yellow;
                         msg.red = red;
-
-                        std::cout << "Order" << std::endl;
+                        msg.status = 0;
                     }
 
                     // Reset

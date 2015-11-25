@@ -94,66 +94,65 @@ void changeMode()
     }
     else if (_runMode == M_IDLE)
     {
-	ROS_INFO("Changed to IDLE");
+        ROS_INFO("Changed to IDLE");
         switch (_errorMode)
         {
-        case M_SAFE:
-            _writeQueue.enqueue ("idle\n");
-            break;
+            case M_SAFE:
+                _writeQueue.enqueue ("idle\n");
+                break;
 
-        case M_PROXIMITYALERT:
-            _writeQueue.enqueue ("idleSlow\n");
-            break;
+            case M_PROXIMITYALERT:
+                _writeQueue.enqueue ("idleSlow\n");
+                break;
 
-        case M_COLLIDING:
-            _writeQueue.enqueue ("idleStop\n");
-            break;
+            case M_COLLIDING:
+                _writeQueue.enqueue ("idleStop\n");
+                break;
 
-        default:
-            break;
+            default:
+                break;
         }
     }
     else if (_runMode == M_AUTO)
     {
-	ROS_INFO("Changed to AUTO");
+        ROS_INFO("Changed to AUTO");
         switch (_errorMode)
         {
-        case M_SAFE:
-            _writeQueue.enqueue ("run\n");
-            break;
+            case M_SAFE:
+                _writeQueue.enqueue ("run\n");
+                break;
 
-        case M_PROXIMITYALERT:
-            _writeQueue.enqueue ("runSlow\n");
-            break;
+            case M_PROXIMITYALERT:
+                _writeQueue.enqueue ("runSlow\n");
+                break;
 
-        case M_COLLIDING:
-            _writeQueue.enqueue ("runStop\n");
-            break;
+            case M_COLLIDING:
+                _writeQueue.enqueue ("runStop\n");
+                break;
 
-        default:
-            break;
+            default:
+                break;
         }
     }
     else if (_runMode == M_MANUAL)
     {
-      
-	ROS_INFO("Changed to MANUAL");
+        ROS_INFO("Changed to MANUAL");
         switch (_errorMode)
         {
-        case M_SAFE:
-            _writeQueue.enqueue ("manual\n");
-            break;
+            case M_SAFE:
+                _writeQueue.enqueue ("manual\n");
+                break;
 
-        case M_PROXIMITYALERT:
-            _writeQueue.enqueue ("manualSlow\n");
-            break;
+            case M_PROXIMITYALERT:
+                _writeQueue.enqueue ("manualSlow\n");
+                break;
 
-        case M_COLLIDING:
-            _writeQueue.enqueue ("manualStop\n");
-            break;
+            case M_COLLIDING:
+                _writeQueue.enqueue ("manualStop\n");
+                break;
 
-        default:
-            break;
+            default:
+                break;
         }
     }
 }
@@ -180,19 +179,21 @@ void buttonCallback (std_msgs::Bool msg)
         changeRunMode (M_IDLE);
 }
 
-void obstacleDetectorCallback (std_msgs::String msg) {
+void obstacleDetectorCallback (std_msgs::String msg)
+{
     std::string msg_temp;
     msg_temp = msg.data;
     
     if (msg_temp == "safe")
-	changeErrorMode(M_SAFE);
+        changeErrorMode(M_SAFE);
     else if (msg_temp == "proximityAlert")
-	changeErrorMode(M_PROXIMITYALERT);
+        changeErrorMode(M_PROXIMITYALERT);
     else if (msg_temp == "colliding")
-	changeErrorMode(M_COLLIDING);
+        changeErrorMode(M_COLLIDING);
 }
 
-void mrMainModeCallback (std_msgs::String msg) {
+void mrMainModeCallback (std_msgs::String msg)
+{
     if (msg.data == "auto")
         changeRunMode (M_AUTO);
     else if (msg.data == "idle")
@@ -227,20 +228,21 @@ void readSerialThread()
         try
         {
             tempString = _serialConnection->read (10);
-	    if(tempString.size() > 1 && tempString.find("run")!=std::string::npos)
-	    {
-		std_msgs::Bool msg;
-		msg.data = true;
-		_buttonPublisher.publish (msg);
-		ROS_INFO ("Button run");
-	    }
-	    else if (tempString.find("idle")!=std::string::npos)
-	    {
-		std_msgs::Bool msg;
-		msg.data = false;
-		_buttonPublisher.publish (msg);
-		ROS_INFO ("Button idle");
-	    }
+
+            if(tempString.size() > 1 && tempString.find("run")!=std::string::npos)
+            {
+                std_msgs::Bool msg;
+                msg.data = true;
+                _buttonPublisher.publish (msg);
+                ROS_INFO ("Button run");
+            }
+            else if(tempString.find("idle")!=std::string::npos)
+            {
+                std_msgs::Bool msg;
+                msg.data = false;
+                _buttonPublisher.publish (msg);
+                ROS_INFO ("Button idle");
+            }
 
             // Signal interrupt point
             boost::this_thread::interruption_point();
@@ -310,7 +312,7 @@ int main()
 
     // ROS Spin: Handle callbacks
     while (!ros::isShuttingDown())
-	ros::spin();	
+        ros::spin();
 
     // Close connection
     changeRunMode (M_OFF);

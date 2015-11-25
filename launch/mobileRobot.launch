@@ -170,9 +170,9 @@
 			<param name="baud_rate" value="115200"/>
 			<param name="port" value="/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00"/> 
 			<param name="mr_collision_sub" value="/mrObstacleDetector/status"/>
-			<param name="mr_hmi_sub" value="/mrHMI/run"/>
 			<param name="mr_button_pub" value="/mrButton/run"/> 
 			<param name="mr_button_sub" value="/mrButton/status"/> 	
+			<param name="mr_main_mode_sub" value="/mrMain/mode"/>
 		</node>
 	</group>
 
@@ -190,6 +190,7 @@
 			<param name="mes_sub" value="mrMESClient/msgFromServer"/> 
 			<param name="obstacle_detector_sub" value="/mrObstacleDetector/status"/> 
 			<param name="battery_sub" value="/fmInformation/battery"/>
+			<param name="mode_pub" value="/mrMain/mode"/>
 			<param name="check_battery" value="false"/>
 			<param name="battery_low" value="12.4"/> 
 			<param name="battery_critic" value="12.0"/> 
@@ -240,7 +241,8 @@
 			<param name="pid_min" value="-320" />
 			<param name="reference_point_x" value="320" />
 			<param name="reference_point_y" value="240" />
-			<param name="robot_speed" value="0.14" />
+			<param name="robot_speed" value="0.2" />
+			<param name="robot_speed_qr_slow" value="0.1" />
 			<param name="lidar_distance" value="0.2" />
 			<param name="relative_distance" value="0.2" />
 		
@@ -286,7 +288,7 @@
 	<node pkg="tf" type="static_transform_publisher" name="imu_transform" args="0.10 0 0 0 0 0 base_link imu_link 50"  >
 	</node>
 
-	<node pkg="map_server" type="map_server" name="map_server" args="/home/frobit_pro_group1/roswork/src/frobo_rsd//Navigation_Setup/maps/frontal_map_big_edited.yaml" output="screen"/>
+	<node pkg="map_server" type="map_server" name="map_server" args="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/maps/frontal_map_big_edited.yaml" output="screen"/>
 
 
 <!--
@@ -321,6 +323,8 @@
 		<rosparam file="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/move_base_config/dwa_local_planner_params.yaml" command="load"/>
 	</node>
 
+	<!-- Record Rosbag -->
+	<!--node pkg="rosbag" type="record" name="rosbag_record_all" args="-a"/-->
 
 </launch>
 

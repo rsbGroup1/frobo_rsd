@@ -21,6 +21,7 @@
 
 // Lidar stuff
 #include <sensor_msgs/LaserScan.h>
+#include <algorithm> 
 
 // Odom / Relative Stuff
 #include "nav_msgs/Odometry.h"
@@ -44,6 +45,7 @@ public:
         pNh_.param<int> ("reference_point_x", reference_point_x_, 320);
         pNh_.param<int> ("reference_point_y", reference_point_y_, 240);
         pNh_.param<double> ("robot_speed", robot_speed_, 0.1);
+        pNh_.param<double> ("robot_speed_qr_slow", robot_speed_qr_slow_, 0.05);
         pNh_.param<double> ("lidar_distance", lidar_distance_, 0.1);
         pNh_.param<double> ("relative_distance", lidar_distance_, 0.1);
         pNh_.param<double> ("linear_precision", linear_precision_, 0.005);
@@ -124,19 +126,19 @@ public:
             pid_output = pid_max_;
         else if (pid_output < pid_min_)
             pid_output = pid_min_;
-	/*// And implements an Anti-Windup by not updating integral
-	if(pid_output > pid_max_)
-	{
-		pid_output = pid_max_;
-		integral_ -= pid_error * pid_dt_;
-	}
-	else{
-		if(pid_output < pid_min_)
-		{
-			pid_output = pid_min_;
-			integral_ -= pid_error * pid_dt_;
-		}
-	}*/
+        /*// And implements an Anti-Windup by not updating integral
+        if(pid_output > pid_max_)
+        {
+            pid_output = pid_max_;
+            integral_ -= pid_error * pid_dt_;
+        }
+        else{
+            if(pid_output < pid_min_)
+            {
+                pid_output = pid_min_;
+                integral_ -= pid_error * pid_dt_;
+            }
+        }*/
 
         // Save error to previous error
         pre_error_ = pid_error;
@@ -239,9 +241,15 @@ public:
         ros::Time time_start;
         time_start = ros::Time::now();
 
-        while (req.qr != qr_detected_ &&
-                (ros::Time::now().toSec() - time_start.toSec()) < req.time_limit)
+        // Store robot speed
+        double old_robot_speed = robot_speed_;
+        while (req.qr != qr_detected_ && (ros::Time::now().toSec() - time_start.toSec()) < req.time_limit)
         {
+            if(qr_detected_ == "QR_Countour_Detected")
+                robot_speed_ = robot_speed_qr_slow_;
+            else
+                robot_speed_ = old_robot_speed;
+
             ros::spinOnce();
         }
 
@@ -255,6 +263,9 @@ public:
             ROS_ERROR ("Time limit following the line reached");
             res.success = false;
         }
+
+        // Set old robot speed
+        robot_speed_ = old_robot_speed;
 
         // Disables the deadman
         stopDeadman();
@@ -280,13 +291,27 @@ public:
      */
     void lidarCallback (const sensor_msgs::LaserScan lidar_in)
     {
-	int start = (lidar_in.ranges.size()/2 - 10);
-	int stop = (lidar_in.ranges.size()/2 + 10);
-	double min = 99.0;
-	for (int i= start; i<stop;i++){
-		if (lidar_in.ranges[i] < min && lidar_in.ranges[i] > 0) min = lidar_in.ranges[i];
-	}
-	lidar_detected_ = min;
+        int start = (lidar_in.ranges.size()/2 - 5);
+        int stop = (lidar_in.ranges.size()/2 + 5);
+        double min = 0;//99.0;
+        std::vector<double> scanValues;
+        for (int i= start; i<stop;i++){
+            //if (lidar_in.ranges[i] < min && lidar_in.ranges[i] > 0) min = lidar_in.ranges[i];
+            if(lidar_in.ranges[i] > 0)
+                scanValues.push_back(lidar_in.ranges[i]);
+        }
+
+        std::sort(scanValues.begin(),scanValues.end());
+
+        // Calculate average
+        double count = 0;
+        for(int i = scanValues.size()*0.2;i  < scanValues.size()*0.8;i++)
+        {
+            min += scanValues[i];
+            count = count + 1;
+        }
+        min /=count;
+        lidar_detected_ = min;
     }
 
     /**
@@ -432,7 +457,6 @@ public:
 
         // Ends!
         return true;
-
     }
 
 private:
@@ -459,7 +483,7 @@ private:
     int reference_point_x_;
     int reference_point_y_;
     // Robot
-    double robot_speed_;
+    double robot_speed_, robot_speed_qr_slow_;
     // Topics name
     std::string sub_line_name_, sub_qr_name_,sub_lidar_name_,sub_odom_name_;
     std::string pub_deadman_name_, pub_twist_name_;

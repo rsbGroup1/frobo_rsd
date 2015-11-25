@@ -68,21 +68,22 @@ public:
 enum MODES
 {
     M_OFF = 0,
-    M_RUN,
+    
+    M_AUTO,
     M_IDLE,
     M_MANUAL,
-    M_NORMAL,
-    M_SLOW,
-    M_STOP
+    
+    M_SAFE,
+    M_PROXIMITYALERT,
+    M_COLLIDING
 };
 
 // Global var
-bool _running = false;
 serial::Serial* _serialConnection;
 ros::Publisher _buttonPublisher;
-MODES _errorMode = M_NORMAL, _runMode = M_OFF;
+MODES _errorMode = M_SAFE, _runMode = M_OFF;
 SynchronisedQueue<std::string> _writeQueue;
-boost::mutex _modeMutex;
+boost::mutex _modeMutex, _errorMutex;
 
 // Functions
 void changeMode()
@@ -93,71 +94,67 @@ void changeMode()
     }
     else if (_runMode == M_IDLE)
     {
+        //ROS_INFO("Changed to IDLE");
         switch (_errorMode)
         {
-        case M_NORMAL:
-            _writeQueue.enqueue ("idle\n");
-            break;
+            case M_SAFE:
+                _writeQueue.enqueue ("idle\n");
+                break;
 
-        case M_SLOW:
-            _writeQueue.enqueue ("idleSlow\n");
-            break;
+            case M_PROXIMITYALERT:
+                _writeQueue.enqueue ("idleSlow\n");
+                break;
 
-        case M_STOP:
-            _writeQueue.enqueue ("idleStop\n");
-            break;
+            case M_COLLIDING:
+                _writeQueue.enqueue ("idleStop\n");
+                break;
 
-        default:
-            break;
+            default:
+                break;
         }
     }
-    else if (_runMode == M_RUN)
+    else if (_runMode == M_AUTO)
     {
+        //ROS_INFO("Changed to AUTO");
         switch (_errorMode)
         {
-        case M_NORMAL:
-            _writeQueue.enqueue ("run\n");
-            break;
+            case M_SAFE:
+                _writeQueue.enqueue ("run\n");
+                break;
 
-        case M_SLOW:
-            _writeQueue.enqueue ("runSlow\n");
-            break;
+            case M_PROXIMITYALERT:
+                _writeQueue.enqueue ("runSlow\n");
+                break;
 
-        case M_STOP:
-            _writeQueue.enqueue ("runStop\n");
-            break;
+            case M_COLLIDING:
+                _writeQueue.enqueue ("runStop\n");
+                break;
 
-        default:
-            break;
+            default:
+                break;
         }
     }
     else if (_runMode == M_MANUAL)
     {
+        //ROS_INFO("Changed to MANUAL");
         switch (_errorMode)
         {
-        case M_NORMAL:
-            _writeQueue.enqueue ("manual\n");
-            break;
+            case M_SAFE:
+                _writeQueue.enqueue ("manual\n");
+                break;
 
-        case M_SLOW:
-            _writeQueue.enqueue ("manualSlow\n");
-            break;
+            case M_PROXIMITYALERT:
+                _writeQueue.enqueue ("manualSlow\n");
+                break;
 
-        case M_STOP:
-            _writeQueue.enqueue ("manualStop\n");
-            break;
+            case M_COLLIDING:
+                _writeQueue.enqueue ("manualStop\n");
+                break;
 
-        default:
-            break;
+            default:
+                break;
         }
     }
-}
-
-void changeErrorMode (MODES errorMode)
-{
-    boost::unique_lock<boost::mutex> lock (_modeMutex);
-    _errorMode = errorMode;
-    changeMode();
 }
 
 void changeRunMode (MODES runMode)
@@ -167,59 +164,42 @@ void changeRunMode (MODES runMode)
     changeMode();
 }
 
+void changeErrorMode (MODES errorMode)
+{
+    boost::unique_lock<boost::mutex> lock (_errorMutex);
+    _errorMode = errorMode;
+    changeMode();
+}
+
 void buttonCallback (std_msgs::Bool msg)
 {
     if (msg.data)
-        changeRunMode (M_RUN);
+        changeRunMode (M_AUTO);
     else
         changeRunMode (M_IDLE);
 }
 
-void collisionCallback (std_msgs::String msg)
+void obstacleDetectorCallback (std_msgs::String msg)
 {
-    static MODES oldMode = M_NORMAL;
-    MODES newMode = M_NORMAL;
-
-    if (msg.data == "collision")
-        newMode = M_STOP;
-    else if (msg.data == "proximityAlert")
-        newMode = M_SLOW;
-    else if (msg.data == "safe")
-        newMode = M_NORMAL;
-
-    if (newMode != oldMode)
-    {
-        changeErrorMode (newMode);
-        oldMode = newMode;
-    }
+    std::string msg_temp;
+    msg_temp = msg.data;
+    
+    if (msg_temp == "safe")
+        changeErrorMode(M_SAFE);
+    else if (msg_temp == "proximityAlert")
+        changeErrorMode(M_PROXIMITYALERT);
+    else if (msg_temp == "colliding")
+        changeErrorMode(M_COLLIDING);
 }
 
-void HMICallback (std_msgs::String msg)
+void mrMainModeCallback (std_msgs::String msg)
 {
-    if (msg.data == "start")
-        changeRunMode (M_RUN);
-    else if (msg.data == "stop")
+    if (msg.data == "auto")
+        changeRunMode (M_AUTO);
+    else if (msg.data == "idle")
         changeRunMode (M_IDLE);
-    else if (msg.data == "manual")
-        changeRunMode (M_MANUAL);
-}
-
-bool compareMsg (char* msg, char* command)
-{
-    int i = 0;
-
-    while (msg[i] != '\n' && command[i] != '\n')
-    {
-        if (tolower (msg[i]) != tolower (command[i]))
-            return false;
-
-        i++;
-    }
-
-    if (i == 0)
-        return false;
-
-    return true;
+    else
+	changeRunMode (M_MANUAL);
 }
 
 void writeSerialThread()
@@ -243,59 +223,30 @@ void writeSerialThread()
 void readSerialThread()
 {
     std::string tempString;
-    char msg[DATA_LENGTH + 1];
-    msg[DATA_LENGTH] = '\n';
-    int i = 0;
-
     while (true)
     {
         try
         {
-            tempString = _serialConnection->read (1);
+            tempString = _serialConnection->read (10);
 
-            if (tempString.size() == 1)
+            if(tempString.size() > 1 && tempString.find("run")!=std::string::npos)
             {
-                msg[i] = tempString[0];
-
-                if (msg[i] == '\n')
-                {
-                    if (compareMsg (msg, "run\n"))
-                    {
-                        std_msgs::Bool msg;
-                        msg.data = true;
-                        _buttonPublisher.publish (msg);
-                        ROS_INFO ("btn run");
-                    }
-                    else if (compareMsg (msg, "idle\n"))
-                    {
-                        std_msgs::Bool msg;
-                        msg.data = false;
-                        _buttonPublisher.publish (msg);
-                        ROS_INFO ("btn idle");
-                    }
-
-                    // Clear data
-                    i = 0;
-                }
-                else	// Wait for new character
-                    i++;
+                std_msgs::Bool msg;
+                msg.data = true;
+                _buttonPublisher.publish (msg);
+                ROS_INFO ("Button run");
             }
-            else
+            else if(tempString.find("idle")!=std::string::npos)
             {
-                // Clear if buffer is full without newline
-                if (i == DATA_LENGTH - 1)
-                {
-                    i = 0;
-
-                    for (int k = 0; k < DATA_LENGTH; k++)
-                        msg[k] = ' ';
-
-                    msg[DATA_LENGTH] = '\n';
-                }
+                std_msgs::Bool msg;
+                msg.data = false;
+                _buttonPublisher.publish (msg);
+                ROS_INFO ("Button idle");
             }
 
             // Signal interrupt point
             boost::this_thread::interruption_point();
+
         }
         catch (const boost::thread_interrupted&)
         {
@@ -316,19 +267,19 @@ int main()
     ros::NodeHandle pNh ("~");
 
     // Topic names
-    std::string obstaclePub, hmiSub, buttonPub, buttonSub;
-    pNh.param<std::string> ("mr_collision_sub", obstaclePub, "/mrObstacleDetector/status");
-    pNh.param<std::string> ("mr_hmi_sub", hmiSub, "/mrHMI/run");
+    std::string buttonPub, buttonSub, obstacleDetectorSub, mrMainModeSub;
     pNh.param<std::string> ("mr_button_pub", buttonPub, "/mrButton/run");
     pNh.param<std::string> ("mr_button_sub", buttonSub, "/mrButton/status");
+    pNh.param<std::string> ("mr_obstacle_detector", obstacleDetectorSub, "/mrObstacleDetector/status");
+    pNh.param<std::string> ("mr_main_mode_sub", mrMainModeSub, "/mrMain/mode");
 
     // Publisher
     _buttonPublisher = nh.advertise<std_msgs::Bool> (buttonPub, 1);
 
     // Subscriber
-    ros::Subscriber subCollision = nh.subscribe (obstaclePub, 1, collisionCallback);
-    ros::Subscriber subHMI = nh.subscribe (hmiSub, 1, HMICallback);
     ros::Subscriber subButton = nh.subscribe (buttonSub, 1, buttonCallback);
+    ros::Subscriber subObstacleDetector = nh.subscribe (obstacleDetectorSub, 1, obstacleDetectorCallback);
+    ros::Subscriber subMrMainMode = nh.subscribe (mrMainModeSub, 1, mrMainModeCallback);
 
     // Get serial data parameters
     int baudRate;
@@ -352,7 +303,7 @@ int main()
     // Start serial threads
     boost::thread readThread(readSerialThread);
     boost::thread writeThread(writeSerialThread);
-
+    
     // Sleep for a second
     ros::Duration(2).sleep();
 
@@ -360,7 +311,8 @@ int main()
     changeRunMode (M_IDLE);
 
     // ROS Spin: Handle callbacks
-    ros::spin();
+    while (!ros::isShuttingDown())
+        ros::spin();
 
     // Close connection
     changeRunMode (M_OFF);

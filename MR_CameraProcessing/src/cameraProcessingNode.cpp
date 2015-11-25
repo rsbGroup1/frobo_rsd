@@ -30,7 +30,7 @@ public:
         pNh_.param<std::string>("pub_qr", pub_qr_name_, "/mrCameraProcessing/qr");
         pNh_.param<std::string>("pub_line", pub_line_name_, "/mrCameraProcessing/line");
         pNh_.param<std::string>("srv_enable", srv_enable_name_, "/mrCameraProcessing/enable");
-	pNh_.param<std::string>("mr_camera_srv_enable", srv_mr_camera_enable_name_, "/mrCamera/enable");
+        pNh_.param<std::string>("mr_camera_srv_enable", srv_mr_camera_enable_name_, "/mrCamera/enable");
         pNh_.param<double>("QR_min_area", minQRConArea_, 200.0);
         pNh_.param<int>("QR_grayscale_treshold", qrSquareTresh_, 200);
 
@@ -41,7 +41,7 @@ public:
 
         srv_enable_ = nh_.advertiseService(srv_enable_name_, &ImageConverter::enableCallback, this);
         sub_image_ = it_.subscribe(sub_image_name_, 1, &ImageConverter::imageCb, this, image_transport::TransportHints("compressed"));
-	srv_mr_camera_enable = nh_.serviceClient<mr_camera::enable>(srv_mr_camera_enable_name_);
+        srv_mr_camera_enable = nh_.serviceClient<mr_camera::enable>(srv_mr_camera_enable_name_);
     }
 
     ~ImageConverter()
@@ -54,9 +54,9 @@ public:
      */
     bool enableCallback(mr_camera_processing::enable::Request& req, mr_camera_processing::enable::Response& res)
     {
-	mr_camera::enable mr_camera_call;
-	mr_camera_call.request.enable = req.enable;
-	srv_mr_camera_enable.call(mr_camera_call);
+        mr_camera::enable mr_camera_call;
+        mr_camera_call.request.enable = req.enable;
+        srv_mr_camera_enable.call(mr_camera_call);
 	
         enabled_ = req.enable;
         res.status = enabled_;
@@ -69,7 +69,8 @@ public:
      */
     void imageCb(const sensor_msgs::ImageConstPtr& msg)
     {
-        if (enabled_) {
+        if (enabled_)
+        {
             // Transform the message to an OpenCV image
             cv::Mat image = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::TYPE_8UC3)->image;
 
@@ -240,7 +241,7 @@ public:
     {
         // Threshold image
         cv::Mat image_binary;
-        cv::threshold(imageGray_in, image_binary, qrSquareTresh_, 255, CV_THRESH_BINARY);
+        cv::threshold(imageGray_in, image_binary, qrSquareThresh_, 255, CV_THRESH_BINARY);
 
         // Find contours
         std::vector<std::vector<cv::Point> > contours;
@@ -289,7 +290,7 @@ private:
 	
 	bool enabled_;
     double minQRConArea_;
-    int qrSquareTresh_;
+    int qrSquareThresh_;
 
     // Threads
     boost::thread* qrThread_;

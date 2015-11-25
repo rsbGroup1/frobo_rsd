@@ -32,7 +32,7 @@ public:
     /**
      * Default constructor
      */
-    lineFollower() : rate_(30)
+    lineFollower() : rate_(30), robot_speed_(0.2)
     {
         // Get parameters
         ros::NodeHandle pNh_ ("~");
@@ -54,8 +54,6 @@ public:
         pNh_.param<double> ("relative_distance", lidar_distance_, 0.2);
         pNh_.param<double> ("linear_precision", linear_precision_, 0.005);
 
- 
-
         // Get topics name
         pNh_.param<std::string> ("sub_line", sub_line_name_, "/mrCameraProcessing/line");
         pNh_.param<std::string> ("sub_lidar", sub_lidar_name_, "/scan");
@@ -69,15 +67,10 @@ public:
         pNh_.param<std::string> ("srv_lineLidar", srv_lineUntilLidar_name_, "/mrLineFollower/lineUntilLidar");
         pNh_.param<std::string> ("srv_lineRelative", srv_lineUntilRelative_name_, "/mrLineFollower/lineUntilRelative");
 
-        srv_enable_ = nh_.advertiseService (
-                          srv_lineUntilQR_name_, &lineFollower::lineUntilQRCallback, this);
-
+        srv_enable_ = nh_.advertiseService (srv_lineUntilQR_name_, &lineFollower::lineUntilQRCallback, this);
         srv_mr_camera_processing_enable_ = nh_.serviceClient<mr_camera_processing::enable> (srv_mr_camera_processing_enable_name_);
-
-        srv_lidar_enable_ = nh_.advertiseService (
-                          srv_lineUntilLidar_name_, &lineFollower::lineUntilLidarCallback, this);
-        srv_relative_enable_ = nh_.advertiseService (
-                          srv_lineUntilRelative_name_, &lineFollower::lineUntilRelativeCallback, this);
+        srv_lidar_enable_ = nh_.advertiseService (srv_lineUntilLidar_name_, &lineFollower::lineUntilLidarCallback, this);
+        srv_relative_enable_ = nh_.advertiseService (srv_lineUntilRelative_name_, &lineFollower::lineUntilRelativeCallback, this);
 		
 		pub_twist_ = nh_.advertise<geometry_msgs::TwistStamped> (pub_twist_name_, 1);
 		pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
@@ -86,7 +79,6 @@ public:
 		sub_qr_ = nh_.subscribe<std_msgs::String> (sub_qr_name_, 1, &lineFollower::qrCallback, this);
 		sub_lidar_ = nh_.subscribe<sensor_msgs::LaserScan> (sub_lidar_name_, 1, &lineFollower::lidarCallback, this);
 		sub_odom_ = nh_.subscribe<nav_msgs::Odometry> (sub_odom_name_, 1, &lineFollower::odometryCallback, this);
-		
     }
 
     /**

@@ -214,4 +214,4 @@ bool Skills::wait(double seconds){
     r.sleep();
 	return true;
 }
-}
+

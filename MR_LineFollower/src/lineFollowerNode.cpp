@@ -49,6 +49,10 @@ public:
         pNh_.param<double> ("lidar_distance", lidar_distance_, 0.1);
         pNh_.param<double> ("relative_distance", lidar_distance_, 0.1);
         pNh_.param<double> ("linear_precision", linear_precision_, 0.005);
+        pNh_.param<double> ("robot_turn_speed", max_theta, 0.8);
+        pNh_.param<double> ("robot_turn_speed_qr_slow", max_theta_slow, 0.3);
+
+ 
 
         // Get topics name
         pNh_.param<std::string> ("sub_line", sub_line_name_, "/mrCameraProcessing/line");
@@ -154,7 +158,7 @@ public:
          */
         // Define the relation between the error and theta
         geometry_msgs::TwistStamped twistStamp_msg;
-        const double max_theta = 0.8;
+        
         double theta = max_theta * pid_output / pid_max_;
         // Publish the message
         twistStamp_msg.header.stamp = ros::Time::now();
@@ -243,13 +247,19 @@ public:
 
         // Store robot speed
         double old_robot_speed = robot_speed_;
+	double old_turn_speed = max_theta;
         while (req.qr != qr_detected_ && (ros::Time::now().toSec() - time_start.toSec()) < req.time_limit)
         {
-            if(qr_detected_ == "QR_Countour_Detected")
+            if(qr_detected_ == "QR_Contour_Detected")
+	    {
                 robot_speed_ = robot_speed_qr_slow_;
+		max_theta = max_theta_slow;
+	    }
             else
+	    {
                 robot_speed_ = old_robot_speed;
-
+		max_theta = old_turn_speed;
+	    }
             ros::spinOnce();
         }
 
@@ -266,6 +276,7 @@ public:
 
         // Set old robot speed
         robot_speed_ = old_robot_speed;
+	max_theta = old_turn_speed;
 
         // Disables the deadman
         stopDeadman();
@@ -479,6 +490,7 @@ private:
     double integral_;
     double lidar_distance_;
     double relative_distance_;
+    double max_theta, max_theta_slow ;
     // Reference point
     int reference_point_x_;
     int reference_point_y_;

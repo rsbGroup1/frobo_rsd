@@ -14,38 +14,42 @@ from geometry_msgs.msg import Twist, TwistStamped
 from msgs.msg import BoolStamped
 from std_msgs.msg import String, Bool
 from mr_tip_controller.srv import *
+from mr_navigation_controller.srv import *
 from mr_hmi.srv import *
 
-STATUS_REQUEST = "status_request"
-REMOTE_UPDATE = "remote_update"
+STATUS_REQUEST  = "status_request"
+REMOTE_UPDATE   = "remote_update"
+TEXT_FIELD_MSG  = "text_msg"
 
 MR_HMI_SUB = "/mrHMI/status" # receiving location and status updates here
 
-MODE_UPDATE_PUB = "/mrHMI/run"
-ACTUATION_ENA_PUB = "/fmSafe/deadman" # a BoolStamped msg. deadman_msg.data = True enables actuation
-CMD_VEL_UPDATE_PUB = "/fmCommand/cmd_vel"
+MODE_UPDATE_PUB     = "/mrHMI/run"
+ACTUATION_ENA_PUB   = "/fmSafe/deadman" # a BoolStamped msg. deadman_msg.data = True enables actuation
+CMD_VEL_UPDATE_PUB  = "/fmCommand/cmd_vel"
 
-TIPPER_UPDATE_SRV = "/mrTipController/tip"
+TIPPER_UPDATE_SRV       = "/mrTipController/tip"
+SET_CURRENT_NODE_SRV    = "/mrNavigationController/currentNode"
 
 WEB_SOCKET_HOSTNAME = "localhost"
 #WEB_SOCKET_HOSTNAME = "10.125.11.201"
-WEB_SOCKET_PORT = "8888"
-address = ""
+WEB_SOCKET_PORT     = "8888"
+address             = ""
 
-direction = 0
-button = 0
+direction   = 0
+button      = 0
 logMessages = ""
 
 subStatus = 0
 
-pubModeUpdate = 0
+pubModeUpdate   = 0
 # pubTipperUpdate = 0
 pubCmdVelUpdate = 0
 pubActuationEna = 0
 
-srvTipper = 0
+srvTipper       = 0
+srvCurrentMode  = 0
 
-linearVelocity = 0.4
+linearVelocity  = 0.4
 angularVelocity = 0.8
 
 #tipperTilted = False
@@ -139,6 +143,11 @@ class MyServerProtocol( WebSocketServerProtocol ):
                     if isManual == True:
                         setManualMode( False )
                         publishCommand( pubModeUpdate, u"stop" )
+
+            elif messageIn["messageType"] == TEXT_FIELD_MSG:
+
+                msg = messageIn["data"]["msg"]
+                sendCurrentNodeMessage( msg )
 
     def onClose( self, wasClean, code, reason ):
         global actuationEna
@@ -245,7 +254,7 @@ def drive( linearX, angularZ ):
     # print( "Msg *to be published: " + str(msg.twist.linear.x) )
     publishCommand( pubCmdVelUpdate, msg )
     # print( "Msg published OK")
-    
+
 def tipper( direction ):
     """ Method discription
     Calls the tipping service with a direction specified with a boolean ergument
@@ -256,7 +265,16 @@ def tipper( direction ):
 
     global srvTipper
 
-    srvTipper(direction)# req ) # Request tipping (just ignore the response for now)
+    srvTipper( direction ) # Requests tipping (just ignore the response for now)
+
+def sendCurrentNodeMessage( msg ):
+    """ Method discription
+    Sends the message to the currentNode service
+    """
+
+    global srvCurrentMode
+
+    srvCurrentMode( msg ) # Sends message (just ignore the response for now)
 
 def logCallback( data ):
     """ Method Description
@@ -360,6 +378,7 @@ def initHMI():
     ACTUATION_ENA_PUB = rospy.get_param( "~deadman_pub", ACTUATION_ENA_PUB )
 
     TIPPER_UPDATE_SRV = rospy.get_param( "~tipper_srv", TIPPER_UPDATE_SRV )
+    SET_CURRENT_NODE_SRV = rospy.get_param( "~currentNode_srv", SET_CURRENT_NODE_SRV )
 
     # Register Subscribers
     subStatus = rospy.Subscriber( MR_HMI_SUB, String, logCallback )
@@ -372,6 +391,8 @@ def initHMI():
     # Service Definitions
     rospy.wait_for_service(TIPPER_UPDATE_SRV)
     srvTipper = rospy.ServiceProxy( TIPPER_UPDATE_SRV, tip )
+    rospy.wait_for_service(SET_CURRENT_NODE_SRV)
+    srvCurrentMode = rospy.ServiceProxy( SET_CURRENT_NODE_SRV, setCurrentNode )
 
     log.startLogging(sys.stdout)
 

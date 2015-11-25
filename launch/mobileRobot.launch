@@ -161,6 +161,7 @@
 			<param name="deadman_pub" value="/fmSafe/deadman"/>
 			<param name="cmd_pub" value="/fmCommand/cmd_vel"/>
 			<param name="tipper_srv" value="/mrTipController/tip"/>
+			<param name="currentNode_srv" value="/mrNavigationController/currentNode"/>
 		</node>			
 	</group>
 

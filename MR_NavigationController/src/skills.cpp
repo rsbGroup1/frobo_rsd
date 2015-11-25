@@ -208,3 +208,10 @@ bool Skills::chargeDectectionAndBackupPlan(double battery_level, double threshol
 	return true;
 
 }
+
+bool Skills::wait(double seconds){
+	ros::Rate r(1/seconds); // 10 hz
+    r.sleep();
+	return true;
+}
+}

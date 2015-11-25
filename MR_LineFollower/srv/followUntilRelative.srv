@@ -1,0 +1,4 @@
+float64 relative_distance
+float64 time_limit
+---
+bool success

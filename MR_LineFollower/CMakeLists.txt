@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
 	message_generation
 	mr_camera_processing
 	sensor_msgs
+	nav_msgs
 )
 
 set(CMAKE_CXX_FLAGS "-std=c++11")
@@ -23,6 +24,7 @@ add_service_files(
 	FILES
 	followUntilQR.srv
 	followUntilLidar.srv
+	followUntilRelative.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

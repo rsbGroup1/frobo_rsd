@@ -54,6 +54,13 @@ enum HMI_SAFETY
     colliding = 2
 };
 
+enum MODE
+{
+    IDLE = 0,
+    AUTO = 1,
+    MANUAL = 2
+};
+
 class MainNode
 {
 public:
@@ -73,8 +80,9 @@ public:
         _pNh.param<std::string> ("mes_pub", _mesPub, "/mrMESClient/msgToServer");
         _pNh.param<std::string> ("mes_sub", _mesSub, "/mrMESClient/msgFromServer");
         _pNh.param<std::string> ("obstacle_detector_sub", _obstacleDetectorSub, "/mrObstacleDetector/status");
-	_pNh.param<std::string> ("critical_fault_pub", _criticalFaultSignalPub, "/fmSafe/critical_fault");
+        _pNh.param<std::string> ("critical_fault_pub", _criticalFaultSignalPub, "/fmSafe/critical_fault");
         _pNh.param<std::string> ("battery_sub", _batterySub, "/fmInformation/battery");
+        _pNh.param<std::string> ("mode_pub", _modePub, "/mrMain/mode");
         _pNh.param<bool> ("check_battery", _check_battery , true);
         _pNh.param<double> ("battery_low", _batteryLow, 12.4);
         _pNh.param<double> ("battery_critic", _batteryCritic, 12.1);
@@ -87,7 +95,8 @@ public:
         // Publishers
         _hmiPublisher = _nh.advertise<std_msgs::String> (_hmiPub, 10);
         _mesPublisher = _nh.advertise<std_msgs::String> (_mesPub, 10);
-	_criticalFaultSignalPublisher = _nh.advertise<msgs::BoolStamped>(_criticalFaultSignalPub, 10);
+        _modePublisher = _nh.advertise<std_msgs::String> (_modePub, 10);
+        _criticalFaultSignalPublisher = _nh.advertise<msgs::BoolStamped>(_criticalFaultSignalPub, 10);
 
         // Subscribers
         _buttonSubriber = _nh.subscribe<std_msgs::Bool> (_buttonSub, 5, &MainNode::buttonCallback, this);
@@ -97,8 +106,6 @@ public:
         _mesSubscriber = _nh.subscribe<mr_mes_client::server> (_mesSub, 1, &MainNode::mesCallback, this);
         _obstacleDetectorSubscriber = _nh.subscribe<std_msgs::String> (_obstacleDetectorSub, 10, &MainNode::obstacleCallback, this);
         _batterySubscriber = _nh.subscribe<std_msgs::Float32> (_batterySub, 1, &MainNode::_batteryCallback, this);
-	
-
     }
 
     ~MainNode()
@@ -183,24 +190,33 @@ public:
      */
     void buttonCallback (std_msgs::Bool msg)
     {
-	if (msg.data != _button_msg_last) 
-	{
-	    boost::unique_lock<boost::mutex> lock (_runMutex);
-	    if (msg.data)
-	    {
-		_criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
-		HMISendWarning("Auto mode enabled");
-		HMIUpdateSafety(safe);
-		_autoMode = true;
-		
-	    } else {
-		_criticalFaultSignalThread->interrupt();
-		HMISendError("Emergency stop");
-		HMIUpdateSafety(colliding);
-		_autoMode = false;
-	    }
-	    _button_msg_last = msg.data;
-	}
+        if (msg.data != _button_msg_last)
+        {
+            boost::unique_lock<boost::mutex> lock (_runMutex);
+            if (msg.data)
+            {
+                _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
+                HMISendWarning("Auto mode enabled");
+                HMIUpdateSafety(safe);
+                _mode = AUTO;
+
+            } else {
+                _criticalFaultSignalThread->interrupt();
+                HMISendError("Emergency stop");
+                HMIUpdateSafety(colliding);
+                _mode = IDLE;
+            }
+            _button_msg_last = msg.data;
+
+            std_msgs::String msgMode;
+            if (_mode == AUTO)
+                msgMode.data = "auto";
+            else if (_mode == IDLE)
+                msgMode.data = "idle";
+            else
+                msgMode.data = "manual";
+            _modePublisher.publish(msgMode);
+        }
     }
 
     /**
@@ -208,30 +224,39 @@ public:
      */
     void hmiCallback (std_msgs::String msg)
     {
-	if (msg.data != _hmi_msg_last)
-	{
-	    boost::unique_lock<boost::mutex> lock (_runMutex);
-	    if (msg.data == "start") 
-	    {
-		_criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
-		HMISendWarning("Auto mode enabled");
-		HMIUpdateSafety(safe);
-		_autoMode = true;
-	    }
-	    else if (msg.data == "manual"){
-		_criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
-		HMISendWarning("Manual mode");
-		HMIUpdateSafety(proximityAlert);
-		_autoMode = false;
-	    }
-	    else if (msg.data == "stop") {
-		_criticalFaultSignalThread->interrupt();
-		HMISendError("Emergency stop");
-		HMIUpdateSafety(colliding);
-		_autoMode = false;
-	    }
-	    _hmi_msg_last = msg.data;
-	}
+        if (msg.data != _hmi_msg_last)
+        {
+            boost::unique_lock<boost::mutex> lock (_runMutex);
+            if (msg.data == "start")
+            {
+                _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
+                HMISendWarning("Auto mode enabled");
+                HMIUpdateSafety(safe);
+                _mode = AUTO;
+            }
+            else if (msg.data == "manual"){
+                _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
+                HMISendWarning("Manual mode");
+                HMIUpdateSafety(proximityAlert);
+                _mode = MANUAL;
+            }
+            else if (msg.data == "stop") {
+                _criticalFaultSignalThread->interrupt();
+                HMISendError("Emergency stop");
+                HMIUpdateSafety(colliding);
+                _mode = IDLE;
+            }
+            _hmi_msg_last = msg.data;
+
+            std_msgs::String msgMode;
+            if (_mode == AUTO)
+                msgMode.data = "auto";
+            else if (_mode == IDLE)
+                msgMode.data = "idle";
+            else
+                msgMode.data = "manual";
+            _modePublisher.publish(msgMode);
+        }
     }
 
     /**
@@ -264,17 +289,17 @@ public:
         _new_MESmsg.unlock();
 
         _runMutex.lock();
-        bool automode = _autoMode;
+        MODE mode = _mode;
         _runMutex.unlock();
 
-        if (msg.mobileRobot == 1 && automode && newOrder)
+        if (msg.mobileRobot == 1 && mode==AUTO && newOrder)
         {
 
             mr_navigation_controller::performAction perform_action_obj;
             mr_tip_controller::tip tip_obj;
             std::string action;
 
-	    /*
+            /*
             // Stores the current position just in case the battery is in
             // the critic level
             action = _currentNode;
@@ -288,7 +313,8 @@ public:
 	    
             // Checks if the battery is the critic level
             if (_check_battery) checkBattery (_batteryCritic, action);
-	      */
+            */
+
             // Send the robot to the correct wc conveyor
             if (msg.cell == 1)
                 action = "wc1_conveyor";
@@ -298,13 +324,19 @@ public:
 
             if (msg.cell == 3)
                 action = "wc3_conveyor";
-
             perform_action_obj.request.action = action;
             _servicePerformAction.call (perform_action_obj);
+	    
+            // Tell to the MES to move the conveyor
+            std_msgs::String msg;
+            msg.data = "Ok";
+            _mesPublisher.publish(msg);
+	    
             // Tip Up
             HMIUpdateIcons (tipper);
             tip_obj.request.direction = true;
             _serviceTipper.call (tip_obj);
+
             // Tip Down
             tip_obj.request.direction = false;
             _serviceTipper.call (tip_obj);
@@ -346,7 +378,8 @@ public:
             */
 
             // Charges the battery until the threshold
-            if (_check_battery) chargeBattery (_batteryLow);
+            if (_check_battery)
+                chargeBattery (_batteryLow);
 
             _new_MESmsg.unlock();
             _newOrder = false;
@@ -456,7 +489,7 @@ public:
             std::cout << "No battery level! Waiting..." << std::endl;
 
         while (_batteryLevel == 0) // Wait
-            ;;
+            ;
 
         if (_batteryLevel < threshold)
         {
@@ -480,7 +513,7 @@ public:
             std::cout << "No battery level! Waiting..." << std::endl;
 
         while (_batteryLevel == 0) // Wait
-            ;;
+            ;
 
         if (_batteryLevel < threshold)
         {
@@ -510,10 +543,10 @@ public:
             }
             catch (const boost::thread_interrupted&)
             {
-		critical_fault.data = false;
+                critical_fault.data = false;
                 critical_fault.header.stamp = ros::Time::now();
                 _criticalFaultSignalPublisher.publish (critical_fault);
-		std::cout << "Interrupted!!" << std::endl;
+                std::cout << "Interrupted!!" << std::endl;
                 break;
             }
         }
@@ -525,16 +558,18 @@ private:
     ros::ServiceClient _servicePerformAction, _serviceTipper;
     ros::Subscriber _buttonSubriber, _hmiSubscriber, _navStatusSubscriber, _navCurrentSubscriber,
         _mesSubscriber, _obstacleDetectorSubscriber, _batterySubscriber;
-    ros::Publisher _hmiPublisher, _mesPublisher, _criticalFaultSignalPublisher;
-    bool _newOrder, _check_battery, _autoMode;
+    ros::Publisher _hmiPublisher, _mesPublisher, _criticalFaultSignalPublisher, _modePublisher;
+    bool _newOrder, _check_battery;
     std::string safety_status_prev, _currentNode;
     double _batteryLevel, _batteryLow, _batteryCritic, _desiredCharge;
     boost::mutex _runMutex, _new_MESmsg;
     std::string _performActionString, _navStatusSub, _navCurrentnodeSub, _buttonSub, _buttonPub,
-        _hmiSub, _tipperString, _hmiPub, _mesSub, _mesPub, _obstacleDetectorSub, _batterySub, _criticalFaultSignalPub;
+        _hmiSub, _tipperString, _hmiPub, _mesSub, _mesPub, _obstacleDetectorSub, _batterySub, 
+	_criticalFaultSignalPub, _modePub;
     mr_mes_client::server _msg_last;
     std::string _hmi_msg_last;
     bool _button_msg_last;
+    MODE _mode;
     
     boost::thread* _criticalFaultSignalThread;
 };

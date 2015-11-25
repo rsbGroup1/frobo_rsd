@@ -96,7 +96,7 @@
 			<param name="vehicle_frame" value="base_link" />
 			<param name="encoder_output" value="absolute" />
 			<param name="max_ticks_per_update" value="200" />
-			<param name="yaw_angle_source" value="/imu_angular_velocity" />
+			<param name="yaw_angle_source" value="imu_angular_velocity" />
 			<param name="imu_angular_velocity_yaw_axis" value="z" />
 		</node>
 	</group>
@@ -171,9 +171,9 @@
 			<param name="baud_rate" value="115200"/>
 			<param name="port" value="/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00"/> 
 			<param name="mr_collision_sub" value="/mrObstacleDetector/status"/>
-			<param name="mr_hmi_sub" value="/mrHMI/run"/>
 			<param name="mr_button_pub" value="/mrButton/run"/> 
 			<param name="mr_button_sub" value="/mrButton/status"/> 	
+			<param name="mr_main_mode_sub" value="/mrMain/mode"/>
 		</node>
 	</group>
 
@@ -191,6 +191,7 @@
 			<param name="mes_sub" value="mrMESClient/msgFromServer"/> 
 			<param name="obstacle_detector_sub" value="/mrObstacleDetector/status"/> 
 			<param name="battery_sub" value="/fmInformation/battery"/>
+			<param name="mode_pub" value="/mrMain/mode"/>
 			<param name="check_battery" value="false"/>
 			<param name="battery_low" value="12.4"/> 
 			<param name="battery_critic" value="12.0"/> 
@@ -243,11 +244,13 @@
 			<param name="reference_point_y" value="240" />
 			<param name="robot_speed" value="0.14" />
 			<param name="lidar_distance" value="0.2" />
+			<param name="relative_distance" value="0.2" />
 		
 			<param name="srv_mr_camera_processing_enable_name" value="/mrCameraProcessing/enable" />
 			<param name="sub_cross" value="/mrCameraProcessing/cross" />
 			<param name="sub_line" value="/mrCameraProcessing/line" />
 			<param name="sub_lidar" value="/scan" />
+			<param name="sub_odom" value="/fmKnowledge/pose" />
 			<param name="sub_qr" value="/mrCameraProcessing/QR" />
 			<param name="pub_twist" value="/fmCommand/cmd_vel" />
 			<param name="pub_deadman" value="/fmSafe/deadman" />
@@ -269,6 +272,7 @@
 	<node pkg="mr_navigation_controller" name="mrNavigationController" type="mr_navigation_controller" output="screen">
 		<param name="lineFollowEnableService" value="mrLineFollower/lineUntilQR"/>
 		<param name="lineFollowEnableLidarService" value="mrLineFollower/lineUntilLidar"/>
+		<param name="lineFollowEnableRelativeService" value="mrLineFollower/lineUntilRelative"/>
 		<param name="obstacleDetectorService" value="/mrObstacleDetector/enabler"/>
 		<param name="moveService" value="mrGo/move"/>
 		<param name="performAction" value="mrNavigationController/performAction"/>
@@ -298,6 +302,10 @@
 		<param name="odom_alpha3" value="0.8"/>
 		<param name="odom_alpha4" value="0.8"/>
 		<param name="min_particles" value="30"/>
+
+		<param name="initial_pose_a" value="0"/>
+		<param name="initial_pose_x" value="0"/>
+		<param name="initial_pose_y" value="0"/>
 	
 		<param name="base_frame_id" value="base_link"/>
 		<param name="odom_frame_id" value="odom"/>

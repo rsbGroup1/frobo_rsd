@@ -11,6 +11,8 @@
 #include "mr_navigation_controller/performAction.h"
 #include "mr_navigation_controller/setCurrentNode.h"
 #include "mr_line_follower/followUntilQR.h"
+#include "mr_line_follower/followUntilLidar.h"
+#include "mr_line_follower/followUntilRelative.h"
 #include "mr_go/move.h"
 
 #include "std_msgs/String.h"
@@ -48,12 +50,13 @@ public:
      */
     NavigationController() :
         pNh_ ("~"),
-        skills_ (&srv_lineUntilQR_, &srv_move_, &srv_lineUntilLidar_, &pub_status_, 
+        skills_ (&srv_lineUntilQR_, &srv_move_, &srv_lineUntilLidar_, &srv_lineUntilRelative_, &pub_status_,
 		 &pub_initialize_, &pub_deadman_, &srv_detect_obstacles_)
     {
         // Get parameter names
         pNh_.param<std::string> ("lineFollowEnableService", srv_lineUntilQR_name_, "mrLineFollower/lineUntilQR");
         pNh_.param<std::string> ("lineFollowEnableLidarService", srv_lineUntilLidar_name_, "mrLineFollower/lineUntilLidar");
+        pNh_.param<std::string> ("lineFollowEnableRelativeService", srv_lineUntilRelative_name_, "mrLineFollower/lineUntilRelative");
         pNh_.param<std::string> ("moveService", srv_move_name_, "mrGo/move");
         pNh_.param<std::string> ("performAction", srv_action_name_, "mrNavigationController/performAction");
         pNh_.param<std::string> ("status", pub_status_name_, "mrNavigationController/status");
@@ -68,9 +71,11 @@ public:
         // Service
         srv_lineUntilQR_ = nh_.serviceClient<mr_line_follower::followUntilQR> (srv_lineUntilQR_name_);
         srv_lineUntilLidar_ = nh_.serviceClient<mr_line_follower::followUntilLidar> (srv_lineUntilLidar_name_);
+        srv_lineUntilRelative_ = nh_.serviceClient<mr_line_follower::followUntilRelative> (srv_lineUntilRelative_name_);
         srv_move_ = nh_.serviceClient<mr_go::move> (srv_move_name_);
         srv_action_ = nh_.advertiseService (srv_action_name_, &NavigationController::performActionCallback, this);
         srv_set_current_node_ = nh_.advertiseService (srv_set_current_node_name_, &NavigationController::setCurrentNodeCallback, this);
+	srv_detect_obstacles_ = nh_.serviceClient<mr_obstacle_detector::enabler>(srv_detect_obstacles_name_);
 
         // Subscriber
         sub_pose_ = nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped> ("amcl_pose", 10, &NavigationController::poseReceived, this);
@@ -93,7 +98,7 @@ public:
         // Inialize AMCL
         std::ifstream localisationFile;
         //std::string path_to_file = path_to_node +
-        localisationFile.open ("localization.csv");
+        localisationFile.open ("/home/frobit_pro_group1/Desktop/localization.csv");
         ROS_INFO ("Waiting for global localisation");
         ros::service::waitForService ("global_localization", ros::Duration (5, 0));
 
@@ -112,9 +117,14 @@ public:
             localisationFile >> p.pose.pose.orientation.y;
             localisationFile >> p.pose.pose.orientation.z;
             localisationFile >> p.pose.pose.orientation.w;
+            for(int i = 0; i < 36 ;i+=7){
+		p.pose.covariance[i] = 0.3;
+	    }
             p.header.frame_id = "map";
 
-            ros::Duration d (6, 0);
+            std::cout << "FROM LOADED FILE: " << p.pose.pose.position.x << " " << p.pose.pose.position.y << " " << p.pose.pose.orientation.x << " " << p.pose.pose.orientation.y << " " << p.pose.pose.orientation.z << " "  << p.pose.pose.orientation.w << std::endl;
+
+            ros::Duration d (3, 0);
             d.sleep();
             pub_initialize_.publish (p);
 
@@ -354,6 +364,7 @@ public:
 
         std::vector<std::function<void() >> pre_charge_TO_charge;
         pre_charge_TO_charge.push_back (std::bind (&Skills::linearMove, &skills_, 0.1));
+        pre_charge_TO_charge.push_back (std::bind (&Skills::wait, &skills_, 10.0));
         pre_charge_TO_charge.push_back (std::bind (&Skills::chargeDectectionAndBackupPlan, &skills_, battery_level_, 13.0));
         pre_charge_TO_charge.push_back (std::bind (&Graph::setCurrentNode, graph_, "charge"));
 
@@ -374,9 +385,10 @@ public:
         box_TO_pre_charge_line.push_back (std::bind (&Graph::setCurrentNode, graph_, "pre_charge_line"));
 
         std::vector<std::function<void() >> pre_charge_line_TO_charge_line;
-        pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::chargeDectectionAndBackupPlan, &skills_, battery_level_, 13.0));        
+        //pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::chargeDectectionAndBackupPlan, &skills_, battery_level_, 13.0));        
 	//pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, 0.1));
 	//pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.2));
+	pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::lineUntilRelative, &skills_, 0.2));
         pre_charge_line_TO_charge_line.push_back (std::bind (&Graph::setCurrentNode, graph_, "charge_line"));
 
         std::vector<std::function<void() >> pre_charge_line_TO_box;
@@ -446,33 +458,36 @@ public:
     {
         ROS_INFO ("Storing position");
         // Store last known position
-        std::ofstream outputFile;
-        outputFile.open ("localization.csv");
+        if(!(currentPose_.pose.pose.position.x != currentPose_.pose.pose.position.x || currentPose_.pose.pose.position.y != currentPose_.pose.pose.position.y || currentPose_.pose.pose.orientation.x != currentPose_.pose.pose.orientation.x || currentPose_.pose.pose.orientation.y != currentPose_.pose.pose.orientation.y || currentPose_.pose.pose.orientation.z != currentPose_.pose.pose.orientation.z || currentPose_.pose.pose.orientation.w != currentPose_.pose.pose.orientation.w))
+        {
+            std::ofstream outputFile;
+            outputFile.open ("/home/frobit_pro_group1/Desktop/localization.csv");
 
-        outputFile << currentPose_.pose.pose.position.x << " ";
-        outputFile << currentPose_.pose.pose.position.y << " ";
-        outputFile << currentPose_.pose.pose.orientation.x << " ";
-        outputFile << currentPose_.pose.pose.orientation.y << " ";
-        outputFile << currentPose_.pose.pose.orientation.z << " ";
-        outputFile << currentPose_.pose.pose.orientation.w << " ";
+            outputFile << currentPose_.pose.pose.position.x << " ";
+            outputFile << currentPose_.pose.pose.position.y << " ";
+            outputFile << currentPose_.pose.pose.orientation.x << " ";
+            outputFile << currentPose_.pose.pose.orientation.y << " ";
+            outputFile << currentPose_.pose.pose.orientation.z << " ";
+            outputFile << currentPose_.pose.pose.orientation.w << " ";
 
-        outputFile.flush();
-        outputFile.close();
+            outputFile.flush();
+            outputFile.close();
+        }
     }
 
     void batteryCallback (std_msgs::Float32 battery)
     {
         battery_level_ = battery.data;
-        std::cout<<battery_level_<<std::endl;
+        // std::cout<<battery_level_<<std::endl;
     }
 
 private:
     ros::NodeHandle nh_, pNh_;
     ros::Publisher pub_status_, pub_current_node_, pub_initialize_, pub_deadman_;
-    ros::ServiceClient srv_lineUntilQR_, srv_move_, srv_lineUntilLidar_, srv_detect_obstacles_;
+    ros::ServiceClient srv_lineUntilQR_, srv_move_, srv_lineUntilLidar_, srv_lineUntilRelative_, srv_detect_obstacles_;
     ros::ServiceServer srv_action_, srv_set_current_node_;
     ros::Subscriber sub_pose_;
-    std::string srv_lineUntilQR_name_, srv_move_name_, pub_status_name_, srv_lineUntilLidar_name_,
+    std::string srv_lineUntilQR_name_, srv_move_name_, pub_status_name_, srv_lineUntilLidar_name_, srv_lineUntilRelative_name_,
         srv_action_name_, pub_current_node_name_, srv_set_current_node_name_,
 	srv_detect_obstacles_name_, pub_deadman_name_;
     Skills skills_;
@@ -506,7 +521,7 @@ int main (int argc, char** argv)
     }
 
     // Store position
-    //nc.storePosition();
+    nc.storePosition();
 
     // Return
     return 0;

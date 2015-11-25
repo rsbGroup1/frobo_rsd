@@ -44,13 +44,15 @@ public:
         pNh_.param<double> ("pid_min", pid_min_, -320);
         pNh_.param<int> ("reference_point_x", reference_point_x_, 320);
         pNh_.param<int> ("reference_point_y", reference_point_y_, 240);
-        pNh_.param<double> ("robot_speed", robot_speed_, 0.1);
+        pNh_.param<double> ("robot_speed_lidar", robot_speed_lidar_, 0.2);
+        pNh_.param<double> ("robot_speed_rel", robot_speed_rel_, 0.2);
+        pNh_.param<double> ("robot_speed_qr", robot_speed_qr_, 0.4);
         pNh_.param<double> ("robot_speed_qr_slow", robot_speed_qr_slow_, 0.05);
-        pNh_.param<double> ("lidar_distance", lidar_distance_, 0.1);
-        pNh_.param<double> ("relative_distance", lidar_distance_, 0.1);
-        pNh_.param<double> ("linear_precision", linear_precision_, 0.005);
         pNh_.param<double> ("robot_turn_speed", max_theta, 0.8);
         pNh_.param<double> ("robot_turn_speed_qr_slow", max_theta_slow, 0.3);
+        pNh_.param<double> ("lidar_distance", lidar_distance_, 0.2);
+        pNh_.param<double> ("relative_distance", lidar_distance_, 0.2);
+        pNh_.param<double> ("linear_precision", linear_precision_, 0.005);
 
  
 
@@ -244,8 +246,8 @@ public:
         // Waits until it finds it or the time is more than the limit
         qr_detected_ = "";
 
-        // Store robot speed
-        double old_robot_speed = robot_speed_;
+        // Set robot speed
+        robot_speed_ = robot_speed_qr_;
         double old_turn_speed = max_theta;
 
         while (req.qr != qr_detected_)
@@ -257,7 +259,7 @@ public:
             }
             else
             {
-                robot_speed_ = old_robot_speed;
+                robot_speed_ = robot_speed_qr_;
                 max_theta = old_turn_speed;
             }
 
@@ -277,7 +279,6 @@ public:
         }
 
         // Set old robot speed
-        robot_speed_ = old_robot_speed;
         max_theta = old_turn_speed;
 
         // Disables the deadman
@@ -352,6 +353,9 @@ public:
         // Reset the PID and qr
         integral_ = 0;
         pre_error_ = 0;
+
+        // Set robot speed
+        robot_speed_ = robot_speed_lidar_;
 
         // Waits until it finds it or the time is more than the limit
         lidar_detected_ = 99.0;
@@ -430,6 +434,9 @@ public:
         // Waits until it finds it or the time is more than the limit
         lidar_detected_ = 99.0;
 
+        // Set robot speed
+        robot_speed_ = robot_speed_rel_;
+
         double linear_desired = req.relative_distance;
         double distance_moved = 0.0;
         double start_x = linear_pos_current_x_;
@@ -498,7 +505,7 @@ private:
     int reference_point_x_;
     int reference_point_y_;
     // Robot
-    double robot_speed_, robot_speed_qr_slow_;
+    double robot_speed_qr_, robot_speed_, robot_speed_qr_slow_, robot_speed_lidar_, robot_speed_rel_;
     // Topics name
     std::string sub_line_name_, sub_qr_name_,sub_lidar_name_,sub_odom_name_;
     std::string pub_deadman_name_, pub_twist_name_;

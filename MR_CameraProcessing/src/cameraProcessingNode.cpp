@@ -29,8 +29,8 @@ public:
         pNh_.param<std::string>("pub_qr", pub_qr_name_, "/mrCameraProcessing/qr");
         pNh_.param<std::string>("pub_line", pub_line_name_, "/mrCameraProcessing/line");
         pNh_.param<std::string>("srv_enable", srv_enable_name_, "/mrCameraProcessing/enable");
-        pNh_.param<double>("QR_min_area", minQRConArea_, 200.0);
-        pNh_.param<int>("QR_grayscale_treshold", qrSquareTresh_, 200);
+        pNh_.param<double>("QR_min_area", minQRConArea_, 400.0);
+        pNh_.param<int>("QR_grayscale_threshold", qrSquareThresh_, 200);
 
         pub_line_ = nh_.advertise<geometry_msgs::Point>(pub_line_name_, 1);
         pub_qr_ = nh_.advertise<std_msgs::String>(pub_qr_name_, 1);
@@ -230,7 +230,7 @@ public:
     {
         // Threshold image
         cv::Mat image_binary;
-        cv::threshold(imageGray_in, image_binary, qrSquareTresh_, 255, CV_THRESH_BINARY);
+        cv::threshold(imageGray_in, image_binary, qrSquareThresh_, 255, CV_THRESH_BINARY);
 
         // Find contours
         std::vector<std::vector<cv::Point> > contours;
@@ -278,7 +278,7 @@ private:
 	
 	bool enabled_;
     double minQRConArea_;
-    int qrSquareTresh_;
+    int qrSquareThresh_;
 
     // Threads
     boost::thread* qrThread_;

@@ -106,7 +106,7 @@ int main()
     if(connectToServer() == false)
     {
         ROS_ERROR ("No connection to MES Server!");
-        return -1;
+        return 0;
     }
 
     // Set loop rate

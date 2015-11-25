@@ -31,7 +31,7 @@ public:
         pNh_.param<std::string>("pub_line", pub_line_name_, "/mrCameraProcessing/line");
         pNh_.param<std::string>("srv_enable", srv_enable_name_, "/mrCameraProcessing/enable");
         pNh_.param<std::string>("mr_camera_srv_enable", srv_mr_camera_enable_name_, "/mrCamera/enable");
-        pNh_.param<double>("QR_min_area", minQRConArea_, 200.0);
+        pNh_.param<double>("QR_min_area", minQRConArea_, 400.0);
         pNh_.param<int>("QR_grayscale_threshold", qrSquareThresh_, 200);
 
         pub_line_ = nh_.advertise<geometry_msgs::Point>(pub_line_name_, 1);

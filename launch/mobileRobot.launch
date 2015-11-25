@@ -228,7 +228,7 @@
 			<param name="pub_line" value="/mrCameraProcessing/line" />
 			<param name="pub_image" value="/mrCameraProcessing/output_image" />
 			<param name="srv_enable" value="/mrCameraProcessing/enable" />
-			<param name="QR_min_area" value="400.0" />
+			<param name="QR_min_area" value="250.0" />
 			<param name="QR_grayscale_threshold" value="200" />
 		</node>
 	</group>

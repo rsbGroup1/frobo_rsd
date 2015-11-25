@@ -266,7 +266,6 @@ public:
 
         std::vector<std::function<void() >> wc1_robot_TO_wc_exit;
 	wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::linearMove, &skills_, -0.2));
-		
         wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::angularMove, &skills_, 180));
 	wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
         wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_1_exit"));
@@ -280,22 +279,31 @@ public:
         wc1_TO_wc2.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_2_entrance"));
         wc1_TO_wc2.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc2"));
 
+
+
         std::vector<std::function<void() >> wc2_TO_wc2_conveyor;
+	wc2_TO_wc2_conveyor.push_back (std::bind (&Skills::linearMove, &skills_, 0.6));
         wc2_TO_wc2_conveyor.push_back (std::bind (&Skills::angularMove, &skills_, 90));
-        wc2_TO_wc2_conveyor.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_2_conveyor"));
+	wc2_TO_wc2_conveyor.push_back (std::bind (&Skills::lineUntilRelative, &skills_, 0.11));
+        wc2_TO_wc2_conveyor.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.15));
         wc2_TO_wc2_conveyor.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc2_conveyor"));
 
         std::vector<std::function<void() >> wc2_conveyor_TO_wc2_robot;
-        wc2_conveyor_TO_wc2_robot.push_back (std::bind (&Skills::angularMove, &skills_, 90));
-        wc2_conveyor_TO_wc2_robot.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_2_load"));
+	wc2_conveyor_TO_wc2_robot.push_back (std::bind (&Skills::linearMove, &skills_, -0.35));
+        wc2_conveyor_TO_wc2_robot.push_back (std::bind (&Skills::angularMove, &skills_, -50));
+	wc2_conveyor_TO_wc2_robot.push_back (std::bind (&Skills::linearMove, &skills_, 0.6));
+	wc2_conveyor_TO_wc2_robot.push_back (std::bind (&Skills::angularMove, &skills_, 35));
+        wc2_conveyor_TO_wc2_robot.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.13));
         wc2_conveyor_TO_wc2_robot.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc2_robot"));
 
         std::vector<std::function<void() >> wc2_robot_TO_wc_exit;
-		wc2_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
+	wc2_robot_TO_wc_exit.push_back (std::bind (std::bind (&Skills::linearMove, &skills_, -0.6)));
         wc2_robot_TO_wc_exit.push_back (std::bind (&Skills::angularMove, &skills_, -180));
+	wc2_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
         wc2_robot_TO_wc_exit.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_2_exit"));
         wc2_robot_TO_wc_exit.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc_exit"));
-		wc2_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
+	wc2_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
+	wc2_robot_TO_wc_exit.push_back (std::bind (&Skills::linearMove, &skills_, 0.7));
 
 
 
@@ -314,20 +322,21 @@ public:
         wc3_conveyor_TO_wc3_robot.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc3_robot"));
 
         std::vector<std::function<void() >> wc3_robot_TO_wc_exit;
+	wc3_robot_TO_wc_exit.push_back (std::bind (std::bind (&Skills::linearMove, &skills_, -0.2)));
         wc3_robot_TO_wc_exit.push_back (std::bind (&Skills::angularMove, &skills_, -180));
-		wc3_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
+	wc3_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
         wc3_robot_TO_wc_exit.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_3_exit"));
         wc3_robot_TO_wc_exit.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc_exit"));
-		wc3_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
+	wc3_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
 
 
 
         std::vector<std::function<void() >> wc_exit_TO_line_end;
-		wc_exit_TO_line_end.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
+	wc_exit_TO_line_end.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
         wc_exit_TO_line_end.push_back (std::bind (&Skills::angularMove, &skills_, -90));
         wc_exit_TO_line_end.push_back (std::bind (&Skills::lineUntilQR, &skills_, "line_out"));
         wc_exit_TO_line_end.push_back (std::bind (&Graph::setCurrentNode, graph_, "line_end"));
-		wc_exit_TO_line_end.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
+	wc_exit_TO_line_end.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
 
 
 
@@ -421,7 +430,7 @@ public:
         graph_->addVertex ("line_start", "wc1", 1, line_start_TO_wc1);
         graph_->addVertex ("wc1", "wc2", 1, wc1_TO_wc2);
         graph_->addVertex ("wc2", "wc3", 1, wc2_TO_wc3);
-        graph_->addVertex ("wc_exit", "line_end", 1, wc_exit_TO_line_end);line_end_TO_line_start
+        graph_->addVertex ("wc_exit", "line_end", 1, wc_exit_TO_line_end);
 	
 
         graph_->addVertex ("wc1", "wc1_conveyor", 1, wc1_TO_wc1_conveyor);
@@ -437,7 +446,7 @@ public:
         graph_->addVertex ("wc3_robot", "wc_exit", 1, wc3_robot_TO_wc_exit);
 
         graph_->addVertex ("line_end", "box", 1, line_end_TO_box);
-	graph_->addVertex ("line_end", "line_start", 1, line_end_TO_line_start;
+	graph_->addVertex ("line_end", "line_start", 1, line_end_TO_line_start);
         graph_->addVertex ("box", "line_start", 1, box_TO_line_start);
 
         graph_->addVertex ("box", "pre_charge", 1, box_TO_pre_charge);

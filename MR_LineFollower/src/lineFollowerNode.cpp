@@ -32,7 +32,7 @@ public:
     /**
      * Default constructor
      */
-    lineFollower()
+    lineFollower() : rate_(30)
     {
         // Get parameters
         ros::NodeHandle pNh_ ("~");
@@ -227,6 +227,7 @@ public:
             ROS_INFO ("Not possible to start camera processing, trying againg");
             enableCameraProcessing.request.enable = true;
             srv_mr_camera_processing_enable_.call (enableCameraProcessing);
+            rate_.sleep();
         }
 
         // Starts the deadman and publishers
@@ -242,25 +243,26 @@ public:
 
         // Waits until it finds it or the time is more than the limit
         qr_detected_ = "";
-        ros::Time time_start;
-        time_start = ros::Time::now();
 
         // Store robot speed
         double old_robot_speed = robot_speed_;
-	double old_turn_speed = max_theta;
-        while (req.qr != qr_detected_ && (ros::Time::now().toSec() - time_start.toSec()) < req.time_limit)
+        double old_turn_speed = max_theta;
+
+        while (req.qr != qr_detected_)
         {
             if(qr_detected_ == "QR_Contour_Detected")
-	    {
+            {
                 robot_speed_ = robot_speed_qr_slow_;
-		max_theta = max_theta_slow;
-	    }
+                max_theta = max_theta_slow;
+            }
             else
-	    {
+            {
                 robot_speed_ = old_robot_speed;
-		max_theta = old_turn_speed;
-	    }
+                max_theta = old_turn_speed;
+            }
+
             ros::spinOnce();
+            rate_.sleep();
         }
 
         if (req.qr == qr_detected_)
@@ -276,7 +278,7 @@ public:
 
         // Set old robot speed
         robot_speed_ = old_robot_speed;
-	max_theta = old_turn_speed;
+        max_theta = old_turn_speed;
 
         // Disables the deadman
         stopDeadman();
@@ -291,6 +293,7 @@ public:
             ROS_INFO ("Not possible to stop camera processing, trying againg");
             enableCameraProcessing.request.enable = false;
             srv_mr_camera_processing_enable_.call (enableCameraProcessing);
+            rate_.sleep();
         }
 
         // Ends!
@@ -340,6 +343,7 @@ public:
             ROS_INFO ("Not possible to start camera processing, trying againg");
             enableCameraProcessing.request.enable = true;
             srv_mr_camera_processing_enable_.call (enableCameraProcessing);
+            rate_.sleep();
         }
 
         // Starts the deadman and publishers
@@ -351,12 +355,10 @@ public:
 
         // Waits until it finds it or the time is more than the limit
         lidar_detected_ = 99.0;
-        ros::Time time_start;
-        time_start = ros::Time::now();
-        while (req.lidar_distance < lidar_detected_ &&
-                (ros::Time::now().toSec() - time_start.toSec()) < req.time_limit)
+        while (req.lidar_distance < lidar_detected_)
         {
             ros::spinOnce();
+            rate_.sleep();
         }
 
         if (req.lidar_distance >= lidar_detected_)
@@ -383,6 +385,7 @@ public:
             ROS_INFO ("Not possible to stop camera processing, trying againg");
             enableCameraProcessing.request.enable = false;
             srv_mr_camera_processing_enable_.call (enableCameraProcessing);
+            rate_.sleep();
         }
 
         // Ends!
@@ -415,6 +418,7 @@ public:
             ROS_INFO ("Not possible to start camera processing, trying againg");
             enableCameraProcessing.request.enable = true;
             srv_mr_camera_processing_enable_.call (enableCameraProcessing);
+            rate_.sleep();
         }
         // Starts the deadman and publishers
         deadmanThread_ = new boost::thread (&lineFollower::enableDeadman, this);
@@ -425,19 +429,17 @@ public:
 
         // Waits until it finds it or the time is more than the limit
         lidar_detected_ = 99.0;
-        ros::Time time_start;
-        time_start = ros::Time::now();
 
         double linear_desired = req.relative_distance;
         double distance_moved = 0.0;
         double start_x = linear_pos_current_x_;
         double start_y = linear_pos_current_y_;
-        while (( (distance_moved - std::abs (linear_desired)) < linear_precision_) &&
-                ((ros::Time::now().toSec() - time_start.toSec()) < req.time_limit) )
+        while (( (distance_moved - std::abs (linear_desired)) < linear_precision_))
         {
             distance_moved = sqrt (pow ( (start_x - linear_pos_current_x_), 2.0) +
                        pow ( (start_y - linear_pos_current_y_), 2.0));
             ros::spinOnce();
+            rate_.sleep();
         }
 
         if ((distance_moved - std::abs (linear_desired)) >= linear_precision_)
@@ -464,6 +466,7 @@ public:
             ROS_INFO ("Not possible to stop camera processing, trying againg");
             enableCameraProcessing.request.enable = false;
             srv_mr_camera_processing_enable_.call (enableCameraProcessing);
+            rate_.sleep();
         }
 
         // Ends!
@@ -510,6 +513,8 @@ private:
     double linear_pos_current_x_;
     double linear_pos_current_y_;
     double linear_precision_;
+    // ROS Sleep rate
+    ros::Rate rate_;
 };
 
 /**

@@ -404,6 +404,27 @@
   height: 100%;
 }
 
+.xyab_label{
+    display: block;
+    position: absolute;
+
+    font-size: 12pt;
+
+    width: 80px;
+    height: auto;
+}
+
+#button_x_label{
+    top: -35px;
+    left: -15px;
+}
+
+#button_y_label{
+    width: 110px;
+    top: 16px;
+    left: -130px;
+}
+
 #remoteLabels{
     position: absolute;
     width: 400px;
@@ -422,7 +443,7 @@
     margin: 24px 0px 0px 120px;
 }
 
-#hostname_lable{
+#hostname_label{
     margin-left: 90px;
 }
 
@@ -448,6 +469,28 @@
     height: 100px;
     top: 10px;
     left: 10px;
+}
+
+#message_field{
+    width: 100%;
+    margin-top: 50px;
+
+    text-align: center;
+}
+
+#msg_label{
+    display: block;
+}
+
+#msg_data{
+    display: inline-block;
+    text-align: center;
+    width: 280px;
+    /*box-shadow: 0px 0px 5px black;*/
+}
+
+#msg_button{
+    display: inline-block;
 }
 
 #button_functionality{

@@ -175,3 +175,10 @@ rsdNamespace.stopListening = function() {
     if( rsdNamespace.connection ) rsdNamespace.connection.close();
 
 };
+
+rsdNamespace.sendMsg = function() {
+
+    console.log( $("#msg_data").val() );
+    $("#msg_data").val( "" )
+
+}

@@ -267,40 +267,40 @@ rsdNamespace.RegisterTouchSurfaces = function() {
         rsdNamespace.activeButtonRight = 'n';
 
     });
-    // Button A
-    $('#button_a').on( "mousedown touchstart", function() {
-
-        rsdNamespace.actuationEnable = false;
-
-        $('#remoteRightLayer1').attr('style', 'display:none');
-        $('#remoteRightLayerA').attr('style', 'display:inline');
-        rsdNamespace.activeButtonRight = 'a';
-
-    }).on( "mouseup mouseout touchend", function() {
-
-        $('#remoteRightLayer1').attr('style', 'display:inline');
-        $('#remoteRightLayerA').attr('style', 'display:none');
-        rsdNamespace.activeButtonRight = 'n';
-
-    });
-
-    // Button B
-
-    $('#button_b').on( "mousedown touchstart", function() {
-
-        rsdNamespace.actuationEnable = false;
-
-        $('#remoteRightLayer1').attr('style', 'display:none');
-        $('#remoteRightLayerB').attr('style', 'display:inline');
-        rsdNamespace.activeButtonRight = 'b';
-
-    }).on( "mouseup mouseout touchend", function() {
-
-        $('#remoteRightLayer1').attr('style', 'display:inline');
-        $('#remoteRightLayerB').attr('style', 'display:none');
-        rsdNamespace.activeButtonRight = 'n';
-
-    });
+    // // Button A
+    // $('#button_a').on( "mousedown touchstart", function() {
+    //
+    //     rsdNamespace.actuationEnable = false;
+    //
+    //     $('#remoteRightLayer1').attr('style', 'display:none');
+    //     $('#remoteRightLayerA').attr('style', 'display:inline');
+    //     rsdNamespace.activeButtonRight = 'a';
+    //
+    // }).on( "mouseup mouseout touchend", function() {
+    //
+    //     $('#remoteRightLayer1').attr('style', 'display:inline');
+    //     $('#remoteRightLayerA').attr('style', 'display:none');
+    //     rsdNamespace.activeButtonRight = 'n';
+    //
+    // });
+    //
+    // // Button B
+    //
+    // $('#button_b').on( "mousedown touchstart", function() {
+    //
+    //     rsdNamespace.actuationEnable = false;
+    //
+    //     $('#remoteRightLayer1').attr('style', 'display:none');
+    //     $('#remoteRightLayerB').attr('style', 'display:inline');
+    //     rsdNamespace.activeButtonRight = 'b';
+    //
+    // }).on( "mouseup mouseout touchend", function() {
+    //
+    //     $('#remoteRightLayer1').attr('style', 'display:inline');
+    //     $('#remoteRightLayerB').attr('style', 'display:none');
+    //     rsdNamespace.activeButtonRight = 'n';
+    //
+    // });
 
     // Home button
     $('#button_home').on( "click touchstart", function() {

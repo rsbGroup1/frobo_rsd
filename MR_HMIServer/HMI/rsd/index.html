@@ -441,10 +441,18 @@
 
 
     <aside id="remoteRightContent" class="remoteControllers non_selectable">
-      <div id="button_x" class="touchSurface"></div>
-      <div id="button_y" class="touchSurface"></div>
-      <div id="button_a" class="touchSurface"></div>
-      <div id="button_b" class="touchSurface"></div>
+      <div id="button_x" class="touchSurface">
+          <div id="button_x_label" class="xyab_label" >Tipper UP</div>
+      </div>
+      <div id="button_y" class="touchSurface">
+          <div id="button_y_label" class="xyab_label" >Tipper DOWN</div>
+      </div>
+      <div id="button_a" class="touchSurface">
+          <img src="src/raw/cross.png" width="50" height="50" />
+      </div>
+      <div id="button_b" class="touchSurface">
+          <img src="src/raw/cross.png" width="50" height="50" />
+      </div>
 
       <svg
          xmlns:dc="http://purl.org/dc/elements/1.1/"
@@ -3008,20 +3016,25 @@
             </g>
           </svg>
 
-          <div id="hostname_settings"><span id="hostname_lable" class="main_label">Hostname:</span>
+          <div id="hostname_settings"><span id="hostname_label" class="main_label">Hostname:</span>
               <div id="hostname_data" contenteditable="true">localhost</div>
               <div id="hostname_instructions">press SPACE or ENTER</div>
           </div>
 
           <section>
-              <div id="button_functionality" class="main_label">Speed controller:</div>
+              <div id="message_field" class="main_label"><span id="msg_label" class="main_label">Send message:</span>
+                  <input id="msg_data" type="text" name="msg_input" placeholder="Enter message here...">
+                  <button id="msg_button" onclick="rsdNamespace.sendMsg()">Send</button>
+              </div>
+
+              <!-- <div id="button_functionality" class="main_label">Button functionality:</div>
               <ul id="label_list">
                   <li>Controller: UP, LEFT, DOWN, RIGHT</li>
                   <li>Button X: Tipper UP</li>
                   <li>Button Y: Tipper DOWN</li>
                   <li>Button A: robot START</li>
                   <li>Button B: robot STOP</li>
-              </ul>
+              </ul> -->
 
               <div id="speed_controller_label" class="main_label">Speed controller:</div>
               <input id="speed_controller" type="range" min="1" max="5" step="1" value="4" name="rating" onchange="rsdNamespace.updateSpeed(this.value)" />

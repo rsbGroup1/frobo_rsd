@@ -222,7 +222,7 @@
 	<group ns="MR_CameraProcessing">
 	    	<node pkg="mr_camera_processing" name="CameraProcessing" type="mr_camera_processing" output="screen">
 			<param name="sub_image" value="/mrCamera/image" />
-			<param name="mr_camera_srv_enable" value="/mrCamera/enalbe" />
+			<param name="mr_camera_srv_enable" value="/mrCamera/enable" />
 			<param name="pub_cross" value="/mrCameraProcessing/cross" />
 			<param name="pub_qr" value="/mrCameraProcessing/QR" />
 			<param name="pub_line" value="/mrCameraProcessing/line" />

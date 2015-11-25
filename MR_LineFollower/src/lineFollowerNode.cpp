@@ -168,7 +168,14 @@ public:
      */
     void qrCallback (const std_msgs::String qr)
     {
-        qr_detected_ = qr.data;
+        if(qr.data == "QR_Countour_Detected")
+        {
+
+        }
+        else
+        {
+            qr_detected_ = qr.data;
+        }
     }
 
     /**
@@ -239,8 +246,7 @@ public:
         ros::Time time_start;
         time_start = ros::Time::now();
 
-        while (req.qr != qr_detected_ &&
-                (ros::Time::now().toSec() - time_start.toSec()) < req.time_limit)
+        while (req.qr != qr_detected_ && (ros::Time::now().toSec() - time_start.toSec()) < req.time_limit)
         {
             ros::spinOnce();
         }
@@ -280,13 +286,16 @@ public:
      */
     void lidarCallback (const sensor_msgs::LaserScan lidar_in)
     {
-	int start = (lidar_in.ranges.size()/2 - 10);
-	int stop = (lidar_in.ranges.size()/2 + 10);
-	double min = 99.0;
-	for (int i= start; i<stop;i++){
-		if (lidar_in.ranges[i] < min && lidar_in.ranges[i] > 0) min = lidar_in.ranges[i];
-	}
-	lidar_detected_ = min;
+        int start = (lidar_in.ranges.size()/2 - 10);
+        int stop = (lidar_in.ranges.size()/2 + 10);
+        double min = 99.0;
+        for (int i= start; i<stop;i++)
+        {
+            if (lidar_in.ranges[i] < min && lidar_in.ranges[i] > 0)
+                min = lidar_in.ranges[i];
+        }
+
+        lidar_detected_ = min;
     }
 
     /**

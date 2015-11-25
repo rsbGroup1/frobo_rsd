@@ -252,17 +252,23 @@ public:
         std::vector<std::function<void() >> wc1_TO_wc1_conveyor;
         wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::linearMove, &skills_, 0.6));
         wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::angularMove, &skills_, 90));
-        wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_1_conveyor"));
+	wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::lineUntilRelative, &skills_, 0.11));
+        wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.15));
         wc1_TO_wc1_conveyor.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc1_conveyor"));
 
         std::vector<std::function<void() >> wc1_conveyor_TO_wc1_robot;
-        wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Skills::angularMove, &skills_, 90));
-        wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_1_load"));
+	wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Skills::linearMove, &skills_, -0.4));
+        wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Skills::angularMove, &skills_, 50));
+	wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Skills::linearMove, &skills_, 0.35));
+        wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Skills::angularMove, &skills_, -30));
+        wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.15));
         wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc1_robot"));
 
         std::vector<std::function<void() >> wc1_robot_TO_wc_exit;
-		wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
-        wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::angularMove, &skills_, -180));
+	wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::linearMove, &skills_, -0.2));
+		
+        wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::angularMove, &skills_, 180));
+	wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
         wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_1_exit"));
         wc1_robot_TO_wc_exit.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc1_exit"));
 		wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
@@ -364,7 +370,7 @@ public:
 
         std::vector<std::function<void() >> pre_charge_TO_charge;
         pre_charge_TO_charge.push_back (std::bind (&Skills::linearMove, &skills_, 0.1));
-        pre_charge_TO_charge.push_back (std::bind (&Skills::wait, &skills_, 10.0));
+        pre_charge_TO_charge.push_back (std::bind (&Skills::wait, &skills_, 5.0));
         pre_charge_TO_charge.push_back (std::bind (&Skills::chargeDectectionAndBackupPlan, &skills_, battery_level_, 13.0));
         pre_charge_TO_charge.push_back (std::bind (&Graph::setCurrentNode, graph_, "charge"));
 
@@ -387,8 +393,11 @@ public:
         std::vector<std::function<void() >> pre_charge_line_TO_charge_line;
         //pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::chargeDectectionAndBackupPlan, &skills_, battery_level_, 13.0));        
 	//pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, 0.1));
-	//pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.2));
-	pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::lineUntilRelative, &skills_, 0.2));
+	//pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.15));
+	//pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::lineUntilRelative, &skills_, 0.2));
+        pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, 0.1));
+        pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::wait, &skills_, 10.0));
+        pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, -0.1));
         pre_charge_line_TO_charge_line.push_back (std::bind (&Graph::setCurrentNode, graph_, "charge_line"));
 
         std::vector<std::function<void() >> pre_charge_line_TO_box;

@@ -293,8 +293,15 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "MR_Camera_Processing");
     ImageConverter ic;
 
-    while(ros::ok())
-        ros::spin();
+    // Sleep rate
+    ros::Rate r(30);
+
+    // ROS Spin: Handle callbacks
+    while(!ros::isShuttingDown())
+    {
+        ros::spinOnce();
+        r.sleep();
+    }
 
     return 0;
 }

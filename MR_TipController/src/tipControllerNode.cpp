@@ -182,9 +182,15 @@ int main()
     boost::thread readThread(readSerialThread);
     boost::thread writeThread(writeSerialThread);
 
+    // Sleep rate
+    ros::Rate r(10);
+
     // ROS Spin: Handle callbacks
-    while(ros::ok())
+    while(!ros::isShuttingDown())
+    {
         ros::spinOnce();
+        r.sleep();
+    }
 
     // Close connection
     writeThread.interrupt();

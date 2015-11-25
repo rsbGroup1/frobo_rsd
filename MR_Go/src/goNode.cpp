@@ -69,8 +69,10 @@ public:
         angular_pos_current_ = tf::getYaw (odom.pose.pose.orientation) * RAD_TO_DEG;
 
         // Correct the angle just in case the /odom adds 360 degrees
-        if (std::abs (angular_pos_current_ - angular_pos_previous_) > 180)
+        if((angular_pos_current_ - angular_pos_previous_) > 180)
             angular_pos_current_ -= 360;
+        else if((angular_pos_previous_ - angular_pos_current_) > 180)
+            angular_pos_current_ += 360;
 
         angular_pos_previous_ = angular_pos_current_;
     }

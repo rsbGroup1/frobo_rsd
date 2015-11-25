@@ -33,6 +33,8 @@ public:
         pNh_.param<std::string> ("pub_qr", pub_qr_name_, "/mrCameraProcessing/qr");
         pNh_.param<std::string> ("pub_line", pub_line_name_, "/mrCameraProcessing/line");
         pNh_.param<std::string> ("srv_enable", srv_enable_name_, "/mrCameraProcessing/enable");
+        pNh_.param<double>("QR_min_area", minQRConArea_, 200.0);
+        pNh_.param<int>("QR_grayscale_treshold", qrSquareTresh_, 200);
 
         pub_line_ = nh_.advertise<geometry_msgs::Point> (pub_line_name_, 1);
         pub_qr_ = nh_.advertise<std_msgs::String> (pub_qr_name_, 1);
@@ -175,7 +177,10 @@ public:
     {
         // Set up the scanner
         zbar::ImageScanner scanner;
-        scanner.set_config (zbar::ZBAR_NONE, zbar::ZBAR_CFG_ENABLE, 1);
+        //Disable all symbologies
+        scanner.set_config(zbar::ZBAR_NONE, zbar::ZBAR_CFG_ENABLE, 0);
+        //Enable symbologie for QR
+        scanner.set_config (zbar::ZBAR_QRCODE, zbar::ZBAR_CFG_ENABLE, 1);;
 
         // Filter
         cv::Mat image_filtered;
@@ -185,22 +190,26 @@ public:
         cv::cvtColor (image_original, image_filtered, CV_RGB2GRAY);
         //cv::inRange(image_original, cv::Scalar(0, 0, 0), cv::Scalar(40, 40, 40), image_filtered);
 
-
-        // Prepare the image for reading
-        zbar::Image zbar_image (image_filtered.cols, image_filtered.rows, "Y800",
-                                (uchar*) image_filtered.data , image_filtered.cols * image_filtered.rows);
-
-        // Scan the image to find QR code
-        scanner.scan (zbar_image);
-
         // String used for telling what the QR or barcode says.
         std::string data;
 
-        // Read the image
-        for (zbar::Image::SymbolIterator symbol = zbar_image.symbol_begin();
-                symbol != zbar_image.symbol_end(); ++symbol)
-            data = symbol->get_data();
+        //Quick search image if there is something which resembles a QR code
+        if(qrContourSearch(image_filtered))
+        {
+            // Prepare the image for reading
+            zbar::Image zbar_image (image_filtered.cols, image_filtered.rows, "Y800",
+                                    (uchar*) image_filtered.data , image_filtered.cols * image_filtered.rows);
 
+            // Scan the image to find QR code
+            if(scanner.scan(zbar_image)==1)
+            {
+                //Get scan data.
+                data = zbar_image.symbol_begin()->get_data();
+            }else
+            {
+                data="QR_Contour_Detected";
+            }
+        }
 
         /*
          * Publish
@@ -218,6 +227,42 @@ public:
         // Signal interrupt point
         boost::this_thread::interruption_point();
     }
+    bool qrContourSearch(cv::Mat imageGray_in)
+    {
+        //Threshold image
+        cv::Mat image_binary;
+        cv::threshold(imageGray_in,image_binary,qrSquareTresh_,255,CV_THRESH_BINARY);
+        //Find contours
+        std::vector<std::vector<cv::Point> > contours;
+        std::vector<cv::Vec4i> hierarchy;
+        //Find only outermost point for contour.
+        cv::findContours(image_binary,contours,hierarchy,CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+        //Find contours with largest OBB area
+        double largestConArea = 0.0;
+        int largestConAreaIdx = -1;
+        for(unsigned int i = 0; i<contours.size();i++)
+        {
+            double conArea = cv::contourArea(contours[i]);
+            if(conArea > largestConArea)
+            {
+                largestConArea = conArea;
+                largestConAreaIdx = i;
+            }
+        }
+        //return false if no contours was found
+        if(largestConAreaIdx == -1)
+        {
+            //ROS_INFO("NO CONTOURS");
+            return false;
+        }
+        //Check if contour area is above a min area.
+        if(largestConArea > minQRConArea_)
+        {
+            return true;
+        }
+        //ROS_INFO("FOUND CONTOUR");
+        return false;
+    }
 
 private:
     // ROS
@@ -233,6 +278,8 @@ private:
     std::string srv_enable_name_;
 	
 	bool enabled_;
+    double minQRConArea_;
+    int qrSquareTresh_;
 
     // Threads
     boost::thread* qrThread_;

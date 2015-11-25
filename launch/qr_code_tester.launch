@@ -1,15 +1,14 @@
 <!-- qr test launch file -->
-
 <launch>
-    <node pkg="mr_camera" name="camera" type="mr_camera" output="screen">
-    </node>
-
-    <node pkg="mr_camera_processing" name="camera_processing" type="mr_camera_processing" output="screen">
-		<param name="sub_image" value="/mr_camera/image" />
-		<param name="pub_cross" value="/mr_camera_processing/cross" />
-		<param name="pub_qr" value="/mr_camera_processing/qr" />
-		<param name="pub_line" value="/mr_camera_processing/line" />
-		<param name="pub_image" value="/mr_camera_processing/output_image" />
+    <node pkg="mr_camera_processing" name="CameraProcessing" type="mr_camera_processing" output="screen">
+	<param name="sub_image" value="/mrCamera/image" />
+	<param name="pub_cross" value="/mrCameraProcessing/cross" />
+	<param name="pub_qr" value="/mrCameraProcessing/QR" />
+	<param name="pub_line" value="/mrCameraProcessing/line" />
+	<param name="pub_image" value="/mrCameraProcessing/output_image" />
+	<param name="srv_enable" value="/mrCameraProcessing/enable" />
+  	<param name="QR_min_area" value= "200.0" />
+	<param name="QR_grayscale_treshold" value= "210.0" />
     </node>
 	
 </launch>

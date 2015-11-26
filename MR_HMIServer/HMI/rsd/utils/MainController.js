@@ -160,6 +160,31 @@ rsdNamespace.RegisterTouchSurfaces = function() {
 
     });
 
+    // Stop and Start button on the left
+    // Start Button
+    $('#start_robot').on( "mousedown touchstart", function() {
+
+        rsdNamespace.actuationEnable = false;
+        rsdNamespace.activeButtonRight = 'a';
+
+    }).on( "mouseup mouseout touchend", function() {
+
+        rsdNamespace.activeButtonRight = 'n';
+
+    });
+
+    // Stop Button
+    $('#stop_robot').on( "mousedown touchstart", function() {
+
+        rsdNamespace.actuationEnable = false;
+        rsdNamespace.activeButtonRight = 'b';
+
+    }).on( "mouseup mouseout touchend", function() {
+
+        rsdNamespace.activeButtonRight = 'n';
+
+    });
+
     // Left Controller
 
     // Button Left

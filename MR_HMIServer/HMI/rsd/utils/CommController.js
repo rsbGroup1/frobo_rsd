@@ -178,7 +178,15 @@ rsdNamespace.stopListening = function() {
 
 rsdNamespace.sendMsg = function() {
 
-    console.log( $("#msg_data").val() );
+    messageOut = {
+        "messageType":"text_msg",
+        "data": {
+            "msg": $("#msg_data").val()
+        }
+    }
+
+    rsdNamespace.connection.send( JSON.stringify( messageOut ) );
+
     $("#msg_data").val( "" )
 
 }

@@ -92,7 +92,7 @@ class MyServerProtocol( WebSocketServerProtocol ):
 
             if messageIn["messageType"] == STATUS_REQUEST:
 
-                handleEmergencySituation( messageIn["data"]["resume"] ) # Handle signal from the emergency switch
+                handleEmergencySituation( messageIn["data"]["resume"] ) # TODO Handle signal from the emergency switch
 
                 massageOutRaw = {
                     "messageType":"status_response",
@@ -137,17 +137,20 @@ class MyServerProtocol( WebSocketServerProtocol ):
                     stop_aThreads()
                     if isManual == True:
                         setManualMode( False )
-                        publishCommand( pubModeUpdate, u"start" )
+                        # publishCommand( pubModeUpdate, u"start" )
+                        publishCommand( pubModeUpdate, u"run" ) # XXX I have looked up the strings from mr_button
                 elif rightButton == u"b":
                     stop_aThreads()
                     if isManual == True:
                         setManualMode( False )
-                        publishCommand( pubModeUpdate, u"stop" )
+                        # publishCommand( pubModeUpdate, u"stop" )
+                        publishCommand( pubModeUpdate, u"idle" ) # XXX I have looked up the strings from mr_button
 
             elif messageIn["messageType"] == TEXT_FIELD_MSG:
 
-                msg = messageIn["data"]["msg"]
-                sendCurrentNodeMessage( msg )
+                msg = messageIn["data"]["msg"] # TODO Test it!
+                if msg != "":
+                    sendCurrentNodeMessage( msg )
 
     def onClose( self, wasClean, code, reason ):
         global actuationEna
@@ -203,7 +206,7 @@ class actuationThread( threading.Thread ):
 
         self.lock.acquire()
         msg = createBoolStampedMessage( actuationEna )
-        pubActuationEna.publish ( msg )
+        pubActuationEna.publish( msg )
         self.lock.release()
 
 def createdTwistedCommand( linearX, angularZ ):
@@ -234,7 +237,7 @@ def setManualMode( newState ):
         if( isManual ):
             # pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 1 )
             # pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
-            start_an_aThread()
+            start_an_aThread() # starts publishing safety signals when manual mode is activated
             publishCommand( pubModeUpdate, u"manual" )
             print( "Manual mode is ON" )
         else:
@@ -294,18 +297,14 @@ def logCallback( data ):
 
     now = datetime.datetime.now()
     logTimestamp = now.strftime("%Y-%m-%d %H:%M:%S")
-    # print(logTimestamp)
 
     newData = ""
     for i in range( 0, len( temp ), 2 ):
         newData += temp[i] + d + logTimestamp + d + temp[i + 1] + d
 
     logMessages = logMessages + newData
-    # print(data.data)
-    # print(logMessages)
-    # print(newData)
 
-# TODO check if this works, and publish the messages
+# TODO check if this works, and publishes the messages
 def handleEmergencySituation( signal ):
     global er
 
@@ -315,6 +314,7 @@ def handleEmergencySituation( signal ):
         er = signal
 
     # TODO publish it here
+
 
 def publishCommand( rosPublisher, command ):
     rosPublisher.publish( command )

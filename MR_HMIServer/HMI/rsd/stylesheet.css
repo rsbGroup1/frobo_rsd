@@ -26,6 +26,59 @@
   margin: 0 auto;
 }
 
+.ssflag{
+  position: absolute;
+  z-index: 3;
+  left: -20px;
+
+  width: 120px;
+  height: 60px;
+
+  background-color: white;
+  border-radius: 5px;
+  box-shadow: 0px 0px 5px black;
+
+  transition: 0.09s;
+}
+
+.ssflag:hover{
+  left: -15px;
+}
+
+.ssflag:active{
+  left: -10px;
+}
+
+#start_button{
+  top: 40px;
+}
+
+.start_stop_icon{
+  position: relative;
+  top: 0px;
+  left: 5px;
+
+  width: 60px;
+  height: 60px;
+}
+
+.stopstart_inner{
+    position: relative;
+  top: -60px;
+  right: 0px;
+  width: 120px;
+  height: 60px;
+  z-index: 4;
+
+  box-shadow: 0px 0px 0px black;
+
+  background-color: transparent;
+}
+
+#stop_button{
+  top: 110px;
+}
+
 .flag{
   position: absolute;
   z-index: 3;

@@ -68,11 +68,11 @@ public:
 enum MODES
 {
     M_OFF = 0,
-    
+
     M_AUTO,
     M_IDLE,
     M_MANUAL,
-    
+
     M_SAFE,
     M_PROXIMITYALERT,
     M_COLLIDING
@@ -183,7 +183,7 @@ void obstacleDetectorCallback (std_msgs::String msg)
 {
     std::string msg_temp;
     msg_temp = msg.data;
-    
+
     if (msg_temp == "safe")
         changeErrorMode(M_SAFE);
     else if (msg_temp == "proximityAlert")
@@ -303,7 +303,7 @@ int main()
     // Start serial threads
     boost::thread readThread(readSerialThread);
     boost::thread writeThread(writeSerialThread);
-    
+
     // Sleep for a second
     ros::Duration(2).sleep();
 

@@ -90,7 +90,7 @@ int main()
     std::string mesSub, mesPub;
     pNh.param<std::string>("mesPub", mesPub, "/mrMESClient/msgFromServer");
     pNh.param<std::string>("mesSub", mesSub, "/mrMESClient/msgToServer");
-    pNh.param<std::string>("serverIP", _serverIP, "127.0.0.1"); // 127.0.0.1 - 10.115.253.233
+    pNh.param<std::string>("serverIP", _serverIP, "10.115.253.233"); // 127.0.0.1 - 10.115.253.233
     pNh.param<int>("serverPort", _serverPort, 21240);
 
     // Publishers
@@ -106,7 +106,7 @@ int main()
     if(connectToServer() == false)
     {
         ROS_ERROR ("No connection to MES Server!");
-        return -1;
+        return 0;
     }
 
     // Set loop rate

@@ -94,7 +94,7 @@ void changeMode()
     }
     else if (_runMode == M_IDLE)
     {
-        ROS_INFO("Changed to IDLE");
+        //ROS_INFO("Changed to IDLE");
         switch (_errorMode)
         {
             case M_SAFE:
@@ -115,7 +115,7 @@ void changeMode()
     }
     else if (_runMode == M_AUTO)
     {
-        ROS_INFO("Changed to AUTO");
+        //ROS_INFO("Changed to AUTO");
         switch (_errorMode)
         {
             case M_SAFE:
@@ -136,7 +136,7 @@ void changeMode()
     }
     else if (_runMode == M_MANUAL)
     {
-        ROS_INFO("Changed to MANUAL");
+        //ROS_INFO("Changed to MANUAL");
         switch (_errorMode)
         {
             case M_SAFE:

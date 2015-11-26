@@ -25,25 +25,24 @@ public:
     /**
      * Default constructor
      */
-    Go()
+    Go() : rate_(30)
     {
         ros::NodeHandle pNh_ ("~");
+
         // Get parameters
         pNh_.param<double> ("linear_speed", linear_speed_, 0.1);
         pNh_.param<double> ("angular_speed", angular_speed_, 0.1);
         pNh_.param<double> ("linear_precision", linear_precision_, 0.005);
         pNh_.param<double> ("angular_precision", angular_precision_, 0.500);
 
-
         // Get topics name
-        pNh_.param<std::string> ("odometry", sub_odom_name_, "/fmKnowledge/pose");
+		pNh_.param<std::string> ("odometry", sub_odom_name_, "/odom"/*/fmKnowledge/pose*/);
         pNh_.param<std::string> ("pub_twist", pub_twist_name_, "/fmCommand/cmd_vel");
         pNh_.param<std::string> ("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
         pNh_.param<std::string> ("srv_move", srv_move_name_, "mrGo/move");
 
         // Publishers, subscribers, services
         srv_move_ = nh_.advertiseService (srv_move_name_, &Go::moveCallback, this);
-
         pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
         pub_twist_ = nh_.advertise<geometry_msgs::TwistStamped> (pub_twist_name_, 1);
         sub_odom_ = nh_.subscribe<nav_msgs::Odometry> (sub_odom_name_, 1, &Go::odometryCallback, this);
@@ -70,8 +69,10 @@ public:
         angular_pos_current_ = tf::getYaw (odom.pose.pose.orientation) * RAD_TO_DEG;
 
         // Correct the angle just in case the /odom adds 360 degrees
-        if (std::abs (angular_pos_current_ - angular_pos_previous_) > 180)
+        if((angular_pos_current_ - angular_pos_previous_) > 180)
             angular_pos_current_ -= 360;
+        else if((angular_pos_previous_ - angular_pos_current_) > 180)
+            angular_pos_current_ += 360;
 
         angular_pos_previous_ = angular_pos_current_;
     }
@@ -101,17 +102,21 @@ public:
             while ( (distance_moved - std::abs (linear_desired)) < linear_precision_)
             {
                 // Create the movement msg
-                //std::cout << "Linear distance: " << linear_desired - linear_pos_current_ << std::endl;
+                //std::cout << "Linear distance: " << linear_desired - sqrt (pow ( (start_x - linear_pos_current_x_), 2.0) +
+                //                       pow ( (start_y - linear_pos_current_y_), 2.0)) << std::endl;
                 distance_moved = sqrt (pow ( (start_x - linear_pos_current_x_), 2.0) +
                                        pow ( (start_y - linear_pos_current_y_), 2.0));
 
-                if (req.linear > 0)
+				if (linear_desired - distance_moved  > 0)
                     twist_msg_.twist.linear.x = linear_speed_;
                 else
                     twist_msg_.twist.linear.x = -linear_speed_;
 
                 // Publish the msg
                 pub_twist_.publish (twist_msg_);
+                
+                // Sleep
+                rate_.sleep();
             }
         }
 
@@ -126,14 +131,17 @@ public:
             while (std::abs (angle_desired - angular_pos_current_) > angular_precision_)
             {
                 // Move the robot
-                //std::cout << "Angular distance: " << (angular_pos_current_ - angle_desired) << std::endl;
-                if (req.angular > 0)
+                std::cout << "Angular distance: " << (angular_pos_current_ - angle_desired) << std::endl;
+				if (angle_desired - angular_pos_current_ > 0)
                     twist_msg_.twist.angular.z = angular_speed_;
                 else
                     twist_msg_.twist.angular.z = -angular_speed_;
 
                 // Publish the msg
                 pub_twist_.publish (twist_msg_);
+
+                // Sleep
+                rate_.sleep();
             }
         }
 
@@ -159,8 +167,10 @@ public:
                 deadman.data = true;
                 deadman.header.stamp = ros::Time::now();
                 pub_deadman_.publish (deadman);
+
                 // Sleep for 50 ms = 20Hz
-                boost::this_thread::sleep_for (boost::chrono::milliseconds (75));
+                boost::this_thread::sleep_for (boost::chrono::milliseconds (50));
+
                 // Signal interrupt point
                 boost::this_thread::interruption_point();
             }
@@ -207,18 +217,24 @@ private:
     double linear_speed_;
     double linear_precision_;
     double angular_precision_;
+
+    // Rate
+    ros::Rate rate_;
 };
 
 int main (int argc, char** argv)
 {
-    ros::init (argc, argv, "mr_go");
+    ros::init (argc, argv, "MR_Go");
     Go go;
-    ros::Rate rate (10);
-    ros::AsyncSpinner spinner (3);
+    ros::Rate rate (30);
 
+    ros::AsyncSpinner spinner (0);
+
+    // ROS Spin: Handle callbacks
     while (!ros::isShuttingDown())
     {
-        spinner.start();
+    	spinner.start();
+        //ros::spinOnce();
         rate.sleep();
     }
 

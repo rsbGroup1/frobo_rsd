@@ -200,7 +200,7 @@ void Skills::enableDeadman()
 bool Skills::chargeDectectionAndBackupPlan(double battery_level, double threshold)
 {   
 	if (battery_level < threshold){
-		linearMove(-0.2);
+		//linearMove(-0.2);
 		goToFreePosition(-0.56, -2.41 , -0.2);
 		lineUntilLidar(0.2);
 		linearMove(0.15);
@@ -214,4 +214,4 @@ bool Skills::wait(double seconds){
     r.sleep();
 	return true;
 }
-}
+

@@ -328,21 +328,20 @@ public:
             _servicePerformAction.call (perform_action_obj);
 	    
             // Tell to the MES to move the conveyor
-            std_msgs::String msg;
-            msg.data = "Ok";
-            _mesPublisher.publish(msg);
+            std_msgs::String msg_to_server;
+            msg_to_server.data = "Ok";
+            _mesPublisher.publish(msg_to_server);
 	    
             // Tip Up
-            HMIUpdateIcons (tipper);
-            tip_obj.request.direction = true;
-            _serviceTipper.call (tip_obj);
+            //HMIUpdateIcons (tipper);
+            //tip_obj.request.direction = true;
+            //_serviceTipper.call (tip_obj);
 
             // Tip Down
-            tip_obj.request.direction = false;
-            _serviceTipper.call (tip_obj);
-            HMIUpdateIcons (null);
+            //tip_obj.request.direction = false;
+            //_serviceTipper.call (tip_obj);
+            //HMIUpdateIcons (null);
 
-            /*
             // Checks if the battery is the critic level
             if (_check_battery) checkBattery (_batteryCritic, action);
             // Go to the robot
@@ -368,6 +367,7 @@ public:
             	usleep(5000);
             }
 
+            
             // Go to charge position
             perform_action_obj.request.action = "charge";
             _servicePerformAction.call (perform_action_obj);
@@ -375,7 +375,7 @@ public:
             std_msgs::String msg;
             msg.data = "Ok";
             _mesPublisher.publish(msg);
-            */
+            
 
             // Charges the battery until the threshold
             if (_check_battery)

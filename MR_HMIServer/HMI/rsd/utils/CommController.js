@@ -20,6 +20,9 @@ rsdNamespace.SAFE = '1';
 rsdNamespace.PROXIMITY_ALERT = '2';
 rsdNamespace.COLLIDING = '3';
 
+rsdNamespace.currentNodeMessage = 0;
+rsdNamespace.performActionMessage = 1;
+
 // rsdNamespace.ON = "1";
 // rsdNamespace.OFF = "2";
 // rsdNamespace.TIPPER= "1";
@@ -176,11 +179,12 @@ rsdNamespace.stopListening = function() {
 
 };
 
-rsdNamespace.sendMsg = function() {
+rsdNamespace.sendMsg = function( target ) {
 
     messageOut = {
         "messageType":"text_msg",
         "data": {
+            "target": target,
             "msg": $("#msg_data").val()
         }
     }

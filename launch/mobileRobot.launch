@@ -160,7 +160,7 @@
 	<group ns="MR_HMI">
 		<node pkg="mr_hmi" name="HMI" type="hmiNode.py" output="screen">
 			<param name="mr_hmi_status_sub" value="/mrHMI/status"/>
-			<param name="mr_hmi_run_pub" value="/mrHMI/run"/> <!-- XXX Maybe it should be value="/mrButton/run" ??? -->
+			<param name="mr_hmi_run_pub" value="/mrHMI/run"/>
 			<param name="deadman_pub" value="/fmSafe/deadman"/>
 			<param name="cmd_pub" value="/fmCommand/cmd_vel"/>
 			<param name="tipper_srv" value="/mrTipController/tip"/>

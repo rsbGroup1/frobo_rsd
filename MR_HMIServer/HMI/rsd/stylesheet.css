@@ -524,25 +524,21 @@
     left: 10px;
 }
 
-#message_field{
+.message_field{
     width: 100%;
-    margin-top: 50px;
+    margin-top: 30px;
 
     text-align: center;
 }
 
-#msg_label{
-    display: block;
-}
-
-#msg_data{
+.msg_data{
     display: inline-block;
     text-align: center;
     width: 280px;
     /*box-shadow: 0px 0px 5px black;*/
 }
 
-#msg_button{
+.msg_button{
     display: inline-block;
 }
 

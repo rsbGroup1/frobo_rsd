@@ -29,11 +29,15 @@ CMD_VEL_UPDATE_PUB  = "/fmCommand/cmd_vel"
 
 TIPPER_UPDATE_SRV       = "/mrTipController/tip"
 SET_CURRENT_NODE_SRV    = "/mrNavigationController/currentNode"
+PERFORM_ACTION_SRV      = "/mrNavigationController/performAction"
 
 WEB_SOCKET_HOSTNAME = "localhost"
 #WEB_SOCKET_HOSTNAME = "10.125.11.201"
 WEB_SOCKET_PORT     = "8888"
 address             = ""
+
+CURRENT_NODE_MESSAGE    = 0
+PERFORM_ACTION_MESSAGE  = 1
 
 direction   = 0
 button      = 0
@@ -46,8 +50,9 @@ pubModeUpdate   = 0
 pubCmdVelUpdate = 0
 pubActuationEna = 0
 
-srvTipper       = 0
-srvCurrentMode  = 0
+srvTipper           = 0
+srvCurrentMode      = 0
+srvPerformAction    = 0
 
 linearVelocity  = 0.4
 angularVelocity = 0.8
@@ -77,9 +82,10 @@ class MyServerProtocol( WebSocketServerProtocol ):
     def onMessage( self, payload, isBinary ):
         global pubModeUpdate
         global actuationEna
-        global linearVelocity
-        global angularVelocity
+        global linearVelocity, angularVelocity
         global logMessages
+        global STATUS_REQUEST, REMOTE_UPDATE, TEXT_FIELD_MSG
+        global CURRENT_NODE_MESSAGE, PERFORM_ACTION_MESSAGE
 
         if isBinary:
             print( "Binary message received: {0} bytes".format( len( payload ) ) )
@@ -138,19 +144,24 @@ class MyServerProtocol( WebSocketServerProtocol ):
                     if isManual == True:
                         setManualMode( False )
                         # publishCommand( pubModeUpdate, u"start" )
-                        publishCommand( pubModeUpdate, u"run" ) # XXX I have looked up the strings from mr_button
+                        publishCommand( pubModeUpdate, u"auto" )
                 elif rightButton == u"b":
                     stop_aThreads()
                     if isManual == True:
                         setManualMode( False )
                         # publishCommand( pubModeUpdate, u"stop" )
-                        publishCommand( pubModeUpdate, u"idle" ) # XXX I have looked up the strings from mr_button
+                        publishCommand( pubModeUpdate, u"idle" )
 
-            elif messageIn["messageType"] == TEXT_FIELD_MSG:
+            elif messageIn["messageType"] == TEXT_FIELD_MSG: # TODO Test it!
 
-                msg = messageIn["data"]["msg"] # TODO Test it!
-                if msg != "":
+                target  = messageIn["data"]["target"]
+                msg     = messageIn["data"]["msg"]
+
+                if msg != "" and target == CURRENT_NODE_MESSAGE:
                     sendCurrentNodeMessage( msg )
+
+                elif msg != "" and target == PERFORM_ACTION_MESSAGE:
+                    sendPerformActionMessage( msg )
 
     def onClose( self, wasClean, code, reason ):
         global actuationEna
@@ -279,6 +290,15 @@ def sendCurrentNodeMessage( msg ):
 
     srvCurrentMode( msg ) # Sends message (just ignore the response for now)
 
+def sendPerformActionMessage( msg ):
+    """ Method discription
+    Sends the message to the currentNode service
+    """
+
+    global srvPerformAction
+
+    srvPerformAction( msg ) # Sends message (just ignore the response for now)
+
 def logCallback( data ):
     """ Method Description
     Adds a timestamp to all received messages, and concatenates them to the
@@ -346,20 +366,15 @@ def initHMI():
 
     global MR_HMI_SUB
 
-    global MODE_UPDATE_PUB
-    global CMD_VEL_UPDATE_PUB
-    global ACTUATION_ENA_PUB
+    global MODE_UPDATE_PUB, CMD_VEL_UPDATE_PUB, ACTUATION_ENA_PUB
 
-    global TIPPER_UPDATE_SRV
+    global TIPPER_UPDATE_SRV, SET_CURRENT_NODE_SRV, PERFORM_ACTION_SRV
 
     global subStatus
 
-    global pubModeUpdate
-    # global pubTipperUpdate
-    global pubCmdVelUpdate
-    global pubActuationEna
+    global pubModeUpdate, pubCmdVelUpdate, pubActuationEna
 
-    global srvTipper
+    global srvTipper, srvCurrentMode, srvPerformAction
 
     global aThread
 
@@ -393,6 +408,8 @@ def initHMI():
     srvTipper = rospy.ServiceProxy( TIPPER_UPDATE_SRV, tip )
     rospy.wait_for_service(SET_CURRENT_NODE_SRV)
     srvCurrentMode = rospy.ServiceProxy( SET_CURRENT_NODE_SRV, setCurrentNode )
+    rospy.wait_for_service(PERFORM_ACTION_SRV)
+    srvPerformAction = rospy.ServiceProxy( PERFORM_ACTION_SRV, performAction )
 
     log.startLogging(sys.stdout)
 

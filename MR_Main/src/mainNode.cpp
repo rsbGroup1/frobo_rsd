@@ -227,7 +227,7 @@ public:
         if (msg.data != _hmi_msg_last)
         {
             boost::unique_lock<boost::mutex> lock (_runMutex);
-            if (msg.data == "start")
+            if (msg.data == "auto")
             {
                 _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
                 HMISendWarning("Auto mode enabled");
@@ -240,7 +240,7 @@ public:
                 HMIUpdateSafety(proximityAlert);
                 _mode = MANUAL;
             }
-            else if (msg.data == "stop") {
+            else if (msg.data == "idle") {
                 _criticalFaultSignalThread->interrupt();
                 HMISendError("Emergency stop");
                 HMIUpdateSafety(colliding);

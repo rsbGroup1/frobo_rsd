@@ -166,6 +166,7 @@ rsdNamespace.RegisterTouchSurfaces = function() {
 
         rsdNamespace.actuationEnable = false;
         rsdNamespace.activeButtonRight = 'a';
+	// console.log( "a" )
 
     }).on( "mouseup mouseout touchend", function() {
 
@@ -178,6 +179,7 @@ rsdNamespace.RegisterTouchSurfaces = function() {
 
         rsdNamespace.actuationEnable = false;
         rsdNamespace.activeButtonRight = 'b';
+	// console.log( "b" )
 
     }).on( "mouseup mouseout touchend", function() {
 

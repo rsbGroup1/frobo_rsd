@@ -156,18 +156,6 @@
 	</node>
 -->
 
-	<!-- MR HMI -->
-	<group ns="MR_HMI">
-		<node pkg="mr_hmi" name="HMI" type="hmiNode.py" output="screen">
-			<param name="mr_hmi_status_sub" value="/mrHMI/status"/>
-			<param name="mr_hmi_run_pub" value="/mrHMI/run"/>
-			<param name="deadman_pub" value="/fmSafe/deadman"/>
-			<param name="cmd_pub" value="/fmCommand/cmd_vel"/>
-			<param name="tipper_srv" value="/mrTipController/tip"/>
-			<param name="currentNode_srv" value="/mrNavigationController/currentNode"/>
-		</node>
-	</group>
-
 	<!-- MR Button -->
 	<group ns="MR_Button">
 		<node pkg="mr_button" name="Button" type="mr_button" output="screen">
@@ -336,5 +324,18 @@
 
 	<!-- Record Rosbag -->
 	<!--node pkg="rosbag" type="record" name="rosbag_record_all" args="/mrCamera/image"/-->
+
+	<!-- MR HMI -->
+	<group ns="MR_HMI">
+		<node pkg="mr_hmi" name="HMI" type="hmiNode.py" output="screen">
+			<param name="mr_hmi_status_sub" value="/mrHMI/status"/>
+			<param name="mr_hmi_run_pub" value="/mrHMI/run"/>
+			<param name="deadman_pub" value="/fmSafe/deadman"/>
+			<param name="cmd_pub" value="/fmCommand/cmd_vel"/>
+			<param name="tipper_srv" value="/mrTipController/tip"/>
+			<param name="currentNode_srv" value="/mrNavigationController/currentNode"/>
+			<param name="performAction_srv" value="/mrNavigationController/performAction"/>
+		</node>
+	</group>
 
 </launch>

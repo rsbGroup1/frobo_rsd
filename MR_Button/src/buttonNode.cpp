@@ -10,6 +10,7 @@
 #include <boost/thread.hpp>
 #include "std_msgs/Bool.h"
 #include "std_msgs/String.h"
+#include "mr_main/run.h"
 
 // Defines
 #define SSTR(x)                 dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
@@ -79,8 +80,8 @@ enum MODES
 };
 
 // Global var
+ros::ServiceClient _srvMrMainRun;
 serial::Serial* _serialConnection;
-ros::Publisher _buttonPublisher;
 MODES _errorMode = M_SAFE, _runMode = M_OFF;
 SynchronisedQueue<std::string> _writeQueue;
 boost::mutex _modeMutex, _errorMutex;
@@ -231,16 +232,16 @@ void readSerialThread()
 
             if(tempString.size() > 1 && tempString.find("run")!=std::string::npos)
             {
-                std_msgs::Bool msg;
-                msg.data = true;
-                _buttonPublisher.publish (msg);
+                mr_main::run msg;
+                msg.request.state = "run";
+                _srvMrMainRun.call(msg);
                 ROS_INFO ("Button run");
             }
             else if(tempString.find("idle")!=std::string::npos)
             {
-                std_msgs::Bool msg;
-                msg.data = false;
-                _buttonPublisher.publish (msg);
+                mr_main::run msg;
+                msg.request.state = "idle";
+                _srvMrMainRun.call(msg);
                 ROS_INFO ("Button idle");
             }
 
@@ -267,14 +268,14 @@ int main()
     ros::NodeHandle pNh ("~");
 
     // Topic names
-    std::string buttonPub, buttonSub, obstacleDetectorSub, mrMainModeSub;
-    pNh.param<std::string> ("mr_button_pub", buttonPub, "/mrButton/run");
+    std::string mrMainRunSrv, buttonSub, obstacleDetectorSub, mrMainModeSub;
     pNh.param<std::string> ("mr_button_sub", buttonSub, "/mrButton/status");
     pNh.param<std::string> ("mr_obstacle_detector", obstacleDetectorSub, "/mrObstacleDetector/status");
     pNh.param<std::string> ("mr_main_mode_sub", mrMainModeSub, "/mrMain/mode");
+    pNh.param<std::string> ("mr_main_run_srv", mrMainRunSrv, "/mrMain/run");
 
-    // Publisher
-    _buttonPublisher = nh.advertise<std_msgs::Bool> (buttonPub, 1);
+    // Service
+    _srvMrMainRun = nh.serviceClient<mr_main::run>(mrMainRunSrv);
 
     // Subscriber
     ros::Subscriber subButton = nh.subscribe (buttonSub, 1, buttonCallback);

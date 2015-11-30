@@ -162,8 +162,8 @@
 			<param name="baud_rate" value="115200"/>
 			<param name="port" value="/dev/serial/by-id/usb-Texas_Instruments_In-Circuit_Debug_Interface_0E203B83-if00"/>
 			<param name="mr_collision_sub" value="/mrObstacleDetector/status"/>
-			<param name="mr_button_pub" value="/mrButton/run"/>
 			<param name="mr_button_sub" value="/mrButton/status"/>
+			<param name="mr_main_run_srv" value="/mrMain/run"/>
 			<param name="mr_main_mode_sub" value="/mrMain/mode"/>
 		</node>
 	</group>
@@ -174,8 +174,6 @@
 			<param name="nav_perform_srv" value="MR_NavigationController/performAction"/>
 			<param name="nav_status_sub" value="mrNavigationController/status"/>
 			<param name="nav_currentnode_sub" value="mrNavigationController/currentNode"/>
-			<param name="button_sub" value="/mrButton/run"/>
-			<param name="hmi_sub" value="mrHMI/run"/>
 			<param name="hmi_pub" value="mrHMI/status"/>
 			<param name="tipper_srv" value="mrTipController/tip"/>
 			<param name="mes_pub" value="mrMESClient/msgToServer"/>
@@ -183,6 +181,7 @@
 			<param name="obstacle_detector_sub" value="/mrObstacleDetector/status"/>
 			<param name="battery_sub" value="/fmInformation/battery"/>
 			<param name="mode_pub" value="/mrMain/mode"/>
+			<param name="run_srv" value="/mrMain/run"/>
 			<param name="check_battery" value="false"/>
 			<param name="battery_low" value="12.4"/>
 			<param name="battery_critic" value="12.0"/>
@@ -329,7 +328,8 @@
 	<group ns="MR_HMI">
 		<node pkg="mr_hmi" name="HMI" type="hmiNode.py" output="screen">
 			<param name="mr_hmi_status_sub" value="/mrHMI/status"/>
-			<param name="mr_hmi_run_pub" value="/mrHMI/run"/>
+			<param name="mr_main_run_srv" value="/mrMain/run"/>
+			<param name="mr_main_mode_sub" value="/mrMain/mode"/>
 			<param name="deadman_pub" value="/fmSafe/deadman"/>
 			<param name="cmd_pub" value="/fmCommand/cmd_vel"/>
 			<param name="tipper_srv" value="/mrTipController/tip"/>

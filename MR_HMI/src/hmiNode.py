@@ -5,7 +5,7 @@ import json
 import jsonlib
 import sys
 import time, threading, datetime
-from autobahn.twisted.websocket import WebSocketServerProtocol, WebSocketServerFactory
+#from autobahn.twisted.websocket import WebSocketServerProtocol, WebSocketServerFactory
 from twisted.python import log
 from twisted.internet import reactor
 import rospy
@@ -15,6 +15,7 @@ from std_msgs.msg import String, Bool
 from mr_tip_controller.srv import *
 from mr_navigation_controller.srv import *
 from mr_hmi.srv import *
+from mr_main.srv import *
 
 # Global variables
 STATUS_REQUEST  	= "status_request"
@@ -96,8 +97,8 @@ class MyServerProtocol( WebSocketServerProtocol ):
         global CURRENT_NODE_MESSAGE, PERFORM_ACTION_MESSAGE
 	global IDLE, AUTO, MANUAL, robotState 
 
-        if isBinary:
-            print( "Binary message received: {0} bytes".format( len( payload ) ) )
+        #if isBinary:
+            #print( "Binary message received: {0} bytes".format( len( payload ) ) )
         #else:
             # print( "Text message received: {0}".format( payload.decode( 'utf8' ) ) )
 
@@ -106,8 +107,8 @@ class MyServerProtocol( WebSocketServerProtocol ):
             messageIn = jsonlib.read( messageInRaw )
 
             if messageIn["messageType"] == STATUS_REQUEST:
-
-                handleEmergencySituation( messageIn["data"]["resume"] ) # TODO Handle signal from the emergency switch
+		# TODO Handle signal from the emergency switch
+                handleEmergencySituation( messageIn["data"]["resume"] ) 
 
                 massageOutRaw = {
                     "messageType":"status_response",
@@ -162,8 +163,8 @@ class MyServerProtocol( WebSocketServerProtocol ):
                     if robotState != IDLE:
 		        sendMode( u"idle" )
 		        robotState = IDLE
-
-            elif messageIn["messageType"] == TEXT_FIELD_MSG: # TODO Test it!
+	    # TODO Test it!
+            elif messageIn["messageType"] == TEXT_FIELD_MSG: 
 
                 target  = messageIn["data"]["target"]
                 msg     = messageIn["data"]["msg"]
@@ -285,7 +286,7 @@ def drive( linearX, angularZ ):
     # print( "Msg published OK")
 
 def tipper( direction ):
-    """ Method discription
+    """ Method description
     Calls the tipping service with a direction specified with a boolean ergument
 
     True = up
@@ -294,25 +295,46 @@ def tipper( direction ):
 
     global srvTipper
 
-    srvTipper( direction ) # Requests tipping (just ignore the response for now)
+    try:
+    	resp = srvTipper( direction ) # Requests tipping (just ignore the response for now)
+    except rospy.ServiceException, e:
+        print "Service call failed: %s"%e
+
+def sendMode( mode ):
+    """ Method description
+    Calls the run service with a state
+    "idle", "run", "manual"
+    """
+    global srvMainRun
+
+    try:
+        resp = srvMainRun( mode ) # Sends run message (just ignore the response for now)
+    except rospy.ServiceException, e:
+        print "Service call failed: %s"%e
 
 def sendCurrentNodeMessage( msg ):
-    """ Method discription
+    """ Method description
     Sends the message to the currentNode service
     """
 
     global srvCurrentMode
 
-    srvCurrentMode( msg ) # Sends message (just ignore the response for now)
+    try:
+    	resp = srvCurrentMode( msg ) # Sends message (just ignore the response for now)    
+    except rospy.ServiceException, e:
+        print "Service call failed: %s"%e
 
 def sendPerformActionMessage( msg ):
-    """ Method discription
+    """ Method description
     Sends the message to the currentNode service
     """
 
     global srvPerformAction
 
-    srvPerformAction( msg ) # Sends message (just ignore the response for now)
+    try:
+    	resp = srvPerformAction( msg ) # Sends message (just ignore the response for now)
+    except rospy.ServiceException, e:
+        print "Service call failed: %s"%e
 
 def logCallback( data ):
     """ Method Description
@@ -322,7 +344,6 @@ def logCallback( data ):
     Input message format: "code,message,"
     Output message format: "code,timestamp,message,"
     """
-    #print(data.data)
     global logMessages
 
     s = "-"
@@ -338,18 +359,22 @@ def logCallback( data ):
         newData += temp[i] + d + logTimestamp + d + temp[i + 1] + d
 
     logMessages = logMessages + newData
+    #print data.data
+    #print newData
 
 def runModeCallback( data ):
-    if data == "auto":
-	logCallback( "Auto mode enabled" )
+    if data.data == "auto":
+	logCallback( String("1000,Auto mode enabled!,") )
 	robotState = AUTO
-    elif data == "idle":
-	logCallback( "Emergency stop" )
+	#sendMode("auto")
+    elif data.data == "idle":
+	logCallback( String("2000,Emergency stop!,") )
 	robotState = IDLE
-    elif data == "manual":
-	logCallback( "Manual mode" )
+	#sendMode("idle")
+    elif data.data == "manual":
+	logCallback( String("1000,Manual mode!,") )
 	robotState = MANUAL
-
+	#sendMode("manual")
 
 # TODO check if this works, and publishes the messages
 def handleEmergencySituation( signal ):
@@ -360,19 +385,13 @@ def handleEmergencySituation( signal ):
     if signal != er:
         er = signal
 
-    # TODO publish it here
-
+    # Publish
+    logCallback( String("3000,Emergency stop!,") )
+    robotState = IDLE
+    sendMode( u"idle" )
 
 def publishCommand( rosPublisher, command ):
     rosPublisher.publish( command )
-
-def sendMode( mode ):
-    """ Method discription
-    Calls the run service with a state
-    "idle", "run", "manual"
-    """
-    global srvMainRun
-    srvMainRun( mode ) # Requests tipping (just ignore the response for now)
 
 def stopServer():
     reactor.stop()
@@ -424,20 +443,19 @@ def initHMI():
     MR_HMI_SUB = rospy.get_param( "~mr_hmi_status_sub", MR_HMI_SUB )
     MR_MAIN_SUB = rospy.get_param( "~mr_main_mode_sub", MR_MAIN_SUB )
 
-    MODE_UPDATE_PUB = rospy.get_param( "~mr_main_run_srv", MODE_UPDATE_PUB )
     CMD_VEL_UPDATE_PUB = rospy.get_param( "~cmd_pub", CMD_VEL_UPDATE_PUB )
     ACTUATION_ENA_PUB = rospy.get_param( "~deadman_pub", ACTUATION_ENA_PUB )
 
     TIPPER_UPDATE_SRV = rospy.get_param( "~tipper_srv", TIPPER_UPDATE_SRV )
     SET_CURRENT_NODE_SRV = rospy.get_param( "~currentNode_srv", SET_CURRENT_NODE_SRV )
     PERFORM_ACTION_SRV = rospy.get_param( "~performAction_srv", PERFORM_ACTION_SRV )
+    MR_MAIN_RUN_SRV = rospy.get_param( "~mr_main_run_srv", MR_MAIN_RUN_SRV )
 
     # Register Subscribers
     subStatus = rospy.Subscriber( MR_HMI_SUB, String, logCallback )
     subRunMode = rospy.Subscriber( MR_MAIN_SUB, String, runModeCallback )
 
     # Register Publisers
-    pubModeUpdate = rospy.Publisher( MODE_UPDATE_PUB, String, queue_size = 10 )
     pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 10 )
     pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 10 )
 
@@ -455,12 +473,12 @@ def initHMI():
     log.startLogging(sys.stdout)
 
     # Establish WebSocket connection
-    factory = WebSocketServerFactory( u"ws://" + WEB_SOCKET_HOSTNAME + ":" + WEB_SOCKET_PORT, debug = False )
-    factory.protocol = MyServerProtocol
+    #factory = WebSocketServerFactory( u"ws://" + WEB_SOCKET_HOSTNAME + ":" + WEB_SOCKET_PORT, debug = False )
+    #factory.protocol = MyServerProtocol
     # factory.setProtocolOptions(maxConnections=2)
 
-    reactor.listenTCP( int(WEB_SOCKET_PORT), factory )
-    reactor.run()
+    #reactor.listenTCP( int(WEB_SOCKET_PORT), factory )
+    #reactor.run()
 
     print "We re good!"
 

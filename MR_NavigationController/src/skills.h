@@ -81,7 +81,7 @@ public:
      * checks battery level, if < @param threshold, we determine the robot is not charging
      * and execute the backup behaviour
      */
-    bool chargeDectectionAndBackupPlan(double battery_level, double threshold);
+    bool chargeDectectionAndBackupPlan(double* battery_level, double threshold);
 
     /**
      * waits for @param seconds

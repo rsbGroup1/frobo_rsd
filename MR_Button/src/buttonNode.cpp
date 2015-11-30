@@ -153,6 +153,7 @@ void changeMode()
                 break;
 
             default:
+                _writeQueue.enqueue ("manual\n");
                 break;
         }
     }
@@ -201,6 +202,8 @@ void mrMainModeCallback (std_msgs::String msg)
         changeRunMode (M_IDLE);
     else
 	changeRunMode (M_MANUAL);
+
+	std::cout << msg.data << std::endl;
 }
 
 void writeSerialThread()
@@ -233,9 +236,9 @@ void readSerialThread()
             if(tempString.size() > 1 && tempString.find("run")!=std::string::npos)
             {
                 mr_main::run msg;
-                msg.request.state = "run";
+                msg.request.state = "auto";
                 _srvMrMainRun.call(msg);
-                ROS_INFO ("Button run");
+                ROS_INFO ("Button auto");
             }
             else if(tempString.find("idle")!=std::string::npos)
             {

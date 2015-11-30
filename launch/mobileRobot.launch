@@ -147,14 +147,14 @@
 
 
 	<!-- MR TIP CONTROLLER -->
-<!--
+
 	<node pkg="mr_tip_controller" name="mr_tip_controller" type="mr_tip_controller" output="screen">
 		<param name="baud_rate" value="115200"/>
 		<param name="port" value="/dev/serial/by-id/usb-Arduino_Srl_Arduino_Uno_7543932393535120F172-if00"/>
 		<param name="debug" value="true"/>
 		<param name="tipper_srv" value="/mrTipController/tip"/>
 	</node>
--->
+
 
 	<!-- MR Button -->
 	<group ns="MR_Button">
@@ -219,8 +219,8 @@
 			<param name="pub_line" value="/mrCameraProcessing/line" />
 			<param name="pub_image" value="/mrCameraProcessing/output_image" />
 			<param name="srv_enable" value="/mrCameraProcessing/enable" />
-			<param name="QR_min_white_area" value= "2000.0" />
-			<param name="QR_min_black_area" value= "11" />
+			<param name="QR_min_white_area" value= "600.0" />
+			<param name="QR_min_black_area" value= "2" />
 			<param name="QR_grayscale_threshold" value= "162.0" />
 		</node>
 	</group>

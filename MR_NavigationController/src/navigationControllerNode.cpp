@@ -245,7 +245,7 @@ public:
         wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::linearMove, &skills_, 0.6));
         wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::angularMove, &skills_, 90));
 	wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::lineUntilRelative, &skills_, 0.11));
-        wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.15));
+        wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.20));
         wc1_TO_wc1_conveyor.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc1_conveyor"));
 
         std::vector<std::function<void() >> wc1_conveyor_TO_wc1_robot;
@@ -355,15 +355,15 @@ public:
         box_TO_pre_bricks.push_back (std::bind (&Graph::setCurrentNode, graph_, "pre_bricks"));
 
         std::vector<std::function<void() >> pre_bricks_TO_box;
-        pre_bricks_TO_box.push_back (std::bind (&Skills::goToFreePosition, &skills_, -0.5, -1.5 , 1.3));
+        //pre_bricks_TO_box.push_back (std::bind (&Skills::goToFreePosition, &skills_, -0.5, -1.5 , 1.3));
         pre_bricks_TO_box.push_back (std::bind (&Graph::setCurrentNode, graph_, "box"));
 
 
         std::vector<std::function<void() >> pre_bricks_TO_bricks;
-        pre_bricks_TO_bricks.push_back (std::bind (&Skills::linearMove, &skills_, 0.15));
+        pre_bricks_TO_bricks.push_back (std::bind (&Skills::linearMove, &skills_, 0.2));
         pre_bricks_TO_bricks.push_back (std::bind (&Graph::setCurrentNode, graph_, "bricks"));
         std::vector<std::function<void() >> bricks_TO_pre_bricks;
-        bricks_TO_pre_bricks.push_back (std::bind (&Skills::linearMove, &skills_, -0.15));
+        bricks_TO_pre_bricks.push_back (std::bind (&Skills::linearMove, &skills_, -0.2));
         bricks_TO_pre_bricks.push_back (std::bind (&Graph::setCurrentNode, graph_, "pre_bricks"));
 
 
@@ -379,7 +379,7 @@ public:
         std::vector<std::function<void() >> pre_charge_TO_charge;
         //pre_charge_TO_charge.push_back (std::bind (&Skills::linearMove, &skills_, 0.1));
         //pre_charge_TO_charge.push_back (std::bind (&Skills::wait, &skills_, 5.0));
-        pre_charge_TO_charge.push_back (std::bind (&Skills::chargeDectectionAndBackupPlan, &skills_, battery_level_, 13.0));
+        pre_charge_TO_charge.push_back (std::bind (&Skills::chargeDectectionAndBackupPlan, &skills_, &battery_level_, 12.8));
         pre_charge_TO_charge.push_back (std::bind (&Graph::setCurrentNode, graph_, "charge"));
 
         std::vector<std::function<void() >> charge_TO_pre_charge;
@@ -490,7 +490,7 @@ public:
     void batteryCallback (std_msgs::Float32 battery)
     {
         battery_level_ = battery.data;
-        // std::cout<<battery_level_<<std::endl;
+       // std::cout<<battery_level_<<std::endl;
     }
 
 private:

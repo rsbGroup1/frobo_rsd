@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 
 class Vertex;
 
@@ -34,12 +35,12 @@ public:
     /**
      * Return the parent of the node
      */
-    Node* getParent();
+	Node* getParent();
 
     /**
      * Set the parent of the node
      */
-    void setParent (Node* parent);
+	void setParent (Node* parent);
 
     /**
      * Returns a vector with all the nodes that are the children of
@@ -52,7 +53,6 @@ public:
      * of node
      */
     std::vector<Node*> getParentsNodes();
-
 
 private:
     std::string name_;

@@ -33,15 +33,6 @@
 #define RAD_TO_DEG	(180.0/M_PI)
 #define SSTR(x)		dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
 
-/**
- * Skill struct
- */
-struct Skill
-{
-    //
-};
-
-
 class NavigationController
 {
 public:
@@ -192,7 +183,7 @@ public:
     {
         // Search in graph how to perform action
         solution_ = graph_->bfs (req.action.c_str(), search_limit_);
-
+		
         // Execute skills
         for (auto & skill : solution_)
             skill();
@@ -395,12 +386,6 @@ public:
         charge_TO_pre_charge.push_back (std::bind (&Skills::linearMove, &skills_, -0.1));
         charge_TO_pre_charge.push_back (std::bind (&Graph::setCurrentNode, graph_, "pre_charge"));
 
-        std::vector<std::function<void() >> line_start_TO_box;
-        line_start_TO_box.push_back (std::bind (&Skills::setInitialPoseAMCL, &skills_, 0.1, 0.7 , 1.3));
-        line_start_TO_box.push_back (std::bind (&Skills::goToFreePosition, &skills_, 0.1, 0.7 , -1.9));
-        line_start_TO_box.push_back (std::bind (&Skills::goToFreePosition, &skills_, -0.5, -1.5 , -1.9));
-        line_start_TO_box.push_back (std::bind (&Graph::setCurrentNode, graph_, "box"));
-
         // line following charging
         std::vector<std::function<void() >> box_TO_pre_charge_line;
         box_TO_pre_charge_line.push_back (std::bind (&Skills::goToFreePosition, &skills_, -0.56, -2.41 , -0.2));
@@ -447,7 +432,7 @@ public:
         graph_->addVertex ("wc3_robot", "wc_exit", 1, wc3_robot_TO_wc_exit);
 
         graph_->addVertex ("line_end", "box", 1, line_end_TO_box);
-	graph_->addVertex ("line_end", "line_start", 1, line_end_TO_line_start);
+		graph_->addVertex ("line_end", "line_start", 1, line_end_TO_line_start);
         graph_->addVertex ("box", "line_start", 1, box_TO_line_start);
 
         graph_->addVertex ("box", "pre_charge", 1, box_TO_pre_charge);
@@ -462,7 +447,6 @@ public:
         graph_->addVertex ("pre_bricks", "bricks", 1, pre_bricks_TO_bricks);
         graph_->addVertex ("bricks", "pre_bricks", 1, bricks_TO_pre_bricks);
 
-        graph_->addVertex ("line_start", "box", 1, line_start_TO_box); // for Testing
         // alternative charge behavior
         graph_->addVertex ("box", "pre_charge_line", 1, box_TO_pre_charge_line);
         graph_->addVertex ("pre_charge_line", "charge_line", 1, pre_charge_line_TO_charge_line);

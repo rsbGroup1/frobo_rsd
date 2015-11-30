@@ -105,11 +105,7 @@ std::vector<std::function<void() >> Graph::bfs (const std::string node_end_name,
     Node* current_node;
     int counter;
 
-
-    // Clear the BFS
-    for (auto & node_to_clean : nodes_)
-        node_to_clean.setParent (NULL);
-
+    // Initialize the BFS
     open_list.clear();
     closed_list.clear();
     solution.clear();
@@ -124,7 +120,9 @@ std::vector<std::function<void() >> Graph::bfs (const std::string node_end_name,
     }
 
     // Add the current node to the open list
-    open_list.push_back (findNode (current_node_));
+    Node* first_node = new Node(current_node_);
+	first_node->setParent(NULL);
+	open_list.push_back (first_node);
 
     // BFS
     while (!open_list.empty() && ++counter != number_limit && solution.empty())
@@ -138,33 +136,37 @@ std::vector<std::function<void() >> Graph::bfs (const std::string node_end_name,
         if (current_node->getName() == node_end_name)
         {
             // Until the original node is not reached
+			std::cout << "    ";
             do
-            {
+            {				
                 for (auto & vertex : verteces_)
                 {
-                    if (vertex.getNodeEnd() == current_node &&
-                            vertex.getNodeStart() == current_node->getParent())
+                    if (vertex.getNodeEnd()->getName() == current_node->getName() &&
+                            vertex.getNodeStart()->getName() == current_node->getParent()->getName())
                     {
-                        for (unsigned char i = vertex.getSkills()->size(); i > 0; i--)
+						std::cout << vertex.getNodeEnd()->getName() << " << ";
+                        for (auto i = vertex.getSkills()->size(); i > 0; i--)
                             solution.insert (solution.begin(), vertex.getSkills()->at (i - 1));
+						
                     }
                 }
-
                 current_node = current_node->getParent();
             }
-            while (current_node->getParent() != NULL);   // The parent of the first node is NULL
+            while (current_node->getParent() != NULL);   // The parent of the first node is "no_parent"
+			std::cout << current_node->getName() << std::endl;
         }
         else
         {
             // Add children
-            for (auto node_connected : current_node->getChildrenNodes())
+            for (auto node_connected : findNode(current_node->getName())->getChildrenNodes())
             {
                 bool new_node = true;
 
                 // Check if it exists in the closed list
-                for (auto & node_in_closed_list : closed_list)
-                {
-                    if (node_in_closed_list->getName() == node_connected->getName())
+                for (auto & node_in_closed_list : closed_list) 
+				{
+                    if (node_in_closed_list->getName() == node_connected->getName()
+						&& node_in_closed_list->getParent()->getName() == current_node->getName())
                     {
                         new_node = false;
                     }
@@ -173,8 +175,9 @@ std::vector<std::function<void() >> Graph::bfs (const std::string node_end_name,
                 // If it is not, set the parent and put it in the open list
                 if (new_node == true)
                 {
-                    node_connected->setParent (current_node);
-                    open_list.push_back (node_connected);
+					Node* node_to_add = new Node(node_connected->getName());
+                    node_to_add->setParent (current_node);
+                    open_list.push_back (node_to_add);
                 }
             }
         }

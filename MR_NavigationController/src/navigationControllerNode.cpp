@@ -254,7 +254,7 @@ public:
         wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::linearMove, &skills_, 0.6));
         wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::angularMove, &skills_, 90));
 	wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::lineUntilRelative, &skills_, 0.11));
-        wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.15));
+        wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.20));
         wc1_TO_wc1_conveyor.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc1_conveyor"));
 
         std::vector<std::function<void() >> wc1_conveyor_TO_wc1_robot;

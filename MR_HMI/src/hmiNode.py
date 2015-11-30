@@ -143,14 +143,14 @@ class MyServerProtocol( WebSocketServerProtocol ):
                     stop_aThreads()
                     if isManual == True:
                         setManualMode( False )
-                        # publishCommand( pubModeUpdate, u"start" )
-                        publishCommand( pubModeUpdate, u"auto" )
+                        #publishCommand( pubModeUpdate, u"start" )
+                    publishCommand( pubModeUpdate, u"auto" )
                 elif rightButton == u"b":
                     stop_aThreads()
                     if isManual == True:
                         setManualMode( False )
-                        # publishCommand( pubModeUpdate, u"stop" )
-                        publishCommand( pubModeUpdate, u"idle" )
+                        #publishCommand( pubModeUpdate, u"stop" )
+                    publishCommand( pubModeUpdate, u"idle" )
 
             elif messageIn["messageType"] == TEXT_FIELD_MSG: # TODO Test it!
 
@@ -338,6 +338,7 @@ def handleEmergencySituation( signal ):
 
 def publishCommand( rosPublisher, command ):
     rosPublisher.publish( command )
+    print "fuck off"
 
 def stopServer():
     reactor.stop()
@@ -394,6 +395,7 @@ def initHMI():
 
     TIPPER_UPDATE_SRV = rospy.get_param( "~tipper_srv", TIPPER_UPDATE_SRV )
     SET_CURRENT_NODE_SRV = rospy.get_param( "~currentNode_srv", SET_CURRENT_NODE_SRV )
+    PERFORM_ACTION_SRV = rospy.get_param( "~performAction_srv", PERFORM_ACTION_SRV )
 
     # Register Subscribers
     subStatus = rospy.Subscriber( MR_HMI_SUB, String, logCallback )
@@ -403,12 +405,13 @@ def initHMI():
     pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 10 )
     pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 10 )
 
+    
     # Service Definitions
-    rospy.wait_for_service(TIPPER_UPDATE_SRV)
+    #rospy.wait_for_service(TIPPER_UPDATE_SRV)
     srvTipper = rospy.ServiceProxy( TIPPER_UPDATE_SRV, tip )
-    rospy.wait_for_service(SET_CURRENT_NODE_SRV)
+    #rospy.wait_for_service(SET_CURRENT_NODE_SRV)
     srvCurrentMode = rospy.ServiceProxy( SET_CURRENT_NODE_SRV, setCurrentNode )
-    rospy.wait_for_service(PERFORM_ACTION_SRV)
+    #rospy.wait_for_service(PERFORM_ACTION_SRV)
     srvPerformAction = rospy.ServiceProxy( PERFORM_ACTION_SRV, performAction )
 
     log.startLogging(sys.stdout)
@@ -420,6 +423,8 @@ def initHMI():
 
     reactor.listenTCP( int(WEB_SOCKET_PORT), factory )
     reactor.run()
+
+    print "We re good!"
 
     while not rospy.is_shutdown():
         rospy.spin()

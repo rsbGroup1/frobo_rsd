@@ -299,7 +299,7 @@
 	<node pkg="tf" type="static_transform_publisher" name="imu_transform" args="0.10 0 0 0 0 0 base_link imu_link 50"  >
 	</node>
 
-	<node pkg="map_server" type="map_server" name="map_server" args="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/maps/frontal_map_big_edited.yaml" output="screen"/>
+	<node pkg="map_server" type="map_server" name="map_server" args="$(find mr_free_navigation_setup)/maps/frontal_map_big_edited.yaml" output="screen"/>
 
 
 <!--
@@ -325,13 +325,13 @@
 
 
 	<node pkg="move_base" name="move_base" type="move_base" output="screen">
-		<rosparam file="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/move_base_config/move_base_params.yaml" command="load" />
+		<rosparam file="$(find mr_free_navigation_setup)/move_base_config/move_base_params.yaml" command="load" />
     		<param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS " />
-		<rosparam file="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/move_base_config/costmap_common_params.yaml" command="load" ns="global_costmap"/>
-		<rosparam file="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/move_base_config/costmap_common_params.yaml" command="load" ns="local_costmap"/>
-		<rosparam file="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/move_base_config/local_costmap_params.yaml" command="load"/>
-		<rosparam file="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/move_base_config/global_costmap_params.yaml" command="load"/>
-		<rosparam file="/home/frobit_pro_group1/roswork/src/frobo_rsd/Navigation_Setup/move_base_config/dwa_local_planner_params.yaml" command="load"/>
+		<rosparam file="$(find mr_free_navigation_setup)/move_base_config/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+		<rosparam file="$(find mr_free_navigation_setup)/move_base_config/costmap_common_params.yaml" command="load" ns="local_costmap"/>
+		<rosparam file="$(find mr_free_navigation_setup)/move_base_config/local_costmap_params.yaml" command="load"/>
+		<rosparam file="$(find mr_free_navigation_setup)/move_base_config/global_costmap_params.yaml" command="load"/>
+		<rosparam file="$(find mr_free_navigation_setup)/move_base_config/dwa_local_planner_params.yaml" command="load"/>
 	</node>
 
 	<!-- Record Rosbag -->

@@ -167,6 +167,7 @@ public:
             if (already_here)
             {
                 ROS_INFO ("I am already here!");
+				return true;
             }
             else
             {

@@ -2,14 +2,17 @@ cmake_minimum_required(VERSION 2.8.3)
 project(mr_main)
 
 ## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs geometry_msgs message_generation genmsg mr_navigation_controller mr_tip_controller)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs geometry_msgs genmsg message_generation mr_navigation_controller mr_tip_controller)
 
 set(CMAKE_CXX_FLAGS "-std=c++11")
 
 # Service files
-#add_service_files(
-	#FILES
-#)
+add_service_files(
+	DIRECTORY srv
+	FILES
+	run.srv
+)
+
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
@@ -31,5 +34,5 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencpp ${catkin_EXPORTED_TARGETS})
 
-MESSAGE(${PROJECT_NAME} " Done!")
+MESSAGE(${PROJECT_NAME} "Done!")
 

@@ -388,7 +388,7 @@ public:
         std::vector<std::function<void() >> pre_charge_TO_charge;
         //pre_charge_TO_charge.push_back (std::bind (&Skills::linearMove, &skills_, 0.1));
         //pre_charge_TO_charge.push_back (std::bind (&Skills::wait, &skills_, 5.0));
-        pre_charge_TO_charge.push_back (std::bind (&Skills::chargeDectectionAndBackupPlan, &skills_, battery_level_, 13.0));
+        pre_charge_TO_charge.push_back (std::bind (&Skills::chargeDectectionAndBackupPlan, &skills_, &battery_level_, 12.8));
         pre_charge_TO_charge.push_back (std::bind (&Graph::setCurrentNode, graph_, "charge"));
 
         std::vector<std::function<void() >> charge_TO_pre_charge;
@@ -506,7 +506,7 @@ public:
     void batteryCallback (std_msgs::Float32 battery)
     {
         battery_level_ = battery.data;
-        // std::cout<<battery_level_<<std::endl;
+       // std::cout<<battery_level_<<std::endl;
     }
 
 private:

@@ -198,18 +198,24 @@ void Skills::enableDeadman()
     }
 }
 
-bool Skills::chargeDectectionAndBackupPlan(double & battery_level, double threshold)
+bool Skills::chargeDectectionAndBackupPlan(double* battery_level, double threshold)
 {   
 	bool keep_trying = true;
-	int tries = 0;	
+	int tries = 0;
+	std::cout << "battery START: " << *battery_level << std::endl;
+		
 	while (keep_trying){
 //	if (battery_level < threshold){
 		//linearMove(-0.2);
 		goToFreePosition(-0.56, -2.41 , -0.2);
 		lineUntilLidar(0.45);
 		linearMove(0.25);
-		wait(5.0);
-		if (battery_level > threshold || tries > 1) keep_trying = false;
+		wait(10.0);
+		ros::spinOnce();
+		wait(10.0);
+		ros::spinOnce();
+		std::cout << "battery: " << *battery_level << std::endl;
+		if (*battery_level > threshold || tries > 1) keep_trying = false;
 		else {
 			tries++;
 			linearMove(-0.25);			

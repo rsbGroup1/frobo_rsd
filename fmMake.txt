@@ -39,3 +39,4 @@
 /frobo_rsd/MR_Button
 /frobo_rsd/MR_FrobitInterface
 /frobo_rsd/MR_IncidentHandler
+/frobo_rsd/MR_FreeNavigationSetup

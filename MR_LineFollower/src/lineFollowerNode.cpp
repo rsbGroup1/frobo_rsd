@@ -45,6 +45,7 @@ public:
         pNh_.param<int> ("reference_point_x", reference_point_x_, 320);
         pNh_.param<int> ("reference_point_y", reference_point_y_, 240);
         pNh_.param<double> ("robot_speed_lidar", robot_speed_lidar_, 0.2);
+	pNh_.param<double> ("robot_turn_speed_lidar", max_theta_lidar, 0.3);
         pNh_.param<double> ("robot_speed_rel", robot_speed_rel_, 0.2);
         pNh_.param<double> ("robot_speed_qr", robot_speed_qr_, 0.4);
         pNh_.param<double> ("robot_speed_qr_slow", robot_speed_qr_slow_, 0.05);
@@ -348,6 +349,8 @@ public:
 
         // Set robot speed
         robot_speed_ = robot_speed_lidar_;
+	double old_turn_speed = max_theta;
+	max_theta = max_theta_lidar;
 
         // Waits until it finds it or the time is more than the limit
         lidar_detected_ = 99.0;
@@ -383,6 +386,7 @@ public:
             srv_mr_camera_processing_enable_.call (enableCameraProcessing);
             rate_.sleep();
         }
+	max_theta = old_turn_speed;
 
         // Ends!
         return true;
@@ -492,7 +496,7 @@ private:
     double integral_;
     double lidar_distance_;
     double relative_distance_;
-    double max_theta, max_theta_slow ;
+    double max_theta, max_theta_slow, max_theta_lidar ;
     // Reference point
     int reference_point_x_;
     int reference_point_y_;

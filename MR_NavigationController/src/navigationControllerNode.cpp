@@ -271,7 +271,7 @@ public:
 	wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
         wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_1_exit"));
 	wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
-	wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::linearMove, &skills_, 0.7));
+	wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::linearMove, &skills_, 0.5));
         wc1_robot_TO_wc_exit.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc_exit"));
 		
 

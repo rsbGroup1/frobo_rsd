@@ -228,6 +228,7 @@ public:
         }
 
         res.status = _run_msg_last;
+	return true;
     }
 
     /**
@@ -304,14 +305,14 @@ public:
             _mesPublisher.publish(msg_to_server);
 	    
             // Tip Up
-            //HMIUpdateIcons (tipper);
-            //tip_obj.request.direction = true;
-            //_serviceTipper.call (tip_obj);
+            HMIUpdateIcons (tipper);
+            tip_obj.request.direction = true;
+            _serviceTipper.call (tip_obj);
 
             // Tip Down
-            //tip_obj.request.direction = false;
-            //_serviceTipper.call (tip_obj);
-            //HMIUpdateIcons (null);
+            tip_obj.request.direction = false;
+            _serviceTipper.call (tip_obj);
+            HMIUpdateIcons (null);
 
             // Checks if the battery is the critic level
             if (_check_battery) checkBattery (_batteryCritic, action);
@@ -517,7 +518,7 @@ public:
                 critical_fault.data = false;
                 critical_fault.header.stamp = ros::Time::now();
                 _criticalFaultSignalPublisher.publish (critical_fault);
-                std::cout << "Interrupted!!" << std::endl;
+                //std::cout << "Interrupted!!" << std::endl;
                 break;
             }
         }

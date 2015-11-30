@@ -202,8 +202,6 @@ void mrMainModeCallback (std_msgs::String msg)
         changeRunMode (M_IDLE);
     else
 	changeRunMode (M_MANUAL);
-
-	std::cout << msg.data << std::endl;
 }
 
 void writeSerialThread()

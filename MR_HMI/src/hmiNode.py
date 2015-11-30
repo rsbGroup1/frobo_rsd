@@ -5,7 +5,7 @@ import json
 import jsonlib
 import sys
 import time, threading, datetime
-#from autobahn.twisted.websocket import WebSocketServerProtocol, WebSocketServerFactory
+from autobahn.twisted.websocket import WebSocketServerProtocol, WebSocketServerFactory
 from twisted.python import log
 from twisted.internet import reactor
 import rospy
@@ -73,6 +73,8 @@ AUTO			= 1
 MANUAL 			= 2
 robotState 		= 0
 
+logOnceBool		= False
+
 # Class
 class MyServerProtocol( WebSocketServerProtocol ):
 
@@ -102,11 +104,11 @@ class MyServerProtocol( WebSocketServerProtocol ):
         #else:
             # print( "Text message received: {0}".format( payload.decode( 'utf8' ) ) )
 
-            messageInRaw = payload.decode('utf8')
+        messageInRaw = payload.decode('utf8')
 
-            messageIn = jsonlib.read( messageInRaw )
+        messageIn = jsonlib.read( messageInRaw )
 
-            if messageIn["messageType"] == STATUS_REQUEST:
+        if messageIn["messageType"] == STATUS_REQUEST:
 		# TODO Handle signal from the emergency switch
                 handleEmergencySituation( messageIn["data"]["resume"] ) 
 
@@ -123,7 +125,7 @@ class MyServerProtocol( WebSocketServerProtocol ):
 
                 logMessages = ""
 
-            elif messageIn["messageType"] == REMOTE_UPDATE:
+        elif messageIn["messageType"] == REMOTE_UPDATE:
 
                 leftButton = messageIn["data"]["left"]
                 rightButton = messageIn["data"]["right"]
@@ -153,7 +155,7 @@ class MyServerProtocol( WebSocketServerProtocol ):
                     stop_aThreads()
                     if isManual == True:
                         setManualMode( False )
-                    if robotState != IDLE:
+                    if robotState != AUTO:
 	    	        sendMode( u"auto" )
 		        robotState = AUTO
                 elif rightButton == u"b":
@@ -163,17 +165,19 @@ class MyServerProtocol( WebSocketServerProtocol ):
                     if robotState != IDLE:
 		        sendMode( u"idle" )
 		        robotState = IDLE
-	    # TODO Test it!
-            elif messageIn["messageType"] == TEXT_FIELD_MSG: 
+	# TODO Test it!
+        '''elif messageIn["messageType"] == TEXT_FIELD_MSG: 
 
                 target  = messageIn["data"]["target"]
                 msg     = messageIn["data"]["msg"]
 
-                if msg != "" and target == CURRENT_NODE_MESSAGE:
-                    sendCurrentNodeMessage( msg )
+ 		#print msg
+ 		#print target
 
+                if msg != "" and target == CURRENT_NODE_MESSAGE:
+                    endCurrentNodeMessage( msg )
                 elif msg != "" and target == PERFORM_ACTION_MESSAGE:
-                    sendPerformActionMessage( msg )
+                    sendPerformActionMessage( msg )'''
 
     def onClose( self, wasClean, code, reason ):
         global actuationEna
@@ -307,6 +311,7 @@ def sendMode( mode ):
     """
     global srvMainRun
 
+    #print mode
     try:
         resp = srvMainRun( mode ) # Sends run message (just ignore the response for now)
     except rospy.ServiceException, e:
@@ -319,6 +324,7 @@ def sendCurrentNodeMessage( msg ):
 
     global srvCurrentMode
 
+    print msg
     try:
     	resp = srvCurrentMode( msg ) # Sends message (just ignore the response for now)    
     except rospy.ServiceException, e:
@@ -331,6 +337,7 @@ def sendPerformActionMessage( msg ):
 
     global srvPerformAction
 
+    print msg
     try:
     	resp = srvPerformAction( msg ) # Sends message (just ignore the response for now)
     except rospy.ServiceException, e:
@@ -344,7 +351,9 @@ def logCallback( data ):
     Input message format: "code,message,"
     Output message format: "code,timestamp,message,"
     """
-    global logMessages
+    global logMessages, logOnceBool
+
+    #if logOnceBool:
 
     s = "-"
     d = ","
@@ -356,13 +365,16 @@ def logCallback( data ):
 
     newData = ""
     for i in range( 0, len( temp ), 2 ):
-        newData += temp[i] + d + logTimestamp + d + temp[i + 1] + d
+	newData += temp[i] + d + logTimestamp + d + temp[i + 1] + d
 
     logMessages = logMessages + newData
     #print data.data
     #print newData
 
+    #logOnceBool =  not logOnceBool
+
 def runModeCallback( data ):
+    #print "runModeCallback: " + data.data
     if data.data == "auto":
 	logCallback( String("1000,Auto mode enabled!,") )
 	robotState = AUTO
@@ -386,9 +398,9 @@ def handleEmergencySituation( signal ):
         er = signal
 
     # Publish
-    logCallback( String("3000,Emergency stop!,") )
-    robotState = IDLE
-    sendMode( u"idle" )
+    #logCallback( String("3000,Emergency stop!,") )
+    #robotState = IDLE
+    #sendMode( u"idle" )
 
 def publishCommand( rosPublisher, command ):
     rosPublisher.publish( command )
@@ -473,12 +485,12 @@ def initHMI():
     log.startLogging(sys.stdout)
 
     # Establish WebSocket connection
-    #factory = WebSocketServerFactory( u"ws://" + WEB_SOCKET_HOSTNAME + ":" + WEB_SOCKET_PORT, debug = False )
-    #factory.protocol = MyServerProtocol
+    factory = WebSocketServerFactory( u"ws://" + WEB_SOCKET_HOSTNAME + ":" + WEB_SOCKET_PORT, debug = False )
+    factory.protocol = MyServerProtocol
     # factory.setProtocolOptions(maxConnections=2)
 
-    #reactor.listenTCP( int(WEB_SOCKET_PORT), factory )
-    #reactor.run()
+    reactor.listenTCP( int(WEB_SOCKET_PORT), factory )
+    reactor.run()
 
     print "We re good!"
 

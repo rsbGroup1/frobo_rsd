@@ -29,7 +29,7 @@ ACTUATION_ENA_PUB   	= "/fmSafe/deadman" # a BoolStamped msg. deadman_msg.data =
 CMD_VEL_UPDATE_PUB  	= "/fmCommand/cmd_vel"
 
 TIPPER_UPDATE_SRV   	= "/mrTipController/tip"
-SET_CURRENT_NODE_SRV 	= "/mrNavigationController/currentNode"
+SET_CURRENT_NODE_SRV 	= "/mrNavigationController/setCurrentNode"
 PERFORM_ACTION_SRV  	= "/mrNavigationController/performAction"
 MR_MAIN_RUN_SRV     	= "/mrMain/run"
 
@@ -97,7 +97,7 @@ class MyServerProtocol( WebSocketServerProtocol ):
         global logMessages
         global STATUS_REQUEST, REMOTE_UPDATE, TEXT_FIELD_MSG
         global CURRENT_NODE_MESSAGE, PERFORM_ACTION_MESSAGE
-	global IDLE, AUTO, MANUAL, robotState 
+        global IDLE, AUTO, MANUAL, robotState 
 
         #if isBinary:
             #print( "Binary message received: {0} bytes".format( len( payload ) ) )
@@ -166,18 +166,18 @@ class MyServerProtocol( WebSocketServerProtocol ):
 		        sendMode( u"idle" )
 		        robotState = IDLE
 	# TODO Test it!
-        '''elif messageIn["messageType"] == TEXT_FIELD_MSG: 
+        elif messageIn["messageType"] == TEXT_FIELD_MSG: 
 
-                target  = messageIn["data"]["target"]
-                msg     = messageIn["data"]["msg"]
+            target  = messageIn["data"]["target"]
+            text_msg = messageIn["data"]["msg"]
 
- 		#print msg
- 		#print target
+            #print text_msg
+            #print target
 
-                if msg != "" and target == CURRENT_NODE_MESSAGE:
-                    endCurrentNodeMessage( msg )
-                elif msg != "" and target == PERFORM_ACTION_MESSAGE:
-                    sendPerformActionMessage( msg )'''
+            if text_msg != "" and target == CURRENT_NODE_MESSAGE:
+                sendCurrentNodeMessage( text_msg )
+            elif text_msg != "" and target == PERFORM_ACTION_MESSAGE:
+                sendPerformActionMessage( text_msg )
 
     def onClose( self, wasClean, code, reason ):
         global actuationEna
@@ -481,6 +481,8 @@ def initHMI():
     srvPerformAction = rospy.ServiceProxy( PERFORM_ACTION_SRV, performAction )
     #rospy.wait_for_service(MR_MAIN_RUN_SRV )
     srvMainRun = rospy.ServiceProxy( MR_MAIN_RUN_SRV , run )
+
+    print "Services ready!"
 
     log.startLogging(sys.stdout)
 

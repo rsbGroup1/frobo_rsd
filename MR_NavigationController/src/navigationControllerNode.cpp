@@ -109,13 +109,13 @@ public:
             localisationFile >> p.pose.pose.orientation.z;
             localisationFile >> p.pose.pose.orientation.w;
             for(int i = 0; i < 36 ;i+=7){
-		p.pose.covariance[i] = 0.3;
-	    }
+		          p.pose.covariance[i] = 0.3;
+            }
             p.header.frame_id = "map";
 
             std::cout << "FROM LOADED FILE: " << p.pose.pose.position.x << " " << p.pose.pose.position.y << " " << p.pose.pose.orientation.x << " " << p.pose.pose.orientation.y << " " << p.pose.pose.orientation.z << " "  << p.pose.pose.orientation.w << std::endl;
 
-            ros::Duration d (3, 0);
+            ros::Duration d (5, 0);
             d.sleep();
             pub_initialize_.publish (p);
 
@@ -125,6 +125,8 @@ public:
         {
             // global initialization
             ros::ServiceClient initalize = nh_.serviceClient<std_srvs::Empty> ("global_localization");
+            ros::Duration d (5, 0);
+            d.sleep();
             std_srvs::Empty srv;
             initalize.call (srv);
         }
@@ -340,6 +342,7 @@ public:
 
 	std::vector<std::function<void() >> line_end_TO_line_start;
 	line_end_TO_line_start.push_back (std::bind (&Skills::setInitialPoseAMCL, &skills_, 3.615, -2.046, 2.115));
+    line_end_TO_line_start.push_back (std::bind (&Skills::goToFreePosition, &skills_, 2.89, -0.66 , -1.69));
 	line_end_TO_line_start.push_back (std::bind (&Skills::goToFreePosition, &skills_, 3.3, -2 , -1.2));
 	line_end_TO_line_start.push_back (std::bind (&Graph::setCurrentNode, graph_, "line_start"));
 

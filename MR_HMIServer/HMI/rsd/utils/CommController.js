@@ -179,18 +179,34 @@ rsdNamespace.stopListening = function() {
 
 };
 
-rsdNamespace.sendMsg = function( target ) {
+rsdNamespace.sendCurrentNodeMsg = function( target ) {
+    console.log( 'Current node: ' + document.getElementById("setCurrentNodeID").value);
 
+    value_ = document.getElementById('setCurrentNodeID').value
     messageOut = {
         "messageType":"text_msg",
         "data": {
             "target": target,
-            "msg": $("#msg_data").val()
+            "msg": value_
         }
     }
 
+    value_.value = "";
     rsdNamespace.connection.send( JSON.stringify( messageOut ) );
+}
 
-    $("#msg_data").val( "" )
+rsdNamespace.sendPerformActionMsg = function( target ) {
+    console.log( 'Perform action: ' + document.getElementById("performActionID").value);
 
+    value_ = document.getElementById('performActionID').value
+    messageOut = {
+        "messageType":"text_msg",
+        "data": {
+            "target": target,
+            "msg": value_
+        }
+    }
+
+    value_.value = "";
+    rsdNamespace.connection.send( JSON.stringify( messageOut ) );
 }

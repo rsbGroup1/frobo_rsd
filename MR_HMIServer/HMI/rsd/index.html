@@ -3023,12 +3023,12 @@
 
           <section>
               <div class="message_field"><span class="main_label">Send setCurrentNode message:</span>
-                  <input class="msg_data" type="text" name="msg_input" placeholder="Enter message here...">
-                  <button class="msg_button" onclick="rsdNamespace.sendMsg( rsdNamespace.currentNodeMessage )">Send</button>
+                  <input class="msg_data" type="text" id="setCurrentNodeID" name="msg_input" placeholder="">
+                  <button class="msg_button" onclick="rsdNamespace.sendCurrentNodeMsg( rsdNamespace.currentNodeMessage )">Send</button>
               </div>
               <div class="message_field"><span class="main_label">Send performAction message:</span>
-                  <input class="msg_data" type="text" name="msg_input" placeholder="Enter message here...">
-                  <button class="msg_button" onclick="rsdNamespace.sendMsg( rsdNamespace.performActionMessage )">Send</button>
+                  <input class="msg_data" type="text" id="performActionID" name="msg_input" placeholder="">
+                  <button class="msg_button" onclick="rsdNamespace.sendPerformActionMsg( rsdNamespace.performActionMessage )">Send</button>
               </div>
 
               <!-- <div id="button_functionality" class="main_label">Button functionality:</div>

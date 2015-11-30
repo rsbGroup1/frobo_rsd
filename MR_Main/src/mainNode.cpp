@@ -19,6 +19,7 @@
 #include "mr_navigation_controller/performAction.h"
 #include "mr_tip_controller/tip.h"
 #include "mr_mes_client/server.h"
+#include "mr_main/run.h"
 
 // Defines
 #define SSTR(x)			dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
@@ -73,8 +74,6 @@ public:
         _pNh.param<std::string> ("nav_perform_srv", _performActionString, "/mrNavigationController/performAction");
         _pNh.param<std::string> ("nav_status_sub", _navStatusSub, "/mrNavigationController/status");
         _pNh.param<std::string> ("nav_currentnode_sub", _navCurrentnodeSub, "/mrNavigationController/currentNode");
-        _pNh.param<std::string> ("button_sub", _buttonSub, "/mrButton/run");
-        _pNh.param<std::string> ("hmi_sub", _hmiSub, "/mrHMI/run");
         _pNh.param<std::string> ("hmi_pub", _hmiPub, "/mrHMI/status");
         _pNh.param<std::string> ("tipper_srv", _tipperString, "/mrTipController/tip");
         _pNh.param<std::string> ("mes_pub", _mesPub, "/mrMESClient/msgToServer");
@@ -83,14 +82,18 @@ public:
         _pNh.param<std::string> ("critical_fault_pub", _criticalFaultSignalPub, "/fmSafe/critical_fault");
         _pNh.param<std::string> ("battery_sub", _batterySub, "/fmInformation/battery");
         _pNh.param<std::string> ("mode_pub", _modePub, "/mrMain/mode");
+        _pNh.param<std::string> ("run_srv", _runSrv, "/mrMain/run");
         _pNh.param<bool> ("check_battery", _check_battery , true);
         _pNh.param<double> ("battery_low", _batteryLow, 12.4);
         _pNh.param<double> ("battery_critic", _batteryCritic, 12.1);
         _pNh.param<double> ("desired_charge", _desiredCharge, 14.1);
 
-        // Services
+        // Service subscribers
         _servicePerformAction = _nh.serviceClient<mr_navigation_controller::performAction> (_performActionString);
         _serviceTipper = _nh.serviceClient<mr_tip_controller::tip> (_tipperString);
+
+        // Service providers
+        _serviceSrvRun = _nh.advertiseService (_runSrv, &MainNode::runCallback, this);
 
         // Publishers
         _hmiPublisher = _nh.advertise<std_msgs::String> (_hmiPub, 10);
@@ -99,8 +102,6 @@ public:
         _criticalFaultSignalPublisher = _nh.advertise<msgs::BoolStamped>(_criticalFaultSignalPub, 10);
 
         // Subscribers
-        _buttonSubriber = _nh.subscribe<std_msgs::Bool> (_buttonSub, 5, &MainNode::buttonCallback, this);
-        _hmiSubscriber = _nh.subscribe<std_msgs::String> (_hmiSub, 5, &MainNode::hmiCallback, this);
         _navStatusSubscriber = _nh.subscribe<std_msgs::String> (_navStatusSub, 1, &MainNode::navStatusCallback, this);
         _navCurrentSubscriber = _nh.subscribe<std_msgs::String> (_navCurrentnodeSub, 1, &MainNode::navCurrentNodeCallback, this);
         _mesSubscriber = _nh.subscribe<mr_mes_client::server> (_mesSub, 1, &MainNode::mesCallback, this);
@@ -179,74 +180,40 @@ public:
         _hmiPublisher.publish (obj);
     }
 
-
     /*
      *
      * Callbacks
      *
      */
     /**
-     * When the botton is pressed,
+     * Run service (for changing mode)
      */
-    void buttonCallback (std_msgs::Bool msg)
+    bool runCallback (mr_main::run::Request& req, mr_main::run::Response& res)
     {
-        if (msg.data != _button_msg_last)
+        if (req.state != _run_msg_last)
         {
             boost::unique_lock<boost::mutex> lock (_runMutex);
-            if (msg.data)
-            {
-                _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
-                HMISendWarning("Auto mode enabled");
-                HMIUpdateSafety(safe);
-                _mode = AUTO;
-
-            } else {
-                _criticalFaultSignalThread->interrupt();
-                HMISendError("Emergency stop");
-                HMIUpdateSafety(colliding);
-                _mode = IDLE;
-            }
-            _button_msg_last = msg.data;
-
-            std_msgs::String msgMode;
-            if (_mode == AUTO)
-                msgMode.data = "auto";
-            else if (_mode == IDLE)
-                msgMode.data = "idle";
-            else
-                msgMode.data = "manual";
-            _modePublisher.publish(msgMode);
-        }
-    }
-
-    /**
-     * Controls the mode of the robot from the HMI. Automatic or Manual
-     */
-    void hmiCallback (std_msgs::String msg)
-    {
-        if (msg.data != _hmi_msg_last)
-        {
-            boost::unique_lock<boost::mutex> lock (_runMutex);
-            if (msg.data == "start")
+            if (req.state == "auto")
             {
                 _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
                 HMISendWarning("Auto mode enabled");
                 HMIUpdateSafety(safe);
                 _mode = AUTO;
             }
-            else if (msg.data == "manual"){
+            else if (req.state== "manual")
+            {
                 _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
                 HMISendWarning("Manual mode");
                 HMIUpdateSafety(proximityAlert);
                 _mode = MANUAL;
             }
-            else if (msg.data == "stop") {
+            else if (req.state == "idle")
+            {
                 _criticalFaultSignalThread->interrupt();
                 HMISendError("Emergency stop");
                 HMIUpdateSafety(colliding);
                 _mode = IDLE;
             }
-            _hmi_msg_last = msg.data;
 
             std_msgs::String msgMode;
             if (_mode == AUTO)
@@ -256,7 +223,11 @@ public:
             else
                 msgMode.data = "manual";
             _modePublisher.publish(msgMode);
+
+            _run_msg_last = req.state;
         }
+
+        res.status = _run_msg_last;
     }
 
     /**
@@ -555,20 +526,20 @@ public:
 
 private:
     ros::NodeHandle _nh, _pNh;
+    ros::ServiceServer _serviceSrvRun;
     ros::ServiceClient _servicePerformAction, _serviceTipper;
-    ros::Subscriber _buttonSubriber, _hmiSubscriber, _navStatusSubscriber, _navCurrentSubscriber,
+    ros::Subscriber _navStatusSubscriber, _navCurrentSubscriber,
         _mesSubscriber, _obstacleDetectorSubscriber, _batterySubscriber;
     ros::Publisher _hmiPublisher, _mesPublisher, _criticalFaultSignalPublisher, _modePublisher;
     bool _newOrder, _check_battery;
     std::string safety_status_prev, _currentNode;
     double _batteryLevel, _batteryLow, _batteryCritic, _desiredCharge;
     boost::mutex _runMutex, _new_MESmsg;
-    std::string _performActionString, _navStatusSub, _navCurrentnodeSub, _buttonSub, _buttonPub,
-        _hmiSub, _tipperString, _hmiPub, _mesSub, _mesPub, _obstacleDetectorSub, _batterySub, 
+    std::string _performActionString, _navStatusSub, _navCurrentnodeSub, _buttonPub,
+        _runSrv, _tipperString, _hmiPub, _mesSub, _mesPub, _obstacleDetectorSub, _batterySub,
 	_criticalFaultSignalPub, _modePub;
     mr_mes_client::server _msg_last;
-    std::string _hmi_msg_last;
-    bool _button_msg_last;
+    std::string _run_msg_last;
     MODE _mode;
     
     boost::thread* _criticalFaultSignalThread;

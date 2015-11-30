@@ -21,7 +21,7 @@
 class ImageConverter
 {
 public:
-    ImageConverter() : it_(nh_), enabled_(true)
+    ImageConverter() : it_(nh_), enabled_(false)
     {
         ros::NodeHandle pNh_("~");
         pNh_.param<std::string>("sub_image", sub_image_name_, "/mrCamera/image");
@@ -104,24 +104,19 @@ public:
         int yOffset = 0;
         cv::Mat image_cropped = image_original(cv::Rect(0, image_original.rows / 2 - croppingHeight + yOffset, image_original.cols, croppingHeight * 2));
 
-        // Save old point
-        static cv::Point old_point(image_cropped.cols/2, image_cropped.rows/2);
-
         // Color threshold
-        cv::Mat image_threshold;
-        cv::inRange(image_cropped, cv::Scalar (0, 0, 0), cv::Scalar (50, 50, 50), image_threshold);
+        cv::inRange(image_cropped, cv::Scalar (0, 0, 0), cv::Scalar (50, 50, 50), image_cropped);
 
         // DEBUG
-        //cv::imshow("Color", image_threshold);
+        //cv::imshow("Color", image_cropped);
 
         /*
          * Detect point
          */
         int numberOfRows = 10; // image_filtered.rows;
-        int rowSpacing = image_threshold.rows/numberOfRows;
+        int rowSpacing = image_cropped.rows/numberOfRows;
         int xLeftWhitePixel = 0;
-        int xRightWhitePixel = image_threshold.cols;
-        int numberOfWhitePixels = 0;
+        int xRightWhitePixel = image_cropped.cols;
 
         for(int i=0; i<numberOfRows; i++)
         {
@@ -129,12 +124,11 @@ public:
             int y = rowSpacing*i;
 
             // Find min white x
-            for(int x=0; x<image_threshold.cols; x++)
+            for(int x=0; x<image_cropped.cols; x++)
             {
                 // Check if white
-                if(image_threshold.at<uchar>(y,x) == 255)
+                if(image_cropped.at<uchar>(y,x) == 255)
                 {
-                    numberOfWhitePixels++;
                     if(x > xLeftWhitePixel)
                     {
                         xLeftWhitePixel = x;
@@ -144,12 +138,11 @@ public:
             }
 
             // Find max white x
-            for(int x=image_threshold.cols-1; x>=0; x--)
+            for(int x=image_cropped.cols-1; x>=0; x--)
             {
                 // Check if white
-                if(image_threshold.at<uchar>(y,x) == 255)
+                if(image_cropped.at<uchar>(y,x) == 255)
                 {
-                    numberOfWhitePixels++;
                     if(x < xRightWhitePixel)
                     {
                         xRightWhitePixel = x;
@@ -159,18 +152,7 @@ public:
             }
         }
 
-        //std::cout << "Number of white: " << numberOfWhitePixels << std::endl;
-
-        // Calculate detected point
-        cv::Point detected_point(xLeftWhitePixel + (xRightWhitePixel-xLeftWhitePixel)/2, image_threshold.rows/2 + yOffset);
-
-        // Look if old point is better
-        if(/*abs(old_point.x-detected_point.y) > image_cropped.cols/3 ||*/ numberOfWhitePixels < 50)
-            detected_point = old_point;
-        else
-            old_point = detected_point;
-
-        // Draw point
+        cv::Point detected_point(xLeftWhitePixel + (xRightWhitePixel-xLeftWhitePixel)/2, image_cropped.rows/2 + yOffset);
         cv::circle(image_cropped, detected_point, 1, cv::Scalar (0, 255, 255), 2);
 
         // Debug
@@ -184,7 +166,7 @@ public:
          */
         // Image
         sensor_msgs::ImagePtr image_msg;
-        image_msg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", image_threshold).toImageMsg();
+        image_msg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", image_cropped).toImageMsg();
         pub_image_line_.publish(image_msg);
 
         // Point

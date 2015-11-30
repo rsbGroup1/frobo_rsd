@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 
+# Imports
 import json
 import jsonlib
 import sys
 import time, threading, datetime
-from autobahn.twisted.websocket import WebSocketServerProtocol, \
-    WebSocketServerFactory
+from autobahn.twisted.websocket import WebSocketServerProtocol, WebSocketServerFactory
 from twisted.python import log
 from twisted.internet import reactor
-
 import rospy
 from geometry_msgs.msg import Twist, TwistStamped
 from msgs.msg import BoolStamped
@@ -17,54 +16,63 @@ from mr_tip_controller.srv import *
 from mr_navigation_controller.srv import *
 from mr_hmi.srv import *
 
-STATUS_REQUEST  = "status_request"
-REMOTE_UPDATE   = "remote_update"
-TEXT_FIELD_MSG  = "text_msg"
+# Global variables
+STATUS_REQUEST  	= "status_request"
+REMOTE_UPDATE   	= "remote_update"
+TEXT_FIELD_MSG 		= "text_msg"
 
-MR_HMI_SUB = "/mrHMI/status" # receiving location and status updates here
+MR_MAIN_SUB 		= "/mrMain/mode" # receiving mode from mr main
+MR_HMI_SUB 		= "/mrHMI/status" # receiving location and status updates here
 
-MODE_UPDATE_PUB     = "/mrHMI/run"
-ACTUATION_ENA_PUB   = "/fmSafe/deadman" # a BoolStamped msg. deadman_msg.data = True enables actuation
-CMD_VEL_UPDATE_PUB  = "/fmCommand/cmd_vel"
+ACTUATION_ENA_PUB   	= "/fmSafe/deadman" # a BoolStamped msg. deadman_msg.data = True enables actuation
+CMD_VEL_UPDATE_PUB  	= "/fmCommand/cmd_vel"
 
-TIPPER_UPDATE_SRV       = "/mrTipController/tip"
-SET_CURRENT_NODE_SRV    = "/mrNavigationController/currentNode"
-PERFORM_ACTION_SRV      = "/mrNavigationController/performAction"
+TIPPER_UPDATE_SRV   	= "/mrTipController/tip"
+SET_CURRENT_NODE_SRV 	= "/mrNavigationController/currentNode"
+PERFORM_ACTION_SRV  	= "/mrNavigationController/performAction"
+MR_MAIN_RUN_SRV     	= "/mrMain/run"
 
-WEB_SOCKET_HOSTNAME = "localhost"
-#WEB_SOCKET_HOSTNAME = "10.125.11.201"
-WEB_SOCKET_PORT     = "8888"
-address             = ""
+WEB_SOCKET_HOSTNAME 	= "localhost" #"10.125.11.201"
+WEB_SOCKET_PORT     	= "8888"
+address             	= ""
 
 CURRENT_NODE_MESSAGE    = 0
 PERFORM_ACTION_MESSAGE  = 1
 
-direction   = 0
-button      = 0
-logMessages = ""
+direction   		= 0
+button      		= 0
+logMessages 		= ""
 
-subStatus = 0
+subStatus 		= 0
+subRunMode 		= 0
 
-pubModeUpdate   = 0
-# pubTipperUpdate = 0
-pubCmdVelUpdate = 0
-pubActuationEna = 0
+pubModeUpdate  		= 0
+#pubTipperUpdate 	= 0
+pubCmdVelUpdate 	= 0
+pubActuationEna 	= 0
 
-srvTipper           = 0
-srvCurrentMode      = 0
-srvPerformAction    = 0
+srvTipper           	= 0
+srvCurrentMode      	= 0
+srvPerformAction    	= 0
+srvMainRun 		= 0
 
-linearVelocity  = 0.4
-angularVelocity = 0.8
+linearVelocity  	= 0.4
+angularVelocity 	= 0.8
 
-#tipperTilted = False
-isManual = False
-actuationEna = False
-er = True
+#tipperTilted 		= False
+isManual 		= False
+actuationEna 		= False
+er 			= True
 
-threadCounter = 0
-aThreads = []
+threadCounter 		= 0
+aThreads 		= []
 
+IDLE			= 0
+AUTO			= 1
+MANUAL 			= 2
+robotState 		= 0
+
+# Class
 class MyServerProtocol( WebSocketServerProtocol ):
 
     def __init__( self ):
@@ -86,10 +94,11 @@ class MyServerProtocol( WebSocketServerProtocol ):
         global logMessages
         global STATUS_REQUEST, REMOTE_UPDATE, TEXT_FIELD_MSG
         global CURRENT_NODE_MESSAGE, PERFORM_ACTION_MESSAGE
+	global IDLE, AUTO, MANUAL, robotState 
 
         if isBinary:
             print( "Binary message received: {0} bytes".format( len( payload ) ) )
-        else:
+        #else:
             # print( "Text message received: {0}".format( payload.decode( 'utf8' ) ) )
 
             messageInRaw = payload.decode('utf8')
@@ -143,14 +152,16 @@ class MyServerProtocol( WebSocketServerProtocol ):
                     stop_aThreads()
                     if isManual == True:
                         setManualMode( False )
-                        # publishCommand( pubModeUpdate, u"start" )
-                        publishCommand( pubModeUpdate, u"auto" )
+                    if robotState != IDLE:
+	    	        sendMode( u"auto" )
+		        robotState = AUTO
                 elif rightButton == u"b":
                     stop_aThreads()
                     if isManual == True:
                         setManualMode( False )
-                        # publishCommand( pubModeUpdate, u"stop" )
-                        publishCommand( pubModeUpdate, u"idle" )
+                    if robotState != IDLE:
+		        sendMode( u"idle" )
+		        robotState = IDLE
 
             elif messageIn["messageType"] == TEXT_FIELD_MSG: # TODO Test it!
 
@@ -241,6 +252,7 @@ def setManualMode( newState ):
     global pubActuationEna
     global aThread
     global actuationEna
+    global IDLE, AUTO, MANUAL, robotState 
 
     if( isManual != newState ):
         print( "Manual mode CHANGED" )
@@ -249,14 +261,17 @@ def setManualMode( newState ):
             # pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 1 )
             # pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
             start_an_aThread() # starts publishing safety signals when manual mode is activated
-            publishCommand( pubModeUpdate, u"manual" )
+	    sendMode( u"manual" )
             print( "Manual mode is ON" )
+	    robotState = MANUAL
         else:
             actuationEna = False
             stop_aThreads()
             #pubCmdVelUpdate.unregister()
             #pubActuationEna.unregister()
+	    sendMode( u"idle" )
             print( "Manual mode is OFF" )
+	    robotState = IDLE
 
 def drive( linearX, angularZ ):
     global pubCmdVelUpdate
@@ -324,6 +339,18 @@ def logCallback( data ):
 
     logMessages = logMessages + newData
 
+def runModeCallback( data ):
+    if data == "auto":
+	logCallback( "Auto mode enabled" )
+	robotState = AUTO
+    elif data == "idle":
+	logCallback( "Emergency stop" )
+	robotState = IDLE
+    elif data == "manual":
+	logCallback( "Manual mode" )
+	robotState = MANUAL
+
+
 # TODO check if this works, and publishes the messages
 def handleEmergencySituation( signal ):
     global er
@@ -338,6 +365,14 @@ def handleEmergencySituation( signal ):
 
 def publishCommand( rosPublisher, command ):
     rosPublisher.publish( command )
+
+def sendMode( mode ):
+    """ Method discription
+    Calls the run service with a state
+    "idle", "run", "manual"
+    """
+    global srvMainRun
+    srvMainRun( mode ) # Requests tipping (just ignore the response for now)
 
 def stopServer():
     reactor.stop()
@@ -364,17 +399,17 @@ def start_an_aThread():
 
 def initHMI():
 
-    global MR_HMI_SUB
+    global MR_HMI_SUB, MR_MAIN_SUB
 
-    global MODE_UPDATE_PUB, CMD_VEL_UPDATE_PUB, ACTUATION_ENA_PUB
+    global CMD_VEL_UPDATE_PUB, ACTUATION_ENA_PUB
 
-    global TIPPER_UPDATE_SRV, SET_CURRENT_NODE_SRV, PERFORM_ACTION_SRV
+    global TIPPER_UPDATE_SRV, SET_CURRENT_NODE_SRV, PERFORM_ACTION_SRV, MR_MAIN_RUN_SRV
 
-    global subStatus
+    global subStatus, subRunMode
 
     global pubModeUpdate, pubCmdVelUpdate, pubActuationEna
 
-    global srvTipper, srvCurrentMode, srvPerformAction
+    global srvTipper, srvCurrentMode, srvPerformAction, srvMainRun
 
     global aThread
 
@@ -383,33 +418,39 @@ def initHMI():
     # anonymous=True flag means that rospy will choose a unique
     # name for our 'talker' node so that multiple talkers can
     # run simultaneously.
-    rospy.init_node( 'mr_hmi', anonymous = True )
+    rospy.init_node( 'MR_HMI', anonymous = True )
 
     # Read parameters
     MR_HMI_SUB = rospy.get_param( "~mr_hmi_status_sub", MR_HMI_SUB )
+    MR_MAIN_SUB = rospy.get_param( "~mr_main_mode_sub", MR_MAIN_SUB )
 
-    MODE_UPDATE_PUB = rospy.get_param( "~mr_hmi_run_pub", MODE_UPDATE_PUB )
+    MODE_UPDATE_PUB = rospy.get_param( "~mr_main_run_srv", MODE_UPDATE_PUB )
     CMD_VEL_UPDATE_PUB = rospy.get_param( "~cmd_pub", CMD_VEL_UPDATE_PUB )
     ACTUATION_ENA_PUB = rospy.get_param( "~deadman_pub", ACTUATION_ENA_PUB )
 
     TIPPER_UPDATE_SRV = rospy.get_param( "~tipper_srv", TIPPER_UPDATE_SRV )
     SET_CURRENT_NODE_SRV = rospy.get_param( "~currentNode_srv", SET_CURRENT_NODE_SRV )
+    PERFORM_ACTION_SRV = rospy.get_param( "~performAction_srv", PERFORM_ACTION_SRV )
 
     # Register Subscribers
     subStatus = rospy.Subscriber( MR_HMI_SUB, String, logCallback )
+    subRunMode = rospy.Subscriber( MR_MAIN_SUB, String, runModeCallback )
 
     # Register Publisers
     pubModeUpdate = rospy.Publisher( MODE_UPDATE_PUB, String, queue_size = 10 )
     pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 10 )
     pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 10 )
 
+    
     # Service Definitions
-    rospy.wait_for_service(TIPPER_UPDATE_SRV)
+    #rospy.wait_for_service(TIPPER_UPDATE_SRV)
     srvTipper = rospy.ServiceProxy( TIPPER_UPDATE_SRV, tip )
-    rospy.wait_for_service(SET_CURRENT_NODE_SRV)
+    #rospy.wait_for_service(SET_CURRENT_NODE_SRV)
     srvCurrentMode = rospy.ServiceProxy( SET_CURRENT_NODE_SRV, setCurrentNode )
-    rospy.wait_for_service(PERFORM_ACTION_SRV)
+    #rospy.wait_for_service(PERFORM_ACTION_SRV)
     srvPerformAction = rospy.ServiceProxy( PERFORM_ACTION_SRV, performAction )
+    #rospy.wait_for_service(MR_MAIN_RUN_SRV )
+    srvMainRun = rospy.ServiceProxy( MR_MAIN_RUN_SRV , run )
 
     log.startLogging(sys.stdout)
 
@@ -420,6 +461,8 @@ def initHMI():
 
     reactor.listenTCP( int(WEB_SOCKET_PORT), factory )
     reactor.run()
+
+    print "We re good!"
 
     while not rospy.is_shutdown():
         rospy.spin()

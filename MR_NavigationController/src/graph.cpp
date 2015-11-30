@@ -128,58 +128,87 @@ std::vector<std::function<void() >> Graph::bfs (const std::string node_end_name,
     while (!open_list.empty() && ++counter != number_limit && solution.empty())
     {
         // Choose a new node
+		try 
+		{
         current_node = open_list.front(); // Updates the current node
         closed_list.push_back (current_node); // Put it in the closed list
         open_list.erase (open_list.begin()); // Dequeue in the open list
+		}
+		catch (const std::exception e) 
+		{
+			std::cout << "Error selecting node: " << e.what() << std::endl;
+		}
+		
 
         // Check if we have found the solution
         if (current_node->getName() == node_end_name)
         {
+			try {
             // Until the original node is not reached
 			std::cout << "    ";
-            do
-            {				
-                for (auto & vertex : verteces_)
-                {
-                    if (vertex.getNodeEnd()->getName() == current_node->getName() &&
-                            vertex.getNodeStart()->getName() == current_node->getParent()->getName())
-                    {
-						std::cout << vertex.getNodeEnd()->getName() << " << ";
-                        for (auto i = vertex.getSkills()->size(); i > 0; i--)
-                            solution.insert (solution.begin(), vertex.getSkills()->at (i - 1));
-						
-                    }
-                }
-                current_node = current_node->getParent();
-            }
-            while (current_node->getParent() != NULL);   // The parent of the first node is "no_parent"
-			std::cout << current_node->getName() << std::endl;
+				do
+				{
+					for (auto & vertex : verteces_)
+					{
+						if (vertex.getNodeEnd()->getName() == current_node->getName() &&
+								vertex.getNodeStart()->getName() == current_node->getParent()->getName())
+						{
+							std::cout << vertex.getNodeEnd()->getName() << " << ";
+							for (auto i = vertex.getSkills()->size(); i > 0; i--)
+								solution.insert (solution.begin(), vertex.getSkills()->at (i - 1));
+							
+						}
+					}
+					current_node = current_node->getParent();
+				}
+				while (current_node->getParent() != NULL);   // The parent of the first node is "no_parent"
+				std::cout << current_node->getName() << std::endl;
+			}
+			catch (const std::exception& e)
+			{
+				std::cout << "Error constructing path: " << e.what() << std::endl;
+			}
         }
         else
         {
             // Add children
-            for (auto node_connected : findNode(current_node->getName())->getChildrenNodes())
-            {
-                bool new_node = true;
-
-                // Check if it exists in the closed list
-                for (auto & node_in_closed_list : closed_list) 
+			try 
+			{
+				for (auto node_connected : findNode(current_node->getName())->getChildrenNodes())
 				{
-                    if (node_in_closed_list->getName() == node_connected->getName()
-						&& node_in_closed_list->getParent()->getName() == current_node->getName())
-                    {
-                        new_node = false;
-                    }
-                }
+					bool new_node = true;
 
-                // If it is not, set the parent and put it in the open list
-                if (new_node == true)
-                {
-					Node* node_to_add = new Node(node_connected->getName());
-                    node_to_add->setParent (current_node);
-                    open_list.push_back (node_to_add);
-                }
-            }
+					// Check if it exists in the closed list
+					for (auto & node_in_closed_list : closed_list) 
+					{
+						if (node_in_closed_list->getName() == node_connected->getName()
+							&& node_in_closed_list->getParent() != NULL
+							&& node_in_closed_list->getParent()->getName() == current_node->getName())
+						{
+							new_node = false;
+						}
+					}
+
+					//std::cout << "Closed node: " << node_connected->getName() << std::endl;
+					// If it is not, set the parent and put it in the open list
+					if (new_node == true)
+					{
+						Node* node_to_add = new Node(node_connected->getName());
+						node_to_add->setParent (current_node);
+						open_list.push_back (node_to_add);
+					}
+				}
+				/*
+				std::cout << "Open list: ";
+				for (auto node : open_list)
+					std::cout << node->getName() << ",";
+				std::cout << std::endl;
+				*/
+			}
+			catch (const std::exception e)
+			{
+				std::cout << "Error inflating node: " << e.what() << std::endl;
+			}
         }
     }
 

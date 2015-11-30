@@ -31,8 +31,9 @@ public:
         pNh_.param<std::string>("pub_line", pub_line_name_, "/mrCameraProcessing/line");
         pNh_.param<std::string>("srv_enable", srv_enable_name_, "/mrCameraProcessing/enable");
         pNh_.param<std::string>("mr_camera_srv_enable", srv_mr_camera_enable_name_, "/mrCamera/enable");
-        pNh_.param<double>("QR_min_area", minQRConArea_, 400.0);
-        pNh_.param<int>("QR_grayscale_threshold", qrSquareThresh_, 200);
+        pNh_.param<double>("QR_min_white_area", minQRConArea_, 200.0);
+        pNh_.param<int>("QR_min_black_area", minQRBlackArea_, 1);
+        pNh_.param<int>("QR_grayscale_threshold", qrSquareThresh_, 175);
 
         pub_line_ = nh_.advertise<geometry_msgs::Point>(pub_line_name_, 1);
         pub_qr_ = nh_.advertise<std_msgs::String>(pub_qr_name_, 1);
@@ -201,9 +202,11 @@ public:
         // String used for telling what the QR or barcode says.
         std::string data;
 
+
         // Quick search image if there is something which resembles a QR code
         if(qrContourSearch(image_filtered))
         {
+            //ROS_INFO("QR FOUND!");
             // Prepare the image for reading
             zbar::Image zbar_image(image_filtered.cols, image_filtered.rows, "Y800",
                                     (uchar*) image_filtered.data , image_filtered.cols * image_filtered.rows);
@@ -258,20 +261,34 @@ public:
             double conArea = cv::contourArea(contours[i]);
             if(conArea > largestConArea)
             {
-                largestConArea = conArea;
-                largestConAreaIdx = i;
+                // Check if contour area is above a min area.
+                if(conArea > minQRConArea_)
+                {
+                    // Check if contour area contains black
+                    // Create mask
+                    cv::Mat mask = cv::Mat::zeros(imageGray_in.size(),imageGray_in.type());
+                    cv::drawContours(mask,contours,i,cv::Scalar(255),CV_FILLED);
+                    // Mask area on image so that we only search inside contour
+                    cv::Mat masked_area;
+                    cv::bitwise_not(imageGray_in,masked_area,mask);
+                    //Find number of black pixels in image:
+                    cv::Mat bin_im;
+                    cv::threshold(masked_area,bin_im,200,255,CV_THRESH_BINARY);
+                    unsigned black_area = countNonZero(bin_im);
+
+                    if(black_area > minQRBlackArea_)
+                    {
+                        //std::cout<<"White: " << conArea << ", Black:" << black_area << std::endl;
+                        largestConArea = conArea;
+                        largestConAreaIdx = i;
+                    }
+                }
             }
         }
-
-        // Return false if no contours was found
-        if(largestConAreaIdx == -1)
-            return false;
-
-        // Check if contour area is above a min area.
-        if(largestConArea > minQRConArea_)
+        // Return true if contour was found
+        if(largestConAreaIdx != -1)
             return true;
-
-        return false;
+       return false;
     }
 
 private:
@@ -290,6 +307,7 @@ private:
 	
 	bool enabled_;
     double minQRConArea_;
+    int minQRBlackArea_;
     int qrSquareThresh_;
 
     // Threads

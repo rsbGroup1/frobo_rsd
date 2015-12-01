@@ -25,9 +25,8 @@
 #define SSTR(x)			dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
 
 // Enum
-enum ROBOT_POS
+enum HMI_ROBOT_POS
 {
-    nul = 0,
     box = 1,
     camera = 2,
     trackZone2 = 3,
@@ -39,7 +38,6 @@ enum ROBOT_POS
 
 enum HMI_ICONS
 {
-    null = 0,
     tipper = 1,
     lineFollowing = 2,
     gps = 3,
@@ -50,9 +48,9 @@ enum HMI_ICONS
 
 enum HMI_SAFETY
 {
-    safe = 0,
-    proximityAlert = 1,
-    colliding = 2
+    safe = 1,
+    proximityAlert = 2,
+    colliding = 3
 };
 
 enum MODE
@@ -107,6 +105,10 @@ public:
         _mesSubscriber = _nh.subscribe<mr_mes_client::server> (_mesSub, 1, &MainNode::mesCallback, this);
         _obstacleDetectorSubscriber = _nh.subscribe<std_msgs::String> (_obstacleDetectorSub, 10, &MainNode::obstacleCallback, this);
         _batterySubscriber = _nh.subscribe<std_msgs::Float32> (_batterySub, 1, &MainNode::_batteryCallback, this);
+       
+        // Init
+	for(int i=0; i<6; i++)
+		_iconStatus[i] = false;
     }
 
     ~MainNode()
@@ -123,7 +125,7 @@ public:
     /**
      * Updates the position in the HMI Map
      */
-    void HMIUpdatePosition (ROBOT_POS pos)
+    void HMIUpdatePosition (HMI_ROBOT_POS pos)
     {
         std_msgs::String obj;
         obj.data = "0" + SSTR (pos) + "00,,";
@@ -138,6 +140,8 @@ public:
         std_msgs::String obj;
         obj.data = "00" + SSTR (state) + "0,,";
         _hmiPublisher.publish (obj);
+
+	_iconStatus[state] = !_iconStatus[state];
     }
 
     /**
@@ -147,16 +151,6 @@ public:
     {
         std_msgs::String obj;
         obj.data = "000" + SSTR (state) + ",,";
-        _hmiPublisher.publish (obj);
-    }
-
-    /**
-     * Sends to the HMI a error message
-     */
-    void HMISendError (std::string msg)
-    {
-        std_msgs::String obj;
-        obj.data = "3000," + msg + ",";
         _hmiPublisher.publish (obj);
     }
 
@@ -177,6 +171,16 @@ public:
     {
         std_msgs::String obj;
         obj.data = "2000," + msg + ",";
+        _hmiPublisher.publish (obj);
+    }
+
+    /**
+     * Sends to the HMI a error message
+     */
+    void HMISendError (std::string msg)
+    {
+        std_msgs::String obj;
+        obj.data = "3000," + msg + ",";
         _hmiPublisher.publish (obj);
     }
 
@@ -255,6 +259,7 @@ public:
     void MESProcessOrder()
     {
         mr_mes_client::server msg;
+
         _new_MESmsg.lock();
         msg = _msg_last;
         bool newOrder = _newOrder;
@@ -266,7 +271,6 @@ public:
 
         if (msg.mobileRobot == 1 && mode==AUTO && newOrder)
         {
-
             mr_navigation_controller::performAction perform_action_obj;
             mr_tip_controller::tip tip_obj;
             std::string action;
@@ -305,14 +309,14 @@ public:
             _mesPublisher.publish(msg_to_server);
 	    
             // Tip Up
-            HMIUpdateIcons (tipper);
+            HMIUpdateIcons(tipper);
             tip_obj.request.direction = true;
             _serviceTipper.call (tip_obj);
 
             // Tip Down
             tip_obj.request.direction = false;
             _serviceTipper.call (tip_obj);
-            HMIUpdateIcons (null);
+            HMIUpdateIcons(tipper);
 
             // Checks if the battery is the critic level
             if (_check_battery) checkBattery (_batteryCritic, action);
@@ -326,12 +330,14 @@ public:
             perform_action_obj.request.action = action;
             _servicePerformAction.call (perform_action_obj);
             
-            if (_check_battery) checkBattery (_batteryCritic, action);
+            if (_check_battery) 
+	        checkBattery (_batteryCritic, action);
 
             _new_MESmsg.lock();
             msg = _msg_last;
             _new_MESmsg.unlock();
-            while(msg.status != 1) {
+            while(msg.status != 1) 
+            {
             	HMISendInfo("Waiting for robot to complete");
             	_new_MESmsg.lock();
             	msg = _msg_last;
@@ -339,7 +345,7 @@ public:
             	usleep(5000);
             }
 
-            
+
             // Go to charge position
             perform_action_obj.request.action = "charge";
             _servicePerformAction.call (perform_action_obj);
@@ -362,16 +368,48 @@ public:
     /**
      * Reads the navigation status and activate the icons in the HMI
      */
-    void navStatusCallback (std_msgs::String msg)
+    void navStatusCallback(std_msgs::String msg)
     {
-        if (msg.data == "following_line")
-            HMIUpdateIcons (lineFollowing);
-        else if (msg.data == "linear_move")
-            HMIUpdateIcons (fixedMovement);
-        else if (msg.data == "angular_move")
-            HMIUpdateIcons (fixedMovement);
-        else if (msg.data == "free_navigation")
-            HMIUpdateIcons (gps);
+        if(msg.data == "following_line")
+	{
+	    if(_iconStatus[fixedMovement] == true)
+            	HMIUpdateIcons(fixedMovement);	
+
+	    if(_iconStatus[gps] == true)
+            	HMIUpdateIcons(gps);	
+	
+            HMIUpdateIcons(lineFollowing);
+	}
+        else if(msg.data == "linear_move")	
+	{
+	    if(_iconStatus[lineFollowing] == true)
+            	HMIUpdateIcons(lineFollowing);	
+
+	    if(_iconStatus[gps] == true)
+            	HMIUpdateIcons(gps);	
+
+            HMIUpdateIcons(fixedMovement);
+	}
+        else if(msg.data == "angular_move")
+	{
+	    if(_iconStatus[lineFollowing] == true)
+            	HMIUpdateIcons(lineFollowing);	
+
+	    if(_iconStatus[gps] == true)
+            	HMIUpdateIcons(gps);	
+
+            HMIUpdateIcons(fixedMovement);
+	}
+        else if(msg.data == "free_navigation")
+	{
+	    if(_iconStatus[fixedMovement] == true)
+            	HMIUpdateIcons (fixedMovement);	
+
+	    if(_iconStatus[lineFollowing] == true)
+            	HMIUpdateIcons(lineFollowing);	
+
+            HMIUpdateIcons(gps);
+	}
     }
 
     /**
@@ -384,7 +422,7 @@ public:
         if (msg.data == "line_start")
             HMIUpdatePosition (trackZone1);
         else if (msg.data == "line_stop")
-            HMIUpdatePosition (trackZone1);
+            HMIUpdatePosition (trackZone2);
         else if (msg.data == "wc1")
             HMIUpdatePosition (RC1);
         else if (msg.data == "wc1_conveyor")
@@ -415,8 +453,6 @@ public:
             HMIUpdatePosition (box);
         else if (msg.data == "bricks")
             HMIUpdatePosition (box);
-        else
-            HMIUpdatePosition (nul);
     }
 
     /**
@@ -542,7 +578,8 @@ private:
     mr_mes_client::server _msg_last;
     std::string _run_msg_last;
     MODE _mode;
-    
+    bool _iconStatus[6];    
+
     boost::thread* _criticalFaultSignalThread;
 };
 

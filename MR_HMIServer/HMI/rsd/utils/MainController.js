@@ -30,7 +30,6 @@ rsdNamespace.activeButtonLeft = 'n';
 rsdNamespace.activeButtonRight = 'n';
 rsdNamespace.actuationEnable = false;
 rsdNamespace.availability = true;
-rsdNamespace.resumeSignal = false;
 
 // Safety
 rsdNamespace.watchdog;
@@ -55,33 +54,39 @@ rsdNamespace.ToggleHighlighting = function( selector ) {
     var id;
     console.log( 'selector:' + selector );
 
-    switch( selector ) {
-
-        case 0:
-            id = rsdNamespace.robotCellThree;
-            break;
+    switch( selector ) 
+    {
         case 1:
-            id = rsdNamespace.robotCellTwo;
-            break;
-        case 2:
-            id = rsdNamespace.robotCellOne;
-            break;
-        case 3:
-            id = rsdNamespace.trackZoneOne;
-            break;
-        case 4:
-            id = rsdNamespace.trackZoneTwo;
-            break;
-        case 5:
-            id = rsdNamespace.cameraZone;
-            break;
-        case 6:
             id = rsdNamespace.box;
             break;
-        default:
+
+        case 2:
+            id = rsdNamespace.cameraZone;
+            break;
+
+        case 3:
+            id = rsdNamespace.trackZoneTwo;
+            break;
+
+        case 4:
+            id = rsdNamespace.trackZoneOne;
+            break;
+
+        case 5:
             id = rsdNamespace.robotCellOne;
             break;
 
+        case 6:
+            id = rsdNamespace.robotCellTwo;
+            break;
+
+        case 7:
+            id = rsdNamespace.robotCellThree;
+            break;
+
+        default:
+            id = rsdNamespace.box;
+            break;
     }
 
     console.log( "id: " + id );
@@ -119,7 +124,6 @@ rsdNamespace.ToggleHighlighting = function( selector ) {
     $( '#' + id + 'Label' ).attr( 'style', textStyle );
 
     rsdNamespace.zoneSelected = selector;
-
 };
 
 rsdNamespace.WindowResizeHandler = function() {
@@ -388,23 +392,19 @@ rsdNamespace.ToggleAvailabilityState = function() {
 
 };
 
-rsdNamespace.SetAvailabilitySwitch = function( state ) {
-
-    if( state != rsdNamespace.availability ) {
-
+rsdNamespace.SetAvailabilitySwitch = function( state ) 
+{
+    if( state != rsdNamespace.availability ) 
+    {
         rsdNamespace.availability = state;
 
-        if( state && !$("#availability").hasClass("available") ) {
-
+        if( state && !$("#availability").hasClass("available") ) 
             $("#availability").addClass("available");
-            rsdNamespace.resumeSignal = true;
-
-        } else if( !state && $("#availability").hasClass("available") ) $("#availability").removeClass("available");
-
+	else if( !state && $("#availability").hasClass("available") )
+	    $("#availability").removeClass("available");
     }
 
     console.log( 'Should resume operation: ' + rsdNamespace.availability );
-
 };
 
 rsdNamespace.RequestConfirmation = function() {

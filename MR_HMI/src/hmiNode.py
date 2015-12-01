@@ -108,20 +108,24 @@ class MyServerProtocol( WebSocketServerProtocol ):
 
         messageIn = jsonlib.read( messageInRaw )
 
+	#print messageInRaw
+
         if messageIn["messageType"] == STATUS_REQUEST:
 		# TODO Handle signal from the emergency switch
                 handleEmergencySituation( messageIn["data"]["resume"] ) 
 
-                massageOutRaw = {
+                messageOutRaw = {
                     "messageType":"status_response",
                     "data":{
                         "log":[logMessages[:-1]]
                     }
                 }
 
-                massageOut = json.dumps(massageOutRaw)
+		#print messageOutRaw
 
-                self.sendMessage( massageOut, isBinary )
+                messageOutRaw = json.dumps(messageOutRaw)
+
+                self.sendMessage( messageOutRaw, isBinary )
 
                 logMessages = ""
 
@@ -152,6 +156,7 @@ class MyServerProtocol( WebSocketServerProtocol ):
                     setManualMode( False )
                     tipper( False )
                 elif rightButton == u"a":
+                    #print "Auto: " + robotState
                     stop_aThreads()
                     if isManual == True:
                         setManualMode( False )
@@ -159,6 +164,7 @@ class MyServerProtocol( WebSocketServerProtocol ):
 	    	        sendMode( u"auto" )
 		        robotState = AUTO
                 elif rightButton == u"b":
+                    #print "Idle: " + robotState
                     stop_aThreads()
                     if isManual == True:
                         setManualMode( False )
@@ -168,11 +174,8 @@ class MyServerProtocol( WebSocketServerProtocol ):
 	# TODO Test it!
         elif messageIn["messageType"] == TEXT_FIELD_MSG: 
 
-            target  = messageIn["data"]["target"]
+            target = messageIn["data"]["target"]
             text_msg = messageIn["data"]["msg"]
-
-            #print text_msg
-            #print target
 
             if text_msg != "" and target == CURRENT_NODE_MESSAGE:
                 sendCurrentNodeMessage( text_msg )
@@ -213,22 +216,20 @@ class actuationThread( threading.Thread ):
         self.name = name
         self.stopFlag = threading.Event()
 
-        print "Starting " + self.name
+        #print "Starting " + self.name
 
     def stop( self ):
-        print "Stoping " + self.name
+        #print "Stopping " + self.name
         self.stopFlag.set()
 
     def run( self ):
-        print "Starting " + self.name
+        #print "Starting " + self.name
         while not self.stopFlag.is_set():
-
             self.publishActuationEna()
             time.sleep(0.033)
 
     def publishActuationEna( self ):
         global actuationEna
-
         #print "actuationEna: " + str(actuationEna) + " [PUBLISHED]"
 
         self.lock.acquire()
@@ -263,8 +264,6 @@ def setManualMode( newState ):
         print( "Manual mode CHANGED" )
         isManual = newState
         if( isManual ):
-            # pubCmdVelUpdate = rospy.Publisher( CMD_VEL_UPDATE_PUB, TwistStamped, queue_size = 1 )
-            # pubActuationEna = rospy.Publisher( ACTUATION_ENA_PUB, BoolStamped, queue_size = 1 )
             start_an_aThread() # starts publishing safety signals when manual mode is activated
 	    sendMode( u"manual" )
             print( "Manual mode is ON" )
@@ -272,8 +271,6 @@ def setManualMode( newState ):
         else:
             actuationEna = False
             stop_aThreads()
-            #pubCmdVelUpdate.unregister()
-            #pubActuationEna.unregister()
 	    sendMode( u"idle" )
             print( "Manual mode is OFF" )
 	    robotState = IDLE
@@ -283,11 +280,8 @@ def drive( linearX, angularZ ):
     global actuationEna
 
     setManualMode( True )
-
     msg = createdTwistedCommand( linearX, angularZ )
-    # print( "Msg *to be published: " + str(msg.twist.linear.x) )
     publishCommand( pubCmdVelUpdate, msg )
-    # print( "Msg published OK")
 
 def tipper( direction ):
     """ Method description
@@ -353,8 +347,6 @@ def logCallback( data ):
     """
     global logMessages, logOnceBool
 
-    #if logOnceBool:
-
     s = "-"
     d = ","
 
@@ -368,39 +360,28 @@ def logCallback( data ):
 	newData += temp[i] + d + logTimestamp + d + temp[i + 1] + d
 
     logMessages = logMessages + newData
-    #print data.data
-    #print newData
-
-    #logOnceBool =  not logOnceBool
 
 def runModeCallback( data ):
-    #print "runModeCallback: " + data.data
     if data.data == "auto":
 	logCallback( String("1000,Auto mode enabled!,") )
 	robotState = AUTO
-	#sendMode("auto")
     elif data.data == "idle":
 	logCallback( String("2000,Emergency stop!,") )
 	robotState = IDLE
-	#sendMode("idle")
     elif data.data == "manual":
 	logCallback( String("1000,Manual mode!,") )
 	robotState = MANUAL
-	#sendMode("manual")
 
 # TODO check if this works, and publishes the messages
 def handleEmergencySituation( signal ):
     global er
 
-    # print "resume: " + str(signal)
-
     if signal != er:
         er = signal
-
-    # Publish
-    #logCallback( String("3000,Emergency stop!,") )
-    #robotState = IDLE
-    #sendMode( u"idle" )
+        if er == False:
+	    logCallback( String("3000,Emergency stop!,") )
+            robotState = IDLE
+            sendMode( u"idle" )
 
 def publishCommand( rosPublisher, command ):
     rosPublisher.publish( command )
@@ -473,13 +454,9 @@ def initHMI():
 
     
     # Service Definitions
-    #rospy.wait_for_service(TIPPER_UPDATE_SRV)
     srvTipper = rospy.ServiceProxy( TIPPER_UPDATE_SRV, tip )
-    #rospy.wait_for_service(SET_CURRENT_NODE_SRV)
     srvCurrentMode = rospy.ServiceProxy( SET_CURRENT_NODE_SRV, setCurrentNode )
-    #rospy.wait_for_service(PERFORM_ACTION_SRV)
     srvPerformAction = rospy.ServiceProxy( PERFORM_ACTION_SRV, performAction )
-    #rospy.wait_for_service(MR_MAIN_RUN_SRV )
     srvMainRun = rospy.ServiceProxy( MR_MAIN_RUN_SRV , run )
 
     print "Services ready!"
@@ -489,8 +466,6 @@ def initHMI():
     # Establish WebSocket connection
     factory = WebSocketServerFactory( u"ws://" + WEB_SOCKET_HOSTNAME + ":" + WEB_SOCKET_PORT, debug = False )
     factory.protocol = MyServerProtocol
-    # factory.setProtocolOptions(maxConnections=2)
-
     reactor.listenTCP( int(WEB_SOCKET_PORT), factory )
     reactor.run()
 

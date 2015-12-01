@@ -2,7 +2,6 @@ window.rsdNamespace = window.rsdNamespace || { };
 
 rsdNamespace.connection;
 
-
 rsdNamespace.IGNORE = "0";
 rsdNamespace.MESSAGE = "1";
 rsdNamespace.WARNING = "2";
@@ -45,13 +44,13 @@ rsdNamespace.StartListening = function() {
             messageOut = {
                 "messageType":"status_request",
                 "data": {
-                    "resume": rsdNamespace.resumeSignal
+                    "resume": rsdNamespace.availability
                 }
             }
 
             rsdNamespace.connection.send( JSON.stringify( messageOut ) );
 
-            rsdNamespace.resumeSignal = false;
+            //rsdNamespace.resumeSignal = false;
 
         }, 1000);
 
@@ -71,84 +70,70 @@ rsdNamespace.StartListening = function() {
 
             rsdNamespace.connection.send( JSON.stringify( messageOut ) );
 
-        }, 200);
+        }, 50); // 200
 
     };
 
     // Log messages from the server
-    rsdNamespace.connection.onmessage = function ( e ) {
-
+    rsdNamespace.connection.onmessage = function ( e ) 
+    {
         var messageIn = $.parseJSON( e.data );
         console.log( 'Server: ' + e.data );
 
-        switch( messageIn.messageType ) {
-
+        switch( messageIn.messageType ) 
+        {
             case 'status_response':
-
                 var log = messageIn.data.log;
-
-                if( log ) {
-
+                if( log ) 
+                {
                     var messages = String( log ).split(",");
+                    console.log( 'Yonas: ' + messages.length );
 
-                    if( messages.length > 2 ) {
-
-                        for( i = 0; i < messages.length; i += 3 ) {
-
-                            // If message contains displayable content...
-                            // var message_code = messages[i][3];
+                    if( messages.length > 2 ) 
+		    {
+                        for( i = 0; i < messages.length; i += 3 ) 
+			{
+                            // If message contains displayable content... (LOG)
                             var message_code = messages[i][0];
-                            if( message_code != rsdNamespace.IGNORE ) {
-
+                            if( message_code != rsdNamespace.IGNORE ) 
+			    {
                                 // If there was an error,
-                                if( message_code == rsdNamespace.ERROR ) {
-
+                                /*if( message_code == rsdNamespace.ERROR ) 
+				{
                                     // The SetAvailabilitySwitch method will take care of the
                                     // notification of the MES server
                                     rsdNamespace.SetAvailabilitySwitch( false );
-
-                                }
+                                }*/
 
                                 rsdNamespace.UpdateLog( message_code, messages[i + 1], messages[i + 2] );
-
                             }
 
-                            // If message contains location related information...
+                            // If message contains location related information... (POSITION)
                             // var location_code = messages[i][2];
                             var location_code = messages[i][1];
-                            if( location_code != rsdNamespace.IGNORE ) {
-
+                            if( location_code != rsdNamespace.IGNORE ) 
+			    {
                                 var location = parseInt( location_code, 10 );
 
-                                if( rsdNamespace.zoneSelected != location ) {
-
+                                if( rsdNamespace.zoneSelected != location ) 
+				{
                                     rsdNamespace.ToggleHighlighting( rsdNamespace.zoneSelected );
                                     rsdNamespace.ToggleHighlighting( location );
-
                                 }
-
                             }
 
                             // If message contains activity information...
                             var activity_code = messages[i].substr(2, 2);
-                            if( activity_code != rsdNamespace.IGNORE ) {
-
-                                rsdNamespace.IndicateStatus
-
-                                ( activity_code );
-
+                            if( activity_code != rsdNamespace.IGNORE ) 
+			    {
+                                rsdNamespace.IndicateStatus( activity_code );
                             }
-
                         }
-
                     }
-
                 }
 
                 break;
-
         }
-
     };
 
     // Log errors
@@ -162,24 +147,24 @@ rsdNamespace.StartListening = function() {
     // Terminate schedulers upon exiting
     rsdNamespace.connection.onclose = function() {
 
-        if( rsdNamespace.statusRequestScheduler ) {
-
+        if( rsdNamespace.statusRequestScheduler ) 
+	{
             clearInterval( rsdNamespace.statusRequestScheduler );
             clearInterval( rsdNamespace.remoteUpdateScheduler );
-
         }
 
     };
 
 };
 
-rsdNamespace.stopListening = function() {
-
-    if( rsdNamespace.connection ) rsdNamespace.connection.close();
-
+rsdNamespace.stopListening = function() 
+{
+    if( rsdNamespace.connection ) 
+	rsdNamespace.connection.close();
 };
 
-rsdNamespace.sendCurrentNodeMsg = function( target ) {
+rsdNamespace.sendCurrentNodeMsg = function( target ) 
+{
     console.log( 'Current node: ' + document.getElementById("setCurrentNodeID").value);
 
     value_ = document.getElementById('setCurrentNodeID').value
@@ -195,7 +180,8 @@ rsdNamespace.sendCurrentNodeMsg = function( target ) {
     rsdNamespace.connection.send( JSON.stringify( messageOut ) );
 }
 
-rsdNamespace.sendPerformActionMsg = function( target ) {
+rsdNamespace.sendPerformActionMsg = function( target ) 
+{
     console.log( 'Perform action: ' + document.getElementById("performActionID").value);
 
     value_ = document.getElementById('performActionID').value

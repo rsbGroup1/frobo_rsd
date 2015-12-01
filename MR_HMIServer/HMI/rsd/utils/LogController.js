@@ -82,15 +82,15 @@ rsdNamespace.RemoveFilters = function( selector ) {
 
 };
 
-rsdNamespace.IndicateStatus = function( code ) {
-
-
+rsdNamespace.IndicateStatus = function( code ) 
+{
     selector = "#indicator_" + code[0];
     //console.log(selector);
     //console.log(String(code));
     $(selector).toggleClass( "statusActiveNormal" );
 
-    if( code[1] != rsdNamespace.IGNORE ) {
+    if( code[1] != rsdNamespace.IGNORE ) 
+    {
 
         if( code[1] == rsdNamespace.SAFE ) {
 
@@ -105,7 +105,7 @@ rsdNamespace.IndicateStatus = function( code ) {
             // If there was an error,react:
             //     The SetAvailabilitySwitch method will take care of the
             //     notification of the MES server
-            rsdNamespace.SetAvailabilitySwitch( false );
+            //rsdNamespace.SetAvailabilitySwitch( false );
 
             $('#indicator_7').removeClass( "statusActiveWarning" ).addClass( "statusActiveError" );
         }

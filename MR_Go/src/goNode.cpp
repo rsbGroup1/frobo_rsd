@@ -89,15 +89,7 @@ public:
     {
         linear_pos_current_x_ = odom.pose.pose.position.x;
         linear_pos_current_y_ = odom.pose.pose.position.y;
-        angular_pos_current_ = tf::getYaw (odom.pose.pose.orientation) * RAD_TO_DEG;
-
-        // Correct the angle just in case the /odom adds 360 degrees
-        if((angular_pos_current_ - angular_pos_previous_) > 180)
-            angular_pos_current_ -= 360;
-        else if((angular_pos_previous_ - angular_pos_current_) > 180)
-            angular_pos_current_ += 360;
-
-        angular_pos_previous_ = angular_pos_current_;
+        angular_pos_current_ = tf::getYaw (odom.pose.pose.orientation) * RAD_TO_DEG + 180.0;
     }
 
     /**
@@ -149,16 +141,20 @@ public:
         // ONLY Angular movement
         else if (req.angular != 0)
         {
-            // Change the sign
-            req.angular = -req.angular;
             // Desired
             double angle_desired = angular_pos_current_ + req.angular;
+	    if(angle_desired > 360.0)
+		angle_desired -= 360.0;
+            else if(angle_desired < 0.0)
+		angle_desired += 360.0;
+
+	    //std::cout << "Current Angle: " << angular_pos_current_ << std::endl;
+	    //std::cout << "Destination Angle: " <<  angle_desired << ((req.angular >= 0.0)?("(CCW)"):("(CW)")) << std::endl;
 
             while (std::abs (angle_desired - angular_pos_current_) > angular_precision_)
             {
                 // Move the robot
-                std::cout << "Angular distance: " << (angular_pos_current_ - angle_desired) << std::endl;
-				if (angle_desired - angular_pos_current_ > 0)
+                if (req.angular >= 0.0)
                     twist_msg_.twist.angular.z = angular_speed_;
                 else
                     twist_msg_.twist.angular.z = -angular_speed_;
@@ -235,7 +231,6 @@ private:
     double linear_pos_current_x_;
     double linear_pos_current_y_;
     double angular_pos_current_;
-    double angular_pos_previous_;
     geometry_msgs::TwistStamped twist_msg_;
     geometry_msgs::TwistStamped twist_stop_msg_;
 

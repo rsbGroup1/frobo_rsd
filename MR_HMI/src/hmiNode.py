@@ -73,7 +73,8 @@ AUTO			= 1
 MANUAL 			= 2
 robotState 		= 0
 
-logOnceBool		= False
+performActionmsg 	= ""
+performActionRunning    = False
 
 # Class
 class MyServerProtocol( WebSocketServerProtocol ):
@@ -235,6 +236,26 @@ class actuationThread( threading.Thread ):
         pubActuationEna.publish( msg )
         self.lock.release()
 
+class runActionThread( threading.Thread ):
+    def __init__( self ):
+        threading.Thread.__init__( self )
+        self.stopFlag = threading.Event()
+
+    def stop( self ):
+        self.stopFlag.set()
+
+    def run( self ):
+    	global srvPerformAction, performActionmsg
+
+	performActionRunning = True
+    	try:
+    		resp = srvPerformAction( performActionmsg ) # Sends message (just ignore the response for now)
+    	except rospy.ServiceException, e:
+        	print "Service call failed: %s"%e
+
+	performActionRunning = False
+
+
 def createdTwistedCommand( linearX, angularZ ):
     msg = TwistStamped()
     msg.header.stamp = rospy.Time.now()
@@ -276,10 +297,12 @@ def setManualMode( newState ):
 def drive( linearX, angularZ ):
     global pubCmdVelUpdate
     global actuationEna
+    global performActionRunning
 
-    setManualMode( True )
-    msg = createdTwistedCommand( linearX, angularZ )
-    publishCommand( pubCmdVelUpdate, msg )
+    if performActionRunning == False:
+    	setManualMode( True )
+    	msg = createdTwistedCommand( linearX, angularZ )
+    	publishCommand( pubCmdVelUpdate, msg )
 
 def tipper( direction ):
     """ Method description
@@ -303,7 +326,6 @@ def sendMode( mode ):
     """
     global srvMainRun
 
-    #print mode
     try:
         resp = srvMainRun( mode ) # Sends run message (just ignore the response for now)
     except rospy.ServiceException, e:
@@ -316,7 +338,6 @@ def sendCurrentNodeMessage( msg ):
 
     global srvCurrentMode
 
-    print msg
     try:
     	resp = srvCurrentMode( msg ) # Sends message (just ignore the response for now)    
     except rospy.ServiceException, e:
@@ -327,13 +348,19 @@ def sendPerformActionMessage( msg ):
     Sends the message to the currentNode service
     """
 
-    global srvPerformAction
+    global isManual, robotState, performActionmsg, performActionRunning 
 
-    print msg
-    try:
-    	resp = srvPerformAction( msg ) # Sends message (just ignore the response for now)
-    except rospy.ServiceException, e:
-        print "Service call failed: %s"%e
+    if performActionRunning == False:
+	    performActionmsg = msg
+
+	    stop_aThreads()
+	    if isManual == True:
+		setManualMode( False )
+		sendMode( u"idle" )
+		robotState = IDLE
+
+	    t = runActionThread()
+	    t.start()  
 
 def logCallback( data ):
     """ Method Description

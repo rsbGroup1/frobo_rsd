@@ -75,26 +75,29 @@ boost::mutex _waitMutex;
 // Functions
 bool tipCallback(mr_tip_controller::tip::Request& req, mr_tip_controller::tip::Response& res)
 {
+    _waitMutex.lock();
+    _tipperDone = false;
+    _waitMutex.unlock();
+
     if(req.direction)
     {
         ROS_INFO ("Tipper goes UP");
         _queue.enqueue ("u");
+
+        bool tipperDone;
+        do
+        {
+	    _waitMutex.lock();
+	    tipperDone = _tipperDone;
+	    _waitMutex.unlock();
+	    usleep(100);
+        }
+        while(tipperDone == false);
     }
     else if(req.direction == false)
     {
         ROS_INFO ("Tipper goes DOWN");
         _queue.enqueue ("d");
-    }
-
-    _waitMutex.lock();
-    bool tipperDone = _tipperDone;
-    _waitMutex.unlock();
-    while(tipperDone == false)
-    {
-        _waitMutex.lock();
-        tipperDone = _tipperDone;
-        _waitMutex.unlock();
-        usleep(100);
     }
 
     res.status = true;

@@ -65,10 +65,10 @@ class ROSnode():
 			self.act_en_msg.data = True
 
 			# if obstacle close or colliding
-			if self.obstacle_state == "proximityAlert":
+			#if self.obstacle_state == "proximityAlert":
 				#rospy.logwarn("Proximity Alert")
 				# Reduce the speed
-			elif self.obstacle_state == "colliding":
+			if self.obstacle_state == "colliding":
 				#rospy.logerr("Obstacle!")
 				self.act_en_msg.data = False
 

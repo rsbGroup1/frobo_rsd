@@ -76,7 +76,7 @@ public:
         _pNh.param<std::string> ("battery_sub", _batterySub, "/fmInformation/battery");
         _pNh.param<std::string> ("mode_pub", _modePub, "/mrMain/mode");
         _pNh.param<std::string> ("run_srv", _runSrv, "/mrMain/run");
-        _pNh.param<bool> ("check_battery", _check_battery , true);
+        _pNh.param<bool> ("check_battery", _check_battery , false);
         _pNh.param<double> ("battery_low", _batteryLow, 12.4);
         _pNh.param<double> ("battery_critic", _batteryCritic, 12.1);
         _pNh.param<double> ("desired_charge", _desiredCharge, 14.1);
@@ -265,11 +265,9 @@ public:
             std::string action;
 
             // Stores the current position just in case the battery is in
-            // the critic level
+            // the critic level and checks if the battery is the critic level
             action = _currentNode;
-
-            // Checks if the battery is the critic level
-            /*if (_check_battery) 
+            if (_check_battery) 
 		checkBattery (_batteryCritic, action);
 
             // Go to the dispenser position
@@ -280,7 +278,6 @@ public:
             // Checks if the battery is the critic level
             if (_check_battery) 
 		checkBattery (_batteryCritic, action);
-            */
 
             // Send the robot to the correct wc conveyor
             if (msg.cell == 1)

@@ -245,7 +245,7 @@ class runActionThread( threading.Thread ):
         self.stopFlag.set()
 
     def run( self ):
-    	global srvPerformAction, performActionmsg
+    	global performActionmsg, performActionRunning
 
 	performActionRunning = True
     	try:
@@ -303,6 +303,8 @@ def drive( linearX, angularZ ):
     	setManualMode( True )
     	msg = createdTwistedCommand( linearX, angularZ )
     	publishCommand( pubCmdVelUpdate, msg )
+    else:
+	print "Action is running.."
 
 def tipper( direction ):
     """ Method description
@@ -361,6 +363,8 @@ def sendPerformActionMessage( msg ):
 
 	    t = runActionThread()
 	    t.start()  
+    else:
+	print "Action is already running.."
 
 def logCallback( data ):
     """ Method Description

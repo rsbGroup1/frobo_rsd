@@ -59,7 +59,8 @@ public:
     MainNode() :
         _pNh ("~"),
         _batteryLevel (0),
-        _newOrder (false)
+        _newOrder (false),
+	_criticalFaultSignalRunning(false)
     {
         // Get parameter names
         _pNh.param<std::string> ("nav_perform_srv", _performActionString, "/mrNavigationController/performAction");
@@ -176,19 +177,32 @@ public:
             boost::unique_lock<boost::mutex> lock (_runMutex);
             if (req.state == "auto")
             {
-                _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
+		if(_criticalFaultSignalRunning == false)
+		{
+			_criticalFaultSignalRunning = true;
+	                _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
+		}
                 HMISendInfo("Auto mode!");
                 _mode = AUTO;
             }
             else if (req.state== "manual")
             {
-                _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
+		if(_criticalFaultSignalRunning == false)
+		{
+			_criticalFaultSignalRunning = true;
+	                _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
+		}
                 HMISendInfo("Manual mode!");
                 _mode = MANUAL;
             }
             else if (req.state == "idle")
             {
-                _criticalFaultSignalThread->interrupt();
+		if(_criticalFaultSignalRunning)
+		{
+			_criticalFaultSignalRunning = false;
+               		_criticalFaultSignalThread->interrupt();
+			delete _criticalFaultSignalThread;
+		}
                 HMISendInfo("Idle mode!");
                 _mode = IDLE;
             }
@@ -343,10 +357,7 @@ public:
      */
     void navStatusCallback(std_msgs::String msg)
     {
-        if(msg.data == "free_navigation")
-        {
-            HMIUpdateIcons(gps);
-        }
+	//
     }
 
     /**
@@ -518,6 +529,7 @@ private:
     mr_mes_client::server _msg_last;
     std::string _run_msg_last;
     MODE _mode;
+    bool _criticalFaultSignalRunning;
 
     boost::thread* _criticalFaultSignalThread;
 };

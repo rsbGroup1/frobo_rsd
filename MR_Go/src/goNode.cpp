@@ -6,6 +6,7 @@
 #include "tf/tf.h"
 #include "nav_msgs/Odometry.h"
 #include "msgs/BoolStamped.h"
+#include "std_msgs/String.h"
 #include "geometry_msgs/TwistStamped.h"
 
 #include <iostream>
@@ -15,9 +16,22 @@
 #include <boost/thread.hpp>
 #include <boost/chrono.hpp>
 
+// Defines
+#define SSTR(x)                 dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
 #define PI 3.14159265359
 #define DEG_TO_RAD PI/180
 #define RAD_TO_DEG 180/PI
+
+// Enum
+enum HMI_ICONS
+{
+    tipper = 1,
+    lineFollowing = 2,
+    gps = 3,
+    collectingBricks = 4,
+    fixedMovement = 5,
+    charging = 6,
+};
 
 class Go
 {
@@ -40,12 +54,14 @@ public:
         pNh_.param<std::string> ("pub_twist", pub_twist_name_, "/fmCommand/cmd_vel");
         pNh_.param<std::string> ("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
         pNh_.param<std::string> ("srv_move", srv_move_name_, "mrGo/move");
+        pNh_.param<std::string> ("pub_hmi", pub_hmi_name_, "/mrHMI/status");
 
         // Publishers, subscribers, services
         srv_move_ = nh_.advertiseService (srv_move_name_, &Go::moveCallback, this);
         pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
         pub_twist_ = nh_.advertise<geometry_msgs::TwistStamped> (pub_twist_name_, 1);
         sub_odom_ = nh_.subscribe<nav_msgs::Odometry> (sub_odom_name_, 1, &Go::odometryCallback, this);
+        pub_hmi_ = nh_.advertise<std_msgs::String> (pub_hmi_name_, 10);
 
         // Twist stop
         twist_stop_msg_.twist.linear.x = 0;
@@ -57,6 +73,13 @@ public:
      */
     ~Go()
     {
+    }
+
+    void HMIUpdateIcons(HMI_ICONS state)
+    {
+        std_msgs::String obj;
+        obj.data = "00" + SSTR (state) + "0,,";
+        pub_hmi_.publish (obj);
     }
 
     /**
@@ -82,6 +105,9 @@ public:
      */
     bool moveCallback (mr_go::move::Request& req, mr_go::move::Response& res)
     {
+        // Update HMI
+        HMIUpdateIcons(fixedMovement);
+
         // Starts the publishers, subscribers and the deadman
         deadmanThread_ = new boost::thread (&Go::enableDeadman, this);
 
@@ -150,6 +176,10 @@ public:
         pub_twist_.publish (twist_stop_msg_);
         delete deadmanThread_;
 
+        // Update HMI
+        HMIUpdateIcons(fixedMovement);
+
+        // Return
         res.done = true;
         return true;
     }
@@ -193,13 +223,13 @@ private:
     // ROS
     ros::NodeHandle nh_;
     ros::Subscriber sub_odom_;
-    ros::Publisher pub_deadman_, pub_twist_;
+    ros::Publisher pub_deadman_, pub_twist_, pub_hmi_;
     ros::ServiceServer srv_move_;
 
     // Topics name
     std::string sub_odom_name_;
     std::string srv_move_name_;
-    std::string pub_twist_name_, pub_deadman_name_;
+    std::string pub_twist_name_, pub_deadman_name_, pub_hmi_name_;
 
     // Variables
     double linear_pos_current_x_;

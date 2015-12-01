@@ -46,13 +46,6 @@ enum HMI_ICONS
     charging = 6,
 };
 
-enum HMI_SAFETY
-{
-    safe = 1,
-    proximityAlert = 2,
-    colliding = 3
-};
-
 enum MODE
 {
     IDLE = 0,
@@ -105,10 +98,6 @@ public:
         _mesSubscriber = _nh.subscribe<mr_mes_client::server> (_mesSub, 1, &MainNode::mesCallback, this);
         _obstacleDetectorSubscriber = _nh.subscribe<std_msgs::String> (_obstacleDetectorSub, 10, &MainNode::obstacleCallback, this);
         _batterySubscriber = _nh.subscribe<std_msgs::Float32> (_batterySub, 1, &MainNode::_batteryCallback, this);
-       
-        // Init
-	for(int i=0; i<6; i++)
-		_iconStatus[i] = false;
     }
 
     ~MainNode()
@@ -139,18 +128,6 @@ public:
     {
         std_msgs::String obj;
         obj.data = "00" + SSTR (state) + "0,,";
-        _hmiPublisher.publish (obj);
-
-	_iconStatus[state] = !_iconStatus[state];
-    }
-
-    /**
-     * Updates the icons that inform to the user the safety status of the robot
-     */
-    void HMIUpdateSafety (HMI_SAFETY state)
-    {
-        std_msgs::String obj;
-        obj.data = "000" + SSTR (state) + ",,";
         _hmiPublisher.publish (obj);
     }
 
@@ -232,7 +209,7 @@ public:
         }
 
         res.status = _run_msg_last;
-	return true;
+        return true;
     }
 
     /**
@@ -300,6 +277,7 @@ public:
 
             if (msg.cell == 3)
                 action = "wc3_conveyor";
+
             perform_action_obj.request.action = action;
             _servicePerformAction.call (perform_action_obj);
 	    
@@ -309,14 +287,12 @@ public:
             _mesPublisher.publish(msg_to_server);
 	    
             // Tip Up
-            HMIUpdateIcons(tipper);
             tip_obj.request.direction = true;
             _serviceTipper.call (tip_obj);
 
             // Tip Down
             tip_obj.request.direction = false;
             _serviceTipper.call (tip_obj);
-            HMIUpdateIcons(tipper);
 
             // Checks if the battery is the critic level
             if (_check_battery) checkBattery (_batteryCritic, action);
@@ -370,46 +346,10 @@ public:
      */
     void navStatusCallback(std_msgs::String msg)
     {
-        if(msg.data == "following_line")
-	{
-	    if(_iconStatus[fixedMovement] == true)
-            	HMIUpdateIcons(fixedMovement);	
-
-	    if(_iconStatus[gps] == true)
-            	HMIUpdateIcons(gps);	
-	
-            HMIUpdateIcons(lineFollowing);
-	}
-        else if(msg.data == "linear_move")	
-	{
-	    if(_iconStatus[lineFollowing] == true)
-            	HMIUpdateIcons(lineFollowing);	
-
-	    if(_iconStatus[gps] == true)
-            	HMIUpdateIcons(gps);	
-
-            HMIUpdateIcons(fixedMovement);
-	}
-        else if(msg.data == "angular_move")
-	{
-	    if(_iconStatus[lineFollowing] == true)
-            	HMIUpdateIcons(lineFollowing);	
-
-	    if(_iconStatus[gps] == true)
-            	HMIUpdateIcons(gps);	
-
-            HMIUpdateIcons(fixedMovement);
-	}
-        else if(msg.data == "free_navigation")
-	{
-	    if(_iconStatus[fixedMovement] == true)
-            	HMIUpdateIcons (fixedMovement);	
-
-	    if(_iconStatus[lineFollowing] == true)
-            	HMIUpdateIcons(lineFollowing);	
-
+        if(msg.data == "free_navigation")
+        {
             HMIUpdateIcons(gps);
-	}
+        }
     }
 
     /**
@@ -464,15 +404,15 @@ public:
     {
         // Checks if the safety status has changed
         // This avoids unnecesary messages
-        if (status.data != safety_status_prev)
+        /*if (status.data != safety_status_prev)
         {
             if (status.data == "safe")
-                HMIUpdateSafety (safe);
+                //
             else if (status.data == "proximityAlert")
-                HMIUpdateSafety (proximityAlert);
+                //
             else if (status.data == "colliding")
-                HMIUpdateSafety (colliding);
-        }
+                //
+        }*/
 
         safety_status_prev = status.data;
     }
@@ -496,8 +436,7 @@ public:
         if (_batteryLevel == 0)
             std::cout << "No battery level! Waiting..." << std::endl;
 
-        while (_batteryLevel == 0) // Wait
-            ;
+        while (_batteryLevel == 0); // Wait
 
         if (_batteryLevel < threshold)
         {
@@ -517,21 +456,24 @@ public:
      */
     void chargeBattery (float threshold)
     {
+        // Update HMI
+        HMIUpdateIcons(charging);
+
         if (_batteryLevel == 0)
             std::cout << "No battery level! Waiting..." << std::endl;
 
-        while (_batteryLevel == 0) // Wait
-            ;
+        while(_batteryLevel == 0); // Wait
 
         if (_batteryLevel < threshold)
         {
-            while (_batteryLevel < _desiredCharge)
-                ; // Wait
+            while (_batteryLevel < _desiredCharge); // Wait
         }
+
+        // Update HMI
+        HMIUpdateIcons(charging);
     }
     
-    
-        /**
+    /**
      * Necessary to move the robot
      */
     void enableCriticalFaultSignal()
@@ -544,8 +486,10 @@ public:
                 critical_fault.data = true;
                 critical_fault.header.stamp = ros::Time::now();
                 _criticalFaultSignalPublisher.publish (critical_fault);
+
                 // Sleep for 50 ms = 20Hz
-                boost::this_thread::sleep_for (boost::chrono::milliseconds (75));
+                boost::this_thread::sleep_for (boost::chrono::milliseconds (50));
+
                 // Signal interrupt point
                 boost::this_thread::interruption_point();
             }
@@ -554,7 +498,6 @@ public:
                 critical_fault.data = false;
                 critical_fault.header.stamp = ros::Time::now();
                 _criticalFaultSignalPublisher.publish (critical_fault);
-                //std::cout << "Interrupted!!" << std::endl;
                 break;
             }
         }
@@ -578,7 +521,6 @@ private:
     mr_mes_client::server _msg_last;
     std::string _run_msg_last;
     MODE _mode;
-    bool _iconStatus[6];    
 
     boost::thread* _criticalFaultSignalThread;
 };
@@ -604,8 +546,6 @@ int main()
 
     // Multithreading
     ros::AsyncSpinner spinner (0);
-
-    int i = 0;
 
     // ROS Spin: Handle callbacks
     while (!ros::isShuttingDown())

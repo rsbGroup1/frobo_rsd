@@ -1,19 +1,20 @@
+// Includes
 #include "skills.h"
-
 #include "std_msgs/String.h"
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 #include "msgs/BoolStamped.h"
 
+// Defines
 #define M_PI		3.14159265358979323846
 #define DEG_TO_RAD	(M_PI/180.0)
 #define RAD_TO_DEG	(180.0/M_PI)
 
-
 Skills::Skills (ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move, ros::ServiceClient* srv_lineUntilLidar, ros::ServiceClient* srv_lineUntilRelative,
 			ros::Publisher* pub_status, ros::Publisher* pub_initialize, ros::Publisher *pub_deadman,
-			ros::ServiceClient* srv_detect_obstacles
+            ros::ServiceClient* srv_detect_obstacles, ros::Publisher* pub_hmi
  	      )
 {
+    pub_hmi_ = pub_hmi;
     srv_lineUntilQR_ = srv_lineUntilQR;
     srv_lineUntilLidar_ = srv_lineUntilLidar;
     srv_lineUntilRelative_ = srv_lineUntilRelative;
@@ -29,6 +30,14 @@ Skills::~Skills()
 {
     delete move_base_actionclient_;
 }
+
+void Skills::HMIUpdateIcons(HMI_ICONS state)
+{
+    std_msgs::String obj;
+    obj.data = "00" + SSTR (state) + "0,,";
+    pub_hmi_.publish (obj);
+}
+
 
 bool Skills::lineUntilQR (std::string qr)
 {
@@ -102,7 +111,10 @@ bool Skills::angularMove (double angle)
 
 bool Skills::goToFreePosition (double x, double y, double yaw)
 {
-    std::cout << "go to free position called" << std::endl;
+    // Update HMI
+    HMIUpdateIcons(gps);
+
+    //std::cout << "go to free position called" << std::endl;
     ROS_INFO ("Go to free position called - goal(%f, %f, %f)", x, y, yaw);
     bool success = false;
 
@@ -147,10 +159,16 @@ bool Skills::goToFreePosition (double x, double y, double yaw)
     {
         ROS_ERROR ("move_base action server not responding within timeout");
     }
+
+    // Clear
     deadmanThread_->interrupt();
+
+    // Update HMI
+    HMIUpdateIcons(gps);
+
+    // Return
     return success;
 }
-
 
 bool Skills::setInitialPoseAMCL (double x, double y, double yaw)
 {
@@ -167,7 +185,6 @@ bool Skills::setInitialPoseAMCL (double x, double y, double yaw)
 	return true;
 }
 
-
 bool Skills::detectObstacles (bool state)
 {
 	detectObstaclesCall.request.enable = state;
@@ -177,7 +194,6 @@ bool Skills::detectObstacles (bool state)
 
 void Skills::enableDeadman()
 {
-
     while (true)
     {
         try
@@ -204,8 +220,10 @@ bool Skills::chargeDectectionAndBackupPlan(double* battery_level, double thresho
 	int tries = 0;
 	std::cout << "battery START: " << *battery_level << std::endl;
 		
-	while (keep_trying){
-//	if (battery_level < threshold){
+    while (keep_trying)
+    {
+        //if (battery_level < threshold)
+        //{
 		//linearMove(-0.2);
 		goToFreePosition(-0.56, -2.41 , -0.2);
 		lineUntilLidar(0.45);
@@ -215,19 +233,22 @@ bool Skills::chargeDectectionAndBackupPlan(double* battery_level, double thresho
 		wait(10.0);
 		ros::spinOnce();
 		std::cout << "battery: " << *battery_level << std::endl;
-		if (*battery_level > threshold || tries > 1) keep_trying = false;
-		else {
+        if (*battery_level > threshold || tries > 1)
+            keep_trying = false;
+        else
+        {
 			tries++;
 			linearMove(-0.25);			
 		}
 	}
-	return true;
 
+	return true;
 }
 
-bool Skills::wait(double seconds){
-	ros::Rate r(1/seconds); // 10 hz
+bool Skills::wait(double seconds)
+{
+    // 10 hz
+    ros::Rate r(1/seconds);
     r.sleep();
 	return true;
 }
-

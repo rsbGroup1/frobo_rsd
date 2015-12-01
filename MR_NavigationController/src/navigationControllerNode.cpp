@@ -42,7 +42,7 @@ public:
     NavigationController() :
         pNh_ ("~"),
         skills_ (&srv_lineUntilQR_, &srv_move_, &srv_lineUntilLidar_, &srv_lineUntilRelative_, &pub_status_,
-		 &pub_initialize_, &pub_deadman_, &srv_detect_obstacles_)
+         &pub_initialize_, &pub_deadman_, &srv_detect_obstacles_, &pub_hmi_)
     {
         // Get parameter names
         pNh_.param<std::string> ("lineFollowEnableService", srv_lineUntilQR_name_, "mrLineFollower/lineUntilQR");
@@ -55,8 +55,9 @@ public:
         pNh_.param<std::string> ("setCurrentNode", srv_set_current_node_name_, "mrNavigationController/setCurrentNode");
 		pNh_.param<std::string> ("obstacleDetectorService", srv_detect_obstacles_name_, "/mrObstacleDetector/enabler");
         pNh_.param<int> ("searchLimit", search_limit_, 100);
-	pNh_.param<std::string> ("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
+        pNh_.param<std::string> ("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
         pNh_.param<std::string> ("sub_battery", sub_battery_name_, "/fmInformation/battery");
+        pNh_.param<std::string> ("pub_hmi", pub_hmi_name_, "/mrHMI/status");
         //std::string path_to_node = ros::package::getPath("mrNavigationController");
 
         // Service
@@ -66,7 +67,7 @@ public:
         srv_move_ = nh_.serviceClient<mr_go::move> (srv_move_name_);
         srv_action_ = nh_.advertiseService (srv_action_name_, &NavigationController::performActionCallback, this);
         srv_set_current_node_ = nh_.advertiseService (srv_set_current_node_name_, &NavigationController::setCurrentNodeCallback, this);
-	srv_detect_obstacles_ = nh_.serviceClient<mr_obstacle_detector::enabler>(srv_detect_obstacles_name_);
+        srv_detect_obstacles_ = nh_.serviceClient<mr_obstacle_detector::enabler>(srv_detect_obstacles_name_);
 
         // Subscriber
         sub_pose_ = nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped> ("amcl_pose", 10, &NavigationController::poseReceived, this);
@@ -76,7 +77,8 @@ public:
         pub_status_ = nh_.advertise<std_msgs::String> (pub_status_name_, 10);
         pub_current_node_ = nh_.advertise<std_msgs::String> (pub_current_node_name_, 10);
         pub_initialize_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped> ("initialpose", 1);
-	pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
+        pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
+        pub_hmi_ = nh_.advertise<std_msgs::String> (pub_hmi_name_, 10);
 
         // Create the graph and put the start node from the launch file
         graph_ = new Graph (&pub_current_node_);
@@ -88,11 +90,9 @@ public:
 
         // Inialize AMCL
         std::ifstream localisationFile;
-        //std::string path_to_file = path_to_node +
         localisationFile.open ("/home/frobit_pro_group1/Desktop/localization.csv");
         ROS_INFO ("Waiting for global localisation");
         ros::service::waitForService ("global_localization", ros::Duration (5, 0));
-
 
         if (localisationFile.is_open())
         {
@@ -108,9 +108,9 @@ public:
             localisationFile >> p.pose.pose.orientation.y;
             localisationFile >> p.pose.pose.orientation.z;
             localisationFile >> p.pose.pose.orientation.w;
-            for(int i = 0; i < 36 ;i+=7){
+            for(int i = 0; i < 36 ;i+=7)
 		          p.pose.covariance[i] = 0.3;
-            }
+
             p.header.frame_id = "map";
 
             std::cout << "FROM LOADED FILE: " << p.pose.pose.position.x << " " << p.pose.pose.position.y << " " << p.pose.pose.orientation.x << " " << p.pose.pose.orientation.y << " " << p.pose.pose.orientation.z << " "  << p.pose.pose.orientation.w << std::endl;
@@ -123,7 +123,7 @@ public:
         }
         else
         {
-            // global initialization
+            // Global initialization
             ros::ServiceClient initalize = nh_.serviceClient<std_srvs::Empty> ("global_localization");
             ros::Duration d (5, 0);
             d.sleep();
@@ -143,18 +143,16 @@ public:
         bool node_exists = false;
         bool already_here = false;
 
-	// Check if the node exists
+        // Check if the node exists
         for (auto & node : graph_->getNodes())
-        {
             if (node.getName() == req.node.c_str())
                 node_exists = true;
-        }
         
         // Check if it is already in the node
-	if (req.node.c_str() == graph_->getCurrentNode())
-	    already_here = true;
+        if (req.node.c_str() == graph_->getCurrentNode())
+            already_here = true;
 
-	// Handle the output
+        // Handle the output
         if (node_exists == true)
         {
             if (already_here)
@@ -230,13 +228,11 @@ public:
         graph_->addNode ("charge");
         graph_->addNode ("charge_line");
 
-
         /*
          *
          * Skills
          *
          */
-
         std::vector<std::function<void() >> line_start_TO_wc1;
 		line_start_TO_wc1.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
         line_start_TO_wc1.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_1_entrance"));
@@ -246,60 +242,54 @@ public:
         std::vector<std::function<void() >> wc1_TO_wc1_conveyor;
         wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::linearMove, &skills_, 0.6));
         wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::angularMove, &skills_, 90));
-	wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::lineUntilRelative, &skills_, 0.11));
+        wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::lineUntilRelative, &skills_, 0.11));
         wc1_TO_wc1_conveyor.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.20));
         wc1_TO_wc1_conveyor.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc1_conveyor"));
 
         std::vector<std::function<void() >> wc1_conveyor_TO_wc1_robot;
-	wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Skills::linearMove, &skills_, -0.4));
+        wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Skills::linearMove, &skills_, -0.4));
         wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Skills::angularMove, &skills_, 50));
-	wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Skills::linearMove, &skills_, 0.4));
+        wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Skills::linearMove, &skills_, 0.4));
         wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Skills::angularMove, &skills_, -30));
         wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.15));
         wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc1_robot"));
 
         std::vector<std::function<void() >> wc1_robot_TO_wc_exit;
-	wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::linearMove, &skills_, -0.2));
+        wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::linearMove, &skills_, -0.2));
         wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::angularMove, &skills_, 180));
-	wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
+        wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
         wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_1_exit"));
-	wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
-	wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::linearMove, &skills_, 0.5));
+        wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
+        wc1_robot_TO_wc_exit.push_back (std::bind (&Skills::linearMove, &skills_, 0.5));
         wc1_robot_TO_wc_exit.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc_exit"));
 		
-
-
         std::vector<std::function<void() >> wc1_TO_wc2;
         wc1_TO_wc2.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_2_entrance"));
         wc1_TO_wc2.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc2"));
 
-
-
         std::vector<std::function<void() >> wc2_TO_wc2_conveyor;
-	wc2_TO_wc2_conveyor.push_back (std::bind (&Skills::linearMove, &skills_, 0.6));
+        wc2_TO_wc2_conveyor.push_back (std::bind (&Skills::linearMove, &skills_, 0.6));
         wc2_TO_wc2_conveyor.push_back (std::bind (&Skills::angularMove, &skills_, 90));
-	wc2_TO_wc2_conveyor.push_back (std::bind (&Skills::lineUntilRelative, &skills_, 0.11));
+        wc2_TO_wc2_conveyor.push_back (std::bind (&Skills::lineUntilRelative, &skills_, 0.11));
         wc2_TO_wc2_conveyor.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.15));
         wc2_TO_wc2_conveyor.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc2_conveyor"));
 
         std::vector<std::function<void() >> wc2_conveyor_TO_wc2_robot;
-	wc2_conveyor_TO_wc2_robot.push_back (std::bind (&Skills::linearMove, &skills_, -0.35));
+        wc2_conveyor_TO_wc2_robot.push_back (std::bind (&Skills::linearMove, &skills_, -0.35));
         wc2_conveyor_TO_wc2_robot.push_back (std::bind (&Skills::angularMove, &skills_, -50));
-	wc2_conveyor_TO_wc2_robot.push_back (std::bind (&Skills::linearMove, &skills_, 0.6));
-	wc2_conveyor_TO_wc2_robot.push_back (std::bind (&Skills::angularMove, &skills_, 35));
+        wc2_conveyor_TO_wc2_robot.push_back (std::bind (&Skills::linearMove, &skills_, 0.6));
+        wc2_conveyor_TO_wc2_robot.push_back (std::bind (&Skills::angularMove, &skills_, 35));
         wc2_conveyor_TO_wc2_robot.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.13));
         wc2_conveyor_TO_wc2_robot.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc2_robot"));
 
         std::vector<std::function<void() >> wc2_robot_TO_wc_exit;
-	wc2_robot_TO_wc_exit.push_back (std::bind (std::bind (&Skills::linearMove, &skills_, -0.55)));
+        wc2_robot_TO_wc_exit.push_back (std::bind (std::bind (&Skills::linearMove, &skills_, -0.55)));
         wc2_robot_TO_wc_exit.push_back (std::bind (&Skills::angularMove, &skills_, -180));
-	wc2_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
+        wc2_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
         wc2_robot_TO_wc_exit.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_2_exit"));
         wc2_robot_TO_wc_exit.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc_exit"));
-	wc2_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
-	wc2_robot_TO_wc_exit.push_back (std::bind (&Skills::linearMove, &skills_, 0.55));
-
-
+        wc2_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
+        wc2_robot_TO_wc_exit.push_back (std::bind (&Skills::linearMove, &skills_, 0.55));
 
         std::vector<std::function<void() >> wc2_TO_wc3;
         wc2_TO_wc3.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_3_entrance"));
@@ -316,23 +306,19 @@ public:
         wc3_conveyor_TO_wc3_robot.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc3_robot"));
 
         std::vector<std::function<void() >> wc3_robot_TO_wc_exit;
-	wc3_robot_TO_wc_exit.push_back (std::bind (std::bind (&Skills::linearMove, &skills_, -0.2)));
+        wc3_robot_TO_wc_exit.push_back (std::bind (std::bind (&Skills::linearMove, &skills_, -0.2)));
         wc3_robot_TO_wc_exit.push_back (std::bind (&Skills::angularMove, &skills_, -180));
-	wc3_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
+        wc3_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
         wc3_robot_TO_wc_exit.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_3_exit"));
         wc3_robot_TO_wc_exit.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc_exit"));
-	wc3_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
-
-
+        wc3_robot_TO_wc_exit.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
 
         std::vector<std::function<void() >> wc_exit_TO_line_end;
         wc_exit_TO_line_end.push_back (std::bind (&Skills::angularMove, &skills_, -90));
-	wc_exit_TO_line_end.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
+        wc_exit_TO_line_end.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
         wc_exit_TO_line_end.push_back (std::bind (&Skills::lineUntilQR, &skills_, "line_out"));
         wc_exit_TO_line_end.push_back (std::bind (&Graph::setCurrentNode, graph_, "line_end"));
-	wc_exit_TO_line_end.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
-
-
+        wc_exit_TO_line_end.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
 
         std::vector<std::function<void() >> line_end_TO_box;
         line_end_TO_box.push_back (std::bind (&Skills::setInitialPoseAMCL, &skills_, 3.615, -2.046, 2.115));
@@ -340,18 +326,16 @@ public:
         line_end_TO_box.push_back (std::bind (&Skills::goToFreePosition, &skills_, -0.5, -1.5 , -1.9));
         line_end_TO_box.push_back (std::bind (&Graph::setCurrentNode, graph_, "box"));
 
-	std::vector<std::function<void() >> line_end_TO_line_start;
-	line_end_TO_line_start.push_back (std::bind (&Skills::setInitialPoseAMCL, &skills_, 3.615, -2.046, 2.115));
-    line_end_TO_line_start.push_back (std::bind (&Skills::goToFreePosition, &skills_, 2.89, -0.66 , -1.69));
-	line_end_TO_line_start.push_back (std::bind (&Skills::goToFreePosition, &skills_, 3.3, -2 , -1.2));
-	line_end_TO_line_start.push_back (std::bind (&Graph::setCurrentNode, graph_, "line_start"));
+        std::vector<std::function<void() >> line_end_TO_line_start;
+        line_end_TO_line_start.push_back (std::bind (&Skills::setInitialPoseAMCL, &skills_, 3.615, -2.046, 2.115));
+        line_end_TO_line_start.push_back (std::bind (&Skills::goToFreePosition, &skills_, 2.89, -0.66 , -1.69));
+        line_end_TO_line_start.push_back (std::bind (&Skills::goToFreePosition, &skills_, 3.3, -2 , -1.2));
+        line_end_TO_line_start.push_back (std::bind (&Graph::setCurrentNode, graph_, "line_start"));
 
         std::vector<std::function<void() >> box_TO_line_start;
         box_TO_line_start.push_back (std::bind (&Skills::goToFreePosition, &skills_, 0.1, 0.7 , 1.3));
         box_TO_line_start.push_back (std::bind (&Skills::goToFreePosition, &skills_, 3.3, -2 , -1.2));
         box_TO_line_start.push_back (std::bind (&Graph::setCurrentNode, graph_, "line_start"));
-
-
 
         std::vector<std::function<void() >> box_TO_pre_bricks;
         box_TO_pre_bricks.push_back (std::bind (&Skills::goToFreePosition, &skills_, -0.9, -2.2 , -2.7));
@@ -361,14 +345,12 @@ public:
         //pre_bricks_TO_box.push_back (std::bind (&Skills::goToFreePosition, &skills_, -0.5, -1.5 , 1.3));
         pre_bricks_TO_box.push_back (std::bind (&Graph::setCurrentNode, graph_, "box"));
 
-
         std::vector<std::function<void() >> pre_bricks_TO_bricks;
         pre_bricks_TO_bricks.push_back (std::bind (&Skills::linearMove, &skills_, 0.2));
         pre_bricks_TO_bricks.push_back (std::bind (&Graph::setCurrentNode, graph_, "bricks"));
         std::vector<std::function<void() >> bricks_TO_pre_bricks;
         bricks_TO_pre_bricks.push_back (std::bind (&Skills::linearMove, &skills_, -0.2));
         bricks_TO_pre_bricks.push_back (std::bind (&Graph::setCurrentNode, graph_, "pre_bricks"));
-
 
         std::vector<std::function<void() >> box_TO_pre_charge;
         //box_TO_pre_charge.push_back (std::bind (&Skills::goToFreePosition, &skills_, -0.56, -2.41 , -0.2));
@@ -397,9 +379,9 @@ public:
 
         std::vector<std::function<void() >> pre_charge_line_TO_charge_line;
         //pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::chargeDectectionAndBackupPlan, &skills_, battery_level_, 13.0));        
-	//pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, 0.1));
-	//pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.15));
-	//pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::lineUntilRelative, &skills_, 0.2));
+        //pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, 0.1));
+        //pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.15));
+        //pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::lineUntilRelative, &skills_, 0.2));
         pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, 0.1));
         pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::wait, &skills_, 10.0));
         pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, -0.1));
@@ -411,9 +393,8 @@ public:
 
         std::vector<std::function<void() >> charge_line_TO_pre_charge_line;
         charge_line_TO_pre_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, -0.1));
-	//charge_line_TO_pre_charge_line.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_1_load"));
+        //charge_line_TO_pre_charge_line.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_1_load"));
         charge_line_TO_pre_charge_line.push_back (std::bind (&Graph::setCurrentNode, graph_, "pre_charge_line"));
-
 
         // Vertices
         graph_->addVertex ("line_start", "wc1", 1, line_start_TO_wc1);
@@ -421,7 +402,6 @@ public:
         graph_->addVertex ("wc2", "wc3", 1, wc2_TO_wc3);
         graph_->addVertex ("wc_exit", "line_end", 1, wc_exit_TO_line_end);
 	
-
         graph_->addVertex ("wc1", "wc1_conveyor", 1, wc1_TO_wc1_conveyor);
         graph_->addVertex ("wc1_conveyor", "wc1_robot", 1, wc1_conveyor_TO_wc1_robot);
         graph_->addVertex ("wc1_robot", "wc_exit", 1, wc1_robot_TO_wc_exit);
@@ -465,14 +445,13 @@ public:
         currentPose_ = *p;
     }
 
-
     /**
      * Stores the current position in the localisation file
      */
     void storePosition()
     {
-        ROS_INFO ("Storing position");
         // Store last known position
+        ROS_INFO ("Storing position");
         if(!(currentPose_.pose.pose.position.x != currentPose_.pose.pose.position.x || currentPose_.pose.pose.position.y != currentPose_.pose.pose.position.y || currentPose_.pose.pose.orientation.x != currentPose_.pose.pose.orientation.x || currentPose_.pose.pose.orientation.y != currentPose_.pose.pose.orientation.y || currentPose_.pose.pose.orientation.z != currentPose_.pose.pose.orientation.z || currentPose_.pose.pose.orientation.w != currentPose_.pose.pose.orientation.w))
         {
             std::ofstream outputFile;
@@ -498,25 +477,23 @@ public:
 
 private:
     ros::NodeHandle nh_, pNh_;
-    ros::Publisher pub_status_, pub_current_node_, pub_initialize_, pub_deadman_;
+    ros::Publisher pub_status_, pub_current_node_, pub_initialize_, pub_deadman_, pub_hmi_;
     ros::ServiceClient srv_lineUntilQR_, srv_move_, srv_lineUntilLidar_, srv_lineUntilRelative_, srv_detect_obstacles_;
     ros::ServiceServer srv_action_, srv_set_current_node_;
     ros::Subscriber sub_pose_;
     std::string srv_lineUntilQR_name_, srv_move_name_, pub_status_name_, srv_lineUntilLidar_name_, srv_lineUntilRelative_name_,
         srv_action_name_, pub_current_node_name_, srv_set_current_node_name_,
-	srv_detect_obstacles_name_, pub_deadman_name_;
+    srv_detect_obstacles_name_, pub_deadman_name_, pub_hmi_name_;
     Skills skills_;
     Graph* graph_;
     std::vector<std::function<void() >> solution_;
     int search_limit_;
     std::string status;
     geometry_msgs::PoseWithCovarianceStamped currentPose_;
-
     ros::Subscriber sub_battery_;
     std::string sub_battery_name_;
     double battery_level_;
 };
-
 
 /**
  * Main

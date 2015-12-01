@@ -6,6 +6,10 @@ from sensor_msgs.msg import LaserScan
 from msgs.msg import BoolStamped
 from mr_obstacle_detector.srv import enabler
 
+safe = 1
+proximityAlert = 2
+colliding = 3
+
 def createBoolStampedMessage( data ):
     msg = BoolStamped()
     msg.header.stamp = rospy.get_rostime()
@@ -21,8 +25,10 @@ class obs_detector():
 		laserScanSubName = rospy.get_param("~laser_scan", "/scan")
 		obstaclePubName = rospy.get_param("~publishTopic", "/mrObstacleDetector/status")
 		obstacleEnablerSrvName = rospy.get_param("~enabler", "/mrObstacleDetector/enabler")
+		hmiTopicName = rospy.get_param("~hmiTopic", "/mrHMI/status")
 
 		self.obstaclePub = rospy.Publisher(obstaclePubName, String, queue_size=1)
+		self.hmiPub = rospy.Publisher(hmiTopicName, String, queue_size=10)
 		self.laserScanSub = rospy.Subscriber(laserScanSubName, LaserScan, self.on_lidar_data)
 		self.obstacleEnablerSrv = rospy.Service(obstacleEnablerSrvName, enabler, self.enable)
 		
@@ -32,9 +38,11 @@ class obs_detector():
 		self.enable = False
 		self.oldValue = -1 # 0 = nothing, 1 = slow, 2 = sto
 
-
 		self.r = rospy.Rate(self.update_rate)
 		self.updater()
+
+	def updateHMI(state):
+	        self.obstaclePub.publish("00" + str(state) + "0,,")
 
 	def enable(self, req):
 		print "Received", req.enable
@@ -66,10 +74,13 @@ class obs_detector():
 			
 			#if self.value != self.oldValue:
 			if self.value == 0:
+				self.updateHMI(safe)
 				self.obstaclePub.publish("safe")
 			elif self.value == 1:
+				self.updateHMI(proximityAlert)
 				self.obstaclePub.publish("proximityAlert")
 			elif self.value == 2:
+				self.updateHMI(colliding)
 				self.obstaclePub.publish("colliding")
 			self.oldValue = self.value
 

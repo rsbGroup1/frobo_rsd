@@ -18,7 +18,6 @@ public:
      * Initialize the graph given a publisher for the current node
      */
     Graph (ros::Publisher* pub_current_node);
-
     ~Graph();
 
     /**

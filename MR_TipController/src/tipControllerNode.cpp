@@ -66,33 +66,47 @@ public:
     }
 };
 
+// Enum
+enum HMI_ICONS
+{
+    tipper = 1,
+    lineFollowing = 2,
+    gps = 3,
+    collectingBricks = 4,
+    fixedMovement = 5,
+    charging = 6,
+};
+
 // Global var
 serial::Serial* _serialConnection;
 SynchronisedQueue<std::string> _queue;
 bool _tipperDone = false;
 boost::mutex _waitMutex;
+ros::Publisher _hmiPublisher;
 
 // Functions
+void HMIUpdateIcons(HMI_ICONS state)
+{
+    std_msgs::String obj;
+    obj.data = "00" + SSTR (state) + "0,,";
+    _hmiPublisher.publish (obj);
+}
+
 bool tipCallback(mr_tip_controller::tip::Request& req, mr_tip_controller::tip::Response& res)
 {
+    // Update HMI
+    HMIUpdateIcons(tipper);
+
+    // Reset
     _waitMutex.lock();
     _tipperDone = false;
     _waitMutex.unlock();
 
+    // Tip
     if(req.direction)
     {
         ROS_INFO ("Tipper goes UP");
         _queue.enqueue ("u");
-
-        bool tipperDone;
-        do
-        {
-	    _waitMutex.lock();
-	    tipperDone = _tipperDone;
-	    _waitMutex.unlock();
-	    usleep(100);
-        }
-        while(tipperDone == false);
     }
     else if(req.direction == false)
     {
@@ -100,6 +114,21 @@ bool tipCallback(mr_tip_controller::tip::Request& req, mr_tip_controller::tip::R
         _queue.enqueue ("d");
     }
 
+    // Wait for tipper to be done
+    bool tipperDone;
+    do
+    {
+        _waitMutex.lock();
+        tipperDone = _tipperDone;
+        _waitMutex.unlock();
+        usleep(100);
+    }
+    while(tipperDone == false);
+
+    // Update HMI
+    HMIUpdateIcons(tipper);
+
+    // Return
     res.status = true;
     return true;
 }
@@ -164,9 +193,13 @@ int main()
 
     // Get serial data parameters
     int baudRate;
-    std::string port;
+    std::string port, hmi_pub;
+    pNh.param<std::string> ("hmi_pub", hmi_pub, "/mrHMI/status");
     pNh.param<int>("baud_rate", baudRate, 115200);
     pNh.param<std::string>("port", port, "/dev/serial/by-id/usb-Arduino_Srl_Arduino_Uno_7543932393535120F172-if00");
+
+    // Publishers
+    _hmiPublisher = nh.advertise<std_msgs::String> (hmi_pub, 10);
 
     // Open connection
     _serialConnection = new serial::Serial (port.c_str(), baudRate, serial::Timeout::simpleTimeout (50));

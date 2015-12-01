@@ -26,6 +26,20 @@
 // Odom / Relative Stuff
 #include "nav_msgs/Odometry.h"
 
+// Defines
+#define SSTR(x)                 dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
+
+// Enum
+enum HMI_ICONS
+{
+    tipper = 1,
+    lineFollowing = 2,
+    gps = 3,
+    collectingBricks = 4,
+    fixedMovement = 5,
+    charging = 6,
+};
+
 class lineFollower
 {
 public:
@@ -67,6 +81,7 @@ public:
         pNh_.param<std::string> ("srv_mr_camera_processing_enable_name", srv_mr_camera_processing_enable_name_, "/mrCameraProcessing/enable");
         pNh_.param<std::string> ("srv_lineLidar", srv_lineUntilLidar_name_, "/mrLineFollower/lineUntilLidar");
         pNh_.param<std::string> ("srv_lineRelative", srv_lineUntilRelative_name_, "/mrLineFollower/lineUntilRelative");
+        pNh_.param<std::string> ("pub_hmi", pub_hmi_name_, "/mrHMI/status");
 
         srv_enable_ = nh_.advertiseService (srv_lineUntilQR_name_, &lineFollower::lineUntilQRCallback, this);
         srv_mr_camera_processing_enable_ = nh_.serviceClient<mr_camera_processing::enable> (srv_mr_camera_processing_enable_name_);
@@ -75,6 +90,7 @@ public:
 		
 		pub_twist_ = nh_.advertise<geometry_msgs::TwistStamped> (pub_twist_name_, 1);
 		pub_deadman_ = nh_.advertise<msgs::BoolStamped> (pub_deadman_name_, 1);
+        pub_hmi_ = nh_.advertise<std_msgs::String> (pub_hmi_name_, 10);
 		
 		sub_line_ = nh_.subscribe<geometry_msgs::Point> (sub_line_name_, 1, &lineFollower::lineCallback, this);
 		sub_qr_ = nh_.subscribe<std_msgs::String> (sub_qr_name_, 1, &lineFollower::qrCallback, this);
@@ -88,6 +104,13 @@ public:
     ~lineFollower()
     {
         stopDeadman();
+    }
+
+    void HMIUpdateIcons(HMI_ICONS state)
+    {
+        std_msgs::String obj;
+        obj.data = "00" + SSTR (state) + "0,,";
+        pub_hmi_.publish (obj);
     }
 
     /**
@@ -212,6 +235,9 @@ public:
      */
     bool lineUntilQRCallback (mr_line_follower::followUntilQR::Request& req, mr_line_follower::followUntilQR::Response& res)
     {
+        // Update HMI
+        HMIUpdateIcons(lineFollowing);
+
         // Start the camera processing
         mr_camera_processing::enable enableCameraProcessing;
         enableCameraProcessing.request.enable = true;
@@ -290,6 +316,9 @@ public:
             rate_.sleep();
         }
 
+        // Update HMI
+        HMIUpdateIcons(lineFollowing);
+
         // Ends!
         return true;
     }
@@ -327,6 +356,9 @@ public:
      */
     bool lineUntilLidarCallback (mr_line_follower::followUntilLidar::Request& req, mr_line_follower::followUntilLidar::Response& res)
     {
+        // Update HMI
+        HMIUpdateIcons(lineFollowing);
+
         // Start the camera processing
         mr_camera_processing::enable enableCameraProcessing;
         enableCameraProcessing.request.enable = true;
@@ -349,8 +381,8 @@ public:
 
         // Set robot speed
         robot_speed_ = robot_speed_lidar_;
-	double old_turn_speed = max_theta;
-	max_theta = max_theta_lidar;
+        double old_turn_speed = max_theta;
+        max_theta = max_theta_lidar;
 
         // Waits until it finds it or the time is more than the limit
         lidar_detected_ = 99.0;
@@ -386,11 +418,13 @@ public:
             srv_mr_camera_processing_enable_.call (enableCameraProcessing);
             rate_.sleep();
         }
-	max_theta = old_turn_speed;
+        max_theta = old_turn_speed;
+
+        // Update HMI
+        HMIUpdateIcons(lineFollowing);
 
         // Ends!
         return true;
-
     }
 
     /**
@@ -407,6 +441,8 @@ public:
      */
     bool lineUntilRelativeCallback (mr_line_follower::followUntilRelative::Request& req, mr_line_follower::followUntilRelative::Response& res)
     {
+        // Update HMI
+        HMIUpdateIcons(lineFollowing);
 
         // Start the camera processing
         mr_camera_processing::enable enableCameraProcessing;
@@ -472,6 +508,9 @@ public:
             rate_.sleep();
         }
 
+        // Update HMI
+        HMIUpdateIcons(lineFollowing);
+
         // Ends!
         return true;
     }
@@ -480,7 +519,7 @@ private:
     // ROS
     ros::NodeHandle nh_;
     ros::Subscriber sub_line_, sub_qr_, sub_lidar_,sub_odom_;
-    ros::Publisher pub_twist_, pub_deadman_;
+    ros::Publisher pub_twist_, pub_deadman_, pub_hmi_;
     ros::ServiceServer srv_enable_, srv_lidar_enable_, srv_relative_enable_;
     ros::ServiceClient srv_mr_camera_processing_enable_;
     // Threads
@@ -504,7 +543,7 @@ private:
     double robot_speed_qr_, robot_speed_, robot_speed_qr_slow_, robot_speed_lidar_, robot_speed_rel_;
     // Topics name
     std::string sub_line_name_, sub_qr_name_,sub_lidar_name_,sub_odom_name_;
-    std::string pub_deadman_name_, pub_twist_name_;
+    std::string pub_deadman_name_, pub_twist_name_, pub_hmi_name_;
     std::string srv_lineUntilQR_name_, srv_mr_camera_processing_enable_name_, srv_lineUntilLidar_name_, srv_lineUntilRelative_name_;
     // QR
     std::string qr_desired_;

@@ -15,12 +15,10 @@ Graph::~Graph()
     // Nothing
 }
 
-
 void Graph::addNode (std::string name)
 {
     nodes_.push_back (Node (name));
 }
-
 
 void Graph::addVertex (std::string node_start_name,
                        std::string node_end_name,
@@ -33,7 +31,6 @@ void Graph::addVertex (std::string node_start_name,
     verteces_.push_back (Vertex (node_start, node_end, weight, skills_vector));
 }
 
-
 Node* Graph::findNode (std::string name)
 {
     for (auto & node : nodes_)
@@ -43,7 +40,6 @@ Node* Graph::findNode (std::string name)
     std::cout << "Node not found" << std::endl;
     return NULL;
 }
-
 
 void Graph::showGraph()
 {
@@ -79,7 +75,6 @@ std::string Graph::getCurrentNode()
 {
     return current_node_;
 }
-
 
 void Graph::setCurrentNode (std::string name_of_current_node)
 {
@@ -203,7 +198,7 @@ std::vector<std::function<void() >> Graph::bfs (const std::string node_end_name,
 				for (auto node : open_list)
 					std::cout << node->getName() << ",";
 				std::cout << std::endl;
-				*/
+                */
 			}
 			catch (const std::exception e)
 			{

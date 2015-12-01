@@ -16,6 +16,17 @@
 #include <actionlib/client/simple_action_client.h>
 #include <tf/tf.h>
 
+// Enum
+enum HMI_ICONS
+{
+    tipper = 1,
+    lineFollowing = 2,
+    gps = 3,
+    collectingBricks = 4,
+    fixedMovement = 5,
+    charging = 6,
+};
+
 class Skills
 {
 public:
@@ -24,7 +35,7 @@ public:
      */
     Skills (ros::ServiceClient* srv_lineUntilQR, ros::ServiceClient* srv_move, ros::ServiceClient* srv_lineUntilLidar, ros::ServiceClient* srv_lineUntilRelative,
 			ros::Publisher* pub_status, ros::Publisher* pub_initialize , ros::Publisher* pub_deadman,
-			ros::ServiceClient* srv_detect_obstacles);
+            ros::ServiceClient* srv_detect_obstacles, ros::Publisher* pub_hmi);
 
     /**
      *
@@ -61,6 +72,11 @@ public:
      */
     bool angularMove (double angle);
 
+    /**
+     * Show icon on HMI
+     * @param state
+     */
+    void HMIUpdateIcons(HMI_ICONS state);
 
     /**
      *
@@ -88,7 +104,6 @@ public:
      */
     bool wait(double seconds);
     
-
 private:
     ros::ServiceClient* srv_lineUntilQR_;
     ros::ServiceClient* srv_lineUntilLidar_;
@@ -99,6 +114,7 @@ private:
 
     ros::Publisher* pub_initialize_;
     ros::Publisher* pub_deadman_;
+    ros::Publisher* pub_hmi_;
 
     // Threads
     boost::thread* deadmanThread_;

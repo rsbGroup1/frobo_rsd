@@ -14,7 +14,6 @@ Node::~Node()
     // Nothing
 }
 
-
 void Node::setVertex (Vertex* vertex)
 {
     verteces_.push_back (vertex);
@@ -26,24 +25,20 @@ void Node::setVertex (Vertex* vertex)
         childrens_.push_back (vertex->getNodeEnd());
 }
 
-
 std::string Node::getName()
 {
     return name_;
 }
-
 
 std::vector<Node*> Node::getChildrenNodes()
 {
     return childrens_;
 }
 
-
 std::vector<Node*> Node::getParentsNodes()
 {
     return parents_;
 }
-
 
 Node* Node::getParent()
 {

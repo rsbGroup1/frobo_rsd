@@ -156,7 +156,6 @@ class MyServerProtocol( WebSocketServerProtocol ):
                     setManualMode( False )
                     tipper( False )
                 elif rightButton == u"a":
-                    #print "Auto: " + robotState
                     stop_aThreads()
                     if isManual == True:
                         setManualMode( False )
@@ -164,7 +163,6 @@ class MyServerProtocol( WebSocketServerProtocol ):
 	    	        sendMode( u"auto" )
 		        robotState = AUTO
                 elif rightButton == u"b":
-                    #print "Idle: " + robotState
                     stop_aThreads()
                     if isManual == True:
                         setManualMode( False )
@@ -261,7 +259,7 @@ def setManualMode( newState ):
     global IDLE, AUTO, MANUAL, robotState 
 
     if( isManual != newState ):
-        print( "Manual mode CHANGED" )
+        #print( "Manual mode CHANGED" )
         isManual = newState
         if( isManual ):
             start_an_aThread() # starts publishing safety signals when manual mode is activated
@@ -362,14 +360,12 @@ def logCallback( data ):
     logMessages = logMessages + newData
 
 def runModeCallback( data ):
+    global robotState
     if data.data == "auto":
-	logCallback( String("1000,Auto mode enabled!,") )
 	robotState = AUTO
     elif data.data == "idle":
-	logCallback( String("2000,Emergency stop!,") )
 	robotState = IDLE
     elif data.data == "manual":
-	logCallback( String("1000,Manual mode!,") )
 	robotState = MANUAL
 
 # TODO check if this works, and publishes the messages

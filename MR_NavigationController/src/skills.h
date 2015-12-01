@@ -16,6 +16,9 @@
 #include <actionlib/client/simple_action_client.h>
 #include <tf/tf.h>
 
+// Defines
+#define SSTR(x)			dynamic_cast< std::ostringstream & >(( std::ostringstream() << std::dec << x )).str()
+
 // Enum
 enum HMI_ICONS
 {

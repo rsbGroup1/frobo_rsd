@@ -3,21 +3,22 @@ window.rsdNamespace = window.rsdNamespace || { };
 rsdNamespace.logErrorFlag = false;
 rsdNamespace.logWarningFlag = false;
 
-rsdNamespace.UpdateLog = function( type, timestamp, message ) {
-
+rsdNamespace.UpdateLog = function( type, timestamp, message ) 
+{
+    console.log( 'UpdateLog called' );
     var highlighting = "";
     var type_to_display = "Info";
 
-    if( type == 3 ) {
-
+    if( type == 3 ) 
+    {
         type_to_display = "Error"
         highlighting = " error_message";
 
-    } else if( type == 2 ) {
-
+    } 
+    else if( type == 2 ) 
+    {
         type_to_display = "Warning"
         highlighting = " warning_message";
-
     }
 
     var entry = '<div class="log_entry' + highlighting + '">' +
@@ -27,21 +28,21 @@ rsdNamespace.UpdateLog = function( type, timestamp, message ) {
 
     $("#log_screen").prepend( entry );
 
-    if( rsdNamespace.logErrorFlag ) rsdNamespace.FilterMessages( '.log_entry', 'error_message' );
-    else if( rsdNamespace.logWarningFlag ) rsdNamespace.FilterMessages( '.log_entry', 'warning_message' );
+    if( rsdNamespace.logErrorFlag ) 
+	rsdNamespace.FilterMessages( '.log_entry', 'error_message' );
+    else if( rsdNamespace.logWarningFlag ) 
+	rsdNamespace.FilterMessages( '.log_entry', 'warning_message' );
 
     rsdNamespace.RemoveOldEntries( ".log_entry", 50 );
-
 };
 
-rsdNamespace.RemoveOldEntries = function( selector, threshold ) {
-
-    $(selector).each( function( index ) {
-
-        if( index > ( threshold - 1 ) ) $(this).remove();
-
+rsdNamespace.RemoveOldEntries = function( selector, threshold ) 
+{
+    $(selector).each( function( index ) 
+    {
+        if( index > ( threshold - 1 ) ) 
+		$(this).remove();
     });
-
 };
 
 rsdNamespace.FilterMessages = function( selector, filter ) {

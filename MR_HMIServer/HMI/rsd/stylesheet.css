@@ -192,11 +192,11 @@
 }
 
 .statusActiveWarning{
-    box-shadow: 0px 0px 5px gold;
+    box-shadow: 0px 0px 20px orange;
 }
 
 .statusActiveError{
-    box-shadow: 0px 0px 5px red;
+    box-shadow: 0px 0px 20px red;
 }
 
 #map_container{

@@ -35,7 +35,7 @@ void Skills::HMIUpdateIcons(HMI_ICONS state)
 {
     std_msgs::String obj;
     obj.data = "00" + SSTR (state) + "0,,";
-    pub_hmi_.publish (obj);
+    pub_hmi_->publish (obj);
 }
 
 

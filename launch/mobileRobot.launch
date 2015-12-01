@@ -142,6 +142,7 @@
 			<param name="laser_scan" value="/scan" />
 			<param name="publishTopic" value="/mrObstacleDetector/status" />
 			<param name="enabler" value="/mrObstacleDetector/enabler" />
+			<param name="hmiTopic" value="/mrHMI/status" />
 		</node>
 	</group>
 
@@ -153,6 +154,7 @@
 		<param name="port" value="/dev/serial/by-id/usb-Arduino_Srl_Arduino_Uno_7543932393535120F172-if00"/>
 		<param name="debug" value="true"/>
 		<param name="tipper_srv" value="/mrTipController/tip"/>
+		<param name="hmi_pub" value="mrHMI/status"/>
 	</node>
 
 
@@ -200,6 +202,7 @@
 		    	<param name="angular_precision" value="0.500"/>
 		    	<param name="linear_speed" value="0.2"/>
 		    	<param name="angular_speed" value="0.3"/>
+			<param name="pub_hmi" value="mrHMI/status"/>
     		 </node>
 	</group>
 
@@ -254,6 +257,7 @@
 			<param name="sub_qr" value="/mrCameraProcessing/QR" />
 			<param name="pub_twist" value="/fmCommand/cmd_vel" />
 			<param name="pub_deadman" value="/fmSafe/deadman" />
+			<param name="pub_hmi" value="mrHMI/status"/>
 		</node>
 	</group>
 
@@ -280,6 +284,7 @@
 		<param name="currentNode" value="mrNavigationController/currentNode"/>
 		<param name="searchLimit" value="100"/>
 		<param name="start_node" value="line_start"/>
+		<param name="pub_hmi" value="mrHMI/status"/>
 	</node>
 
 	<node pkg="tf" type="static_transform_publisher" name="laser_transform" args="0.25 0 0 0 0 0 base_link base_laser_link 50"  >

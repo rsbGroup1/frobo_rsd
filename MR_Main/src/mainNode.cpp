@@ -177,22 +177,19 @@ public:
             if (req.state == "auto")
             {
                 _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
-                HMISendInfo("Auto mode enabled!");
-                HMIUpdateSafety(safe);
+                HMISendInfo("Auto mode!");
                 _mode = AUTO;
             }
             else if (req.state== "manual")
             {
                 _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
                 HMISendInfo("Manual mode!");
-                HMIUpdateSafety(proximityAlert);
                 _mode = MANUAL;
             }
             else if (req.state == "idle")
             {
                 _criticalFaultSignalThread->interrupt();
-                HMISendWarning("Emergency stop!");
-                HMIUpdateSafety(colliding);
+                HMISendInfo("Idle mode!");
                 _mode = IDLE;
             }
 

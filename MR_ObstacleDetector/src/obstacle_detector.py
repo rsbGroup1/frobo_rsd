@@ -41,8 +41,8 @@ class obs_detector():
 		self.r = rospy.Rate(self.update_rate)
 		self.updater()
 
-	def updateHMI(state):
-	        self.obstaclePub.publish("00" + str(state) + "0,,")
+	def updateHMI(self, state):
+	        self.hmiPub.publish("000" + str(state) + ",,")
 
 	def enable(self, req):
 		print "Received", req.enable
@@ -72,16 +72,21 @@ class obs_detector():
 			elif self.slow:
 				self.value = 1
 			
-			#if self.value != self.oldValue:
+			if self.value != self.oldValue:
+				if self.value == 0:
+					self.updateHMI(safe)
+				elif self.value == 1:
+					self.updateHMI(proximityAlert)
+				elif self.value == 2:
+					self.updateHMI(colliding)
+
 			if self.value == 0:
-				self.updateHMI(safe)
 				self.obstaclePub.publish("safe")
 			elif self.value == 1:
-				self.updateHMI(proximityAlert)
 				self.obstaclePub.publish("proximityAlert")
 			elif self.value == 2:
-				self.updateHMI(colliding)
 				self.obstaclePub.publish("colliding")
+
 			self.oldValue = self.value
 
 		else:

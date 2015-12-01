@@ -50,9 +50,7 @@ rsdNamespace.StartListening = function() {
 
             rsdNamespace.connection.send( JSON.stringify( messageOut ) );
 
-            //rsdNamespace.resumeSignal = false;
-
-        }, 1000);
+        }, 100);
 
         // Send information on the remote's status
         rsdNamespace.remoteUpdateScheduler = setInterval( function () {
@@ -70,7 +68,7 @@ rsdNamespace.StartListening = function() {
 
             rsdNamespace.connection.send( JSON.stringify( messageOut ) );
 
-        }, 50); // 200
+        }, 50);
 
     };
 
@@ -87,7 +85,6 @@ rsdNamespace.StartListening = function() {
                 if( log ) 
                 {
                     var messages = String( log ).split(",");
-                    console.log( 'Yonas: ' + messages.length );
 
                     if( messages.length > 2 ) 
 		    {
@@ -97,14 +94,6 @@ rsdNamespace.StartListening = function() {
                             var message_code = messages[i][0];
                             if( message_code != rsdNamespace.IGNORE ) 
 			    {
-                                // If there was an error,
-                                /*if( message_code == rsdNamespace.ERROR ) 
-				{
-                                    // The SetAvailabilitySwitch method will take care of the
-                                    // notification of the MES server
-                                    rsdNamespace.SetAvailabilitySwitch( false );
-                                }*/
-
                                 rsdNamespace.UpdateLog( message_code, messages[i + 1], messages[i + 2] );
                             }
 

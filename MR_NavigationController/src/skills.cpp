@@ -238,7 +238,7 @@ bool Skills::chargeDectectionAndBackupPlan(double* battery_level, double thresho
         else
         {
 			tries++;
-			linearMove(-0.25);			
+			linearMove(-0.4);			
 		}
 	}
 

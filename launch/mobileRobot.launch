@@ -243,7 +243,7 @@
 			<param name="robot_turn_speed_lidar" value="0.3" />
 			<param name="robot_speed_qr" value="0.42" />
 			<param name="robot_speed_qr_slow" value="0.015" />
-			<param name="robot_speed_rel" value="0.2" />
+			<param name="robot_speed_rel" value="0.3" />
 			<param name="robot_turn_speed" value="1.2" />	
 			<param name="robot_turn_speed_qr_slow" value="0.3" />
 			<param name="lidar_distance" value="0.2" />
@@ -293,7 +293,7 @@
 	<node pkg="tf" type="static_transform_publisher" name="imu_transform" args="0.10 0 0 0 0 0 base_link imu_link 50"  >
 	</node>
 
-	<node pkg="map_server" type="map_server" name="map_server" args="$(find mr_free_navigation_setup)/maps/frontal_map_big_edited.yaml" output="screen"/>
+	<node pkg="map_server" type="map_server" name="map_server" args="$(find mr_free_navigation_setup)/maps/frontal_map_big_edited_rc.yaml" output="screen"/>
 
 
 <!--

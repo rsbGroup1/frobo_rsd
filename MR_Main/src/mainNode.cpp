@@ -183,7 +183,7 @@ public:
                     _criticalFaultSignalRunning = true;
                     _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
                 }
-                HMISendInfo("Auto mode!");
+                HMISendInfo("Main: Auto mode!");
                 _mode = AUTO;
             }
             else if (req.state== "manual")
@@ -193,7 +193,7 @@ public:
                     _criticalFaultSignalRunning = true;
                     _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
                 }
-                HMISendInfo("Manual mode!");
+                HMISendInfo("Main: Manual mode!");
                 _mode = MANUAL;
             }
             else if (req.state == "idle")
@@ -204,7 +204,7 @@ public:
                     _criticalFaultSignalThread->interrupt();
                     delete _criticalFaultSignalThread;
                 }
-                HMISendInfo("Idle mode!");
+                HMISendInfo("Main: Idle mode!");
                 _mode = IDLE;
             }
 
@@ -271,8 +271,8 @@ public:
                 checkBattery (_batteryCritic, action);
 
             // Go to the dispenser position
-            //action = "bricks";
-            //perform_action_obj.request.action = action;
+            action = "bricks";
+            perform_action_obj.request.action = action;
             //_servicePerformAction.call (perform_action_obj);
 	    
             // Checks if the battery is the critic level
@@ -292,14 +292,15 @@ public:
             perform_action_obj.request.action = action;
             _servicePerformAction.call (perform_action_obj);
 	    
-            // Tell to the MES to move the conveyor
+            // Starts the conveyor
             std_msgs::String msg_to_server;
             msg_to_server.data = "Ok";
             _mesPublisher.publish(msg_to_server);
-	    
+
             // Tip Up
             tip_obj.request.direction = true;
             _serviceTipper.call (tip_obj);
+            ros::Rate (0.33).sleep();
 
             // Tip Down
             tip_obj.request.direction = false;
@@ -318,6 +319,10 @@ public:
             	action = "wc3_robot";
             perform_action_obj.request.action = action;
             _servicePerformAction.call (perform_action_obj);
+
+            // Process the order
+            msg_to_server.data = "Ok";
+            _mesPublisher.publish(msg_to_server);
             
             // Checks if the battery is the critic level
             if (_check_battery_critic) 
@@ -326,9 +331,9 @@ public:
             _new_MESmsg.lock();
             msg = _msg_last;
             _new_MESmsg.unlock();
+            HMISendInfo("Main: Waiting for robot to complete");
             while(msg.status != 1) 
-            {
-            	HMISendInfo("Waiting for robot to complete");
+            {      	
             	_new_MESmsg.lock();
             	msg = _msg_last;
             	_new_MESmsg.unlock();

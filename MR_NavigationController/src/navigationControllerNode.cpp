@@ -342,11 +342,12 @@ public:
         box_TO_pre_bricks.push_back (std::bind (&Graph::setCurrentNode, graph_, "pre_bricks"));
 
         std::vector<std::function<void() >> pre_bricks_TO_box;
-        //pre_bricks_TO_box.push_back (std::bind (&Skills::goToFreePosition, &skills_, -0.5, -1.5 , 1.3));
+        pre_bricks_TO_box.push_back (std::bind (&Skills::goToFreePosition, &skills_, -0.5, -1.5 , 1.3));
         pre_bricks_TO_box.push_back (std::bind (&Graph::setCurrentNode, graph_, "box"));
 
         std::vector<std::function<void() >> pre_bricks_TO_bricks;
         pre_bricks_TO_bricks.push_back (std::bind (&Skills::linearMove, &skills_, 0.2));
+        pre_bricks_TO_bricks.push_back (std::bind (&Skills::wait, &skills_, 10));
         pre_bricks_TO_bricks.push_back (std::bind (&Graph::setCurrentNode, graph_, "bricks"));
         std::vector<std::function<void() >> bricks_TO_pre_bricks;
         bricks_TO_pre_bricks.push_back (std::bind (&Skills::linearMove, &skills_, -0.2));

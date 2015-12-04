@@ -184,7 +184,7 @@
 			<param name="battery_sub" value="/fmInformation/battery"/>
 			<param name="mode_pub" value="/mrMain/mode"/>
 			<param name="run_srv" value="/mrMain/run"/>
-			<param name="check_battery_low" value="false"/>
+			<param name="check_battery_low" value="true"/>
 			<param name="check_battery_critic" value="false"/>
 			<param name="battery_low" value="12.4"/>
 			<param name="battery_critic" value="12.0"/>

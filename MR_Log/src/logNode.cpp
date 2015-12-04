@@ -23,10 +23,10 @@ void logCallback(std_msgs::String msgs)
         std::tm timeinfo;
         time (&rawtime);
         timeinfo = *(localtime (&rawtime));
-        logFile << (1900+timeinfo.tm_year) << "-" << 1+timeinfo.tm_mon << "-" << timeinfo.tm_mday << " "
-                 << timeinfo.tm_hour << ":" << timeinfo.tm_min << ":" << timeinfo.tm_sec;
+        logFile << (1900+timeinfo.tm_year) << "-" << ((timeinfo.tm_mon < 10) ? "0":"") << 1+timeinfo.tm_mon << "-" <<  ((timeinfo.tm_mday < 10) ? "0":"") <<timeinfo.tm_mday << " "
+                 << ((timeinfo.tm_hour < 10) ? "0":"") << timeinfo.tm_hour << ":" << ((timeinfo.tm_min < 10) ? "0":"") << timeinfo.tm_min << ":" << ((timeinfo.tm_sec < 10) ? "0":"") << timeinfo.tm_sec  << "  ";
         // write msgs
-        for(int i = 4; i < msgs.data.size()-1; i++)
+        for(int i = 5; i < msgs.data.size()-1; i++)
         {
             logFile << msgs.data[i];
         }
@@ -68,7 +68,6 @@ int main()
      ros::Rate rate(20);
     while(ros::ok())
     {
-        ROS_INFO("spinning");
         ros::spinOnce();
         rate.sleep();
     }

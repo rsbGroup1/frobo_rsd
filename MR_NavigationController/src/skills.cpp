@@ -171,7 +171,7 @@ bool Skills::goToFreePosition (double x, double y, double yaw)
     {
         move_base_actionclient_->sendGoal (goal);
         bool finished = move_base_actionclient_->waitForResult();
-        // DSW TEsting: move to recovery position then try again
+        // DSW: move to recovery position then try again
         move_base_msgs::MoveBaseGoal recovery;
 
         recovery.target_pose.pose.position.x = 0.46;
@@ -182,7 +182,7 @@ bool Skills::goToFreePosition (double x, double y, double yaw)
 
         while (move_base_actionclient_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
         {
-            HMISendWarning("Going to Recovery Position");
+            HMISendWarning("Going to recovery position, then trying again");
             ROS_WARN ("To recovery=>goal");
             move_base_actionclient_->sendGoal (recovery);
             finished = move_base_actionclient_->waitForResult();
@@ -200,6 +200,7 @@ bool Skills::goToFreePosition (double x, double y, double yaw)
     else
     {
         ROS_ERROR ("move_base action server not responding within timeout");
+	HMISendError("Move_Base did not reach location within given time frame");
     }
 
     // Clear
@@ -261,7 +262,7 @@ void Skills::enableDeadman()
 
 bool Skills::chargeDectectionAndBackupPlan(double* battery_level, double threshold)
 {   
-	HMISendInfo("Starting: charging behaviour");	
+	HMISendInfo("Starting: charging behaviour - Battery level: " + std::to_string(*battery_level));	
 	bool keep_trying = true;
 	int tries = 0;
 	std::cout << "battery START: " << *battery_level << std::endl;
@@ -286,7 +287,7 @@ bool Skills::chargeDectectionAndBackupPlan(double* battery_level, double thresho
 	}
         else
         {
-			HMISendWarning("Charging Failed - trying again");			
+			HMISendWarning("Charging failed - trying again");			
 			tries++;
 			linearMove(-0.4);			
 		}

@@ -273,7 +273,7 @@ public:
             // Go to the dispenser position
             action = "bricks";
             perform_action_obj.request.action = action;
-            //_servicePerformAction.call (perform_action_obj);
+            _servicePerformAction.call (perform_action_obj);
 	    
             // Checks if the battery is the critic level
             if (_check_battery_critic) 

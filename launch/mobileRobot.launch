@@ -328,6 +328,11 @@
 		<rosparam file="$(find mr_free_navigation_setup)/move_base_config/dwa_local_planner_params.yaml" command="load"/>
 	</node>
 
+	<node pkg="mr_log" name="Log" type="mr_log">
+		<param name="log_sub" value="/mrHMI/status"/>
+		<param name="log_dir" value="/tmp/"/> 	
+	</node>
+
 	<!-- Record Rosbag -->
 	<!--node pkg="rosbag" type="record" name="rosbag_record_all" args="/mrCamera/image"/-->
 

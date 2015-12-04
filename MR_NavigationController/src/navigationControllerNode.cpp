@@ -224,9 +224,7 @@ public:
         graph_->addNode ("pre_bricks");
         graph_->addNode ("bricks");
         graph_->addNode ("pre_charge");
-        graph_->addNode ("pre_charge_line");
         graph_->addNode ("charge");
-        graph_->addNode ("charge_line");
 
         /*
          *
@@ -368,6 +366,11 @@ public:
         pre_charge_TO_LineStart.push_back (std::bind (&Skills::goToFreePosition, &skills_, 3.3, -2 , -1.2));
         pre_charge_TO_LineStart.push_back (std::bind (&Graph::setCurrentNode, graph_, "line_start"));
 
+        std::vector<std::function<void() >> pre_bricks_TO_LineStart;
+        pre_bricks_TO_LineStart.push_back (std::bind (&Skills::goToFreePosition, &skills_, 0.46, 1.58 , -1.9));
+        pre_bricks_TO_LineStart.push_back (std::bind (&Skills::goToFreePosition, &skills_, 3.3, -2 , -1.2));
+        pre_bricks_TO_LineStart.push_back (std::bind (&Graph::setCurrentNode, graph_, "line_start"));
+
         std::vector<std::function<void() >> pre_charge_TO_charge;
         //pre_charge_TO_charge.push_back (std::bind (&Skills::linearMove, &skills_, 0.1));
         //pre_charge_TO_charge.push_back (std::bind (&Skills::wait, &skills_, 5.0));
@@ -378,30 +381,6 @@ public:
         charge_TO_pre_charge.push_back (std::bind (&Skills::linearMove, &skills_, -0.4));
         charge_TO_pre_charge.push_back (std::bind (&Graph::setCurrentNode, graph_, "pre_charge"));
 
-        // line following charging
-        std::vector<std::function<void() >> box_TO_pre_charge_line;
-        box_TO_pre_charge_line.push_back (std::bind (&Skills::goToFreePosition, &skills_, -0.56, -2.41 , -0.2));
-        box_TO_pre_charge_line.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_1_load"));
-        box_TO_pre_charge_line.push_back (std::bind (&Graph::setCurrentNode, graph_, "pre_charge_line"));
-
-        std::vector<std::function<void() >> pre_charge_line_TO_charge_line;
-        //pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::chargeDectectionAndBackupPlan, &skills_, battery_level_, 13.0));        
-        //pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, 0.1));
-        //pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.15));
-        //pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::lineUntilRelative, &skills_, 0.2));
-        pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, 0.1));
-        pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::wait, &skills_, 10.0));
-        pre_charge_line_TO_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, -0.1));
-        pre_charge_line_TO_charge_line.push_back (std::bind (&Graph::setCurrentNode, graph_, "charge_line"));
-
-        std::vector<std::function<void() >> pre_charge_line_TO_box;
-        pre_charge_line_TO_box.push_back (std::bind (&Skills::goToFreePosition, &skills_, 0.1, 0.7 , -1.9));
-        pre_charge_line_TO_box.push_back (std::bind (&Graph::setCurrentNode, graph_, "box"));
-
-        std::vector<std::function<void() >> charge_line_TO_pre_charge_line;
-        charge_line_TO_pre_charge_line.push_back (std::bind (&Skills::linearMove, &skills_, -0.1));
-        //charge_line_TO_pre_charge_line.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_1_load"));
-        charge_line_TO_pre_charge_line.push_back (std::bind (&Graph::setCurrentNode, graph_, "pre_charge_line"));
 
         // Vertices
         graph_->addVertex ("line_start", "wc1", 1, line_start_TO_wc1);
@@ -425,6 +404,7 @@ public:
 		graph_->addVertex ("line_end", "line_start", 1, line_end_TO_line_start);
         graph_->addVertex ("box", "line_start", 1, box_TO_line_start);
         graph_->addVertex ("pre_charge", "line_start", 1, pre_charge_TO_LineStart);
+        graph_->addVertex ("pre_bricks", "line_start", 1, pre_bricks_TO_LineStart);
 
         graph_->addVertex ("box", "pre_charge", 1, box_TO_pre_charge);
         graph_->addVertex ("pre_charge", "box", 1, pre_charge_TO_box);
@@ -438,11 +418,6 @@ public:
         graph_->addVertex ("pre_bricks", "bricks", 1, pre_bricks_TO_bricks);
         graph_->addVertex ("bricks", "pre_bricks", 1, bricks_TO_pre_bricks);
 
-        // Alternative charge behavior
-        graph_->addVertex ("box", "pre_charge_line", 1, box_TO_pre_charge_line);
-        graph_->addVertex ("pre_charge_line", "charge_line", 1, pre_charge_line_TO_charge_line);
-        graph_->addVertex ("pre_charge_line", "box", 1, pre_charge_line_TO_box);
-        graph_->addVertex ("charge_line", "pre_charge_line", 1, charge_line_TO_pre_charge_line);
     }
 
     /**

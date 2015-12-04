@@ -60,8 +60,8 @@ public:
         _pNh ("~"),
         _batteryLevel (0),
         _newOrder (false),
-	_criticalFaultSignalRunning(false),
-	rate(30)
+        _criticalFaultSignalRunning(false),
+        _rate(30)
     {
         // Get parameter names
         _pNh.param<std::string> ("nav_perform_srv", _performActionString, "/mrNavigationController/performAction");
@@ -106,7 +106,6 @@ public:
     {
         //Nothing
     }
-
 
     /*
      *
@@ -178,32 +177,32 @@ public:
             boost::unique_lock<boost::mutex> lock (_runMutex);
             if (req.state == "auto")
             {
-		if(_criticalFaultSignalRunning == false)
-		{
-			_criticalFaultSignalRunning = true;
-	                _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
-		}
+                if(_criticalFaultSignalRunning == false)
+                {
+                    _criticalFaultSignalRunning = true;
+                    _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
+                }
                 HMISendInfo("Auto mode!");
                 _mode = AUTO;
             }
             else if (req.state== "manual")
             {
-		if(_criticalFaultSignalRunning == false)
-		{
-			_criticalFaultSignalRunning = true;
-	                _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
-		}
+                if(_criticalFaultSignalRunning == false)
+                {
+                    _criticalFaultSignalRunning = true;
+                    _criticalFaultSignalThread = new boost::thread (&MainNode::enableCriticalFaultSignal, this);
+                }
                 HMISendInfo("Manual mode!");
                 _mode = MANUAL;
             }
             else if (req.state == "idle")
             {
-		if(_criticalFaultSignalRunning)
-		{
-			_criticalFaultSignalRunning = false;
-               		_criticalFaultSignalThread->interrupt();
-			delete _criticalFaultSignalThread;
-		}
+                if(_criticalFaultSignalRunning)
+                {
+                    _criticalFaultSignalRunning = false;
+                    _criticalFaultSignalThread->interrupt();
+                    delete _criticalFaultSignalThread;
+                }
                 HMISendInfo("Idle mode!");
                 _mode = IDLE;
             }
@@ -268,7 +267,7 @@ public:
             // the critic level and checks if the battery is the critic level
             action = _currentNode;
             if (_check_battery) 
-		checkBattery (_batteryCritic, action);
+                checkBattery (_batteryCritic, action);
 
             // Go to the dispenser position
             //action = "bricks";
@@ -277,7 +276,7 @@ public:
 	    
             // Checks if the battery is the critic level
             if (_check_battery) 
-		checkBattery (_batteryCritic, action);
+                checkBattery (_batteryCritic, action);
 
             // Send the robot to the correct wc conveyor
             if (msg.cell == 1)
@@ -307,7 +306,7 @@ public:
 
             // Checks if the battery is the critic level
             if (_check_battery) 
-		checkBattery (_batteryCritic, action);
+                checkBattery (_batteryCritic, action);
 
             // Go to the robot
             if (msg.cell == 1)
@@ -332,19 +331,19 @@ public:
             	_new_MESmsg.lock();
             	msg = _msg_last;
             	_new_MESmsg.unlock();
-		rate.sleep();
+                _rate.sleep();
             }
 
             // Go to charge position
             perform_action_obj.request.action = "charge";
             _servicePerformAction.call (perform_action_obj);
 
-	    // Inform MES
+            // Inform MES
             std_msgs::String msg;
             msg.data = "Ok";
             _mesPublisher.publish(msg);
             
-	    // Clear order
+            // Clear order
             _new_MESmsg.unlock();
             _newOrder = false;
             _new_MESmsg.lock();
@@ -360,7 +359,7 @@ public:
      */
     void navStatusCallback(std_msgs::String msg)
     {
-	//
+        //
     }
 
     /**
@@ -436,7 +435,7 @@ public:
             std::cout << "No battery level! Waiting..." << std::endl;
 
         while (_batteryLevel == 0) // Wait
-		rate.sleep();
+            _rate.sleep();
 
         if (_batteryLevel < threshold)
         {
@@ -444,7 +443,7 @@ public:
             _servicePerformAction.call (perform_action_obj);
 
             while (_batteryLevel < _desiredCharge) // Wait
-		rate.sleep();
+            _rate.sleep();
         }
 
         perform_action_obj.request.action = prev_pos;
@@ -463,11 +462,11 @@ public:
             std::cout << "No battery level! Waiting..." << std::endl;
 
         while(_batteryLevel == 0) // Wait
-		rate.sleep();
+            _rate.sleep();
 
         if (_batteryLevel < threshold)
             while (_batteryLevel < _desiredCharge) // Wait
-		rate.sleep();
+                _rate.sleep();
 
         // Update HMI
         HMIUpdateIcons(charging);
@@ -517,12 +516,12 @@ private:
     boost::mutex _runMutex, _new_MESmsg;
     std::string _performActionString, _navStatusSub, _navCurrentnodeSub, _buttonPub,
         _runSrv, _tipperString, _hmiPub, _mesSub, _mesPub, _obstacleDetectorSub, _batterySub,
-	_criticalFaultSignalPub, _modePub;
+        _criticalFaultSignalPub, _modePub;
     mr_mes_client::server _msg_last;
     std::string _run_msg_last;
     MODE _mode;
     bool _criticalFaultSignalRunning;
-    ros::Rate rate;
+    ros::Rate _rate;
 
     boost::thread* _criticalFaultSignalThread;
 };

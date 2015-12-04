@@ -1,0 +1,11 @@
+<!-- Button launch file -->
+
+<launch>
+	<group ns="MR_Log">
+		<node pkg="mr_log" name="Log" type="mr_log">
+			<param name="log_sub" value="/mrHMI/status"/>
+			<param name="log_dir" value="/tmp/"/> 	
+		</node>
+	</group>
+</launch>
+

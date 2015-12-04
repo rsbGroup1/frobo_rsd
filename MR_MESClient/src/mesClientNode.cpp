@@ -26,6 +26,7 @@ bool _connected = false;
 bool _waitForServerMsg = true;
 bool _waitForStatusMsg = false;
 bool _waitForConveyerReach = true;
+int _okCounter = 0;
 
 // Functions
 void sendMsgCallback(std_msgs::String msg)
@@ -34,13 +35,17 @@ void sendMsgCallback(std_msgs::String msg)
     {
         // Send data
         write(_socket, msg.data.c_str(), msg.data.size());
+        _okCounter++;
 
         // Reset
-        _waitForStatusMsg = _waitForConveyerReach;
-        _waitForServerMsg = true;
-        _waitForConveyerReach = !_waitForConveyerReach;
-
-        std::cout << msg.data << std::endl;
+        if(_okCounter == 2)
+        {
+            _okCounter = 0;
+            // Reset
+            _waitForStatusMsg = _waitForConveyerReach;
+            _waitForServerMsg = true;
+            _waitForConveyerReach = !_waitForConveyerReach;
+        }
     }
 }
 
@@ -53,7 +58,7 @@ bool connectToServer()
     addr.sin_addr.s_addr = inet_addr (_serverIP.c_str());
     addr.sin_port = htons (_serverPort);
 
-    std::cout << _serverIP << " " << _serverPort << std::endl;
+    //std::cout << _serverIP << " " << _serverPort << std::endl;
 
     // Create socket
     _socket = socket (AF_INET, SOCK_STREAM, 0);

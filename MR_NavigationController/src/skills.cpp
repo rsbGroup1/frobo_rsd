@@ -38,9 +38,39 @@ void Skills::HMIUpdateIcons(HMI_ICONS state)
     pub_hmi_->publish (obj);
 }
 
+/**
+* Sends to the HMI a info message
+*/
+void Skills::HMISendInfo (std::string msg)
+{
+   std_msgs::String obj;
+   obj.data = "1000," + msg + ",";
+   pub_hmi_->publish (obj);
+}
+
+/**
+* Sends to the HMI a warning message
+*/
+void Skills::HMISendWarning (std::string msg)
+{
+   std_msgs::String obj;
+   obj.data = "2000," + msg + ",";
+   pub_hmi_->publish (obj);
+}
+
+/**
+* Sends to the HMI a error message
+*/
+void Skills::HMISendError (std::string msg)
+{
+   std_msgs::String obj;
+   obj.data = "3000," + msg + ",";
+   pub_hmi_->publish (obj);
+}
 
 bool Skills::lineUntilQR (std::string qr)
 {
+    HMISendInfo("Starting: Line until QR: " + qr);
     std::cout << "Skill: Line until QR: " << qr << std::endl;
     lineFollowerCall.request.qr = qr;
     lineFollowerCall.request.time_limit = 300;
@@ -50,11 +80,13 @@ bool Skills::lineUntilQR (std::string qr)
     //msg.data = "following_line " + qr;
     msg.data = "following_line";
     pub_status_->publish (msg);
+    HMISendInfo("Finished: Line until QR: " + qr);
     return lineFollowerCall.response.success;
 }
 
 bool Skills::lineUntilLidar (double distance)
 {
+    HMISendInfo("Starting: Line until Lidar distance: " + std::to_string(distance));
     std::cout << "Skill: Line until Lidar distance: " << distance << std::endl;
     followUntilLidarCall.request.lidar_distance = distance;
     followUntilLidarCall.request.time_limit = 300;
@@ -64,11 +96,13 @@ bool Skills::lineUntilLidar (double distance)
     //msg.data = "following_line " + qr;
     msg.data = "following_line";
     pub_status_->publish (msg);
+    HMISendInfo("Finished: Line until Lidar distance: " + std::to_string(distance));
     return followUntilLidarCall.response.success;
 }
 
 bool Skills::lineUntilRelative (double distance)
 {
+    HMISendInfo("Starting: Line until Relative distance: " + std::to_string(distance));
     std::cout << "Skill: Line until Relative distance: " << distance << std::endl;
     followUntilRelativeCall.request.relative_distance = distance;
     followUntilRelativeCall.request.time_limit = 300;
@@ -78,11 +112,13 @@ bool Skills::lineUntilRelative (double distance)
     //msg.data = "following_line " + qr;
     msg.data = "following_line";
     pub_status_->publish (msg);
+    HMISendInfo("Finished: Line until Relative distance: " + std::to_string(distance));
     return followUntilRelativeCall.response.success;
 }
 
 bool Skills::linearMove (double distance)
 {
+    HMISendInfo("Starting: Linear move for: " + std::to_string(distance));
     std::cout << "Skill: Linear move for: " << distance << " m" << std::endl;
     move_call_.request.linear = distance;
     move_call_.request.angular = 0;
@@ -92,11 +128,13 @@ bool Skills::linearMove (double distance)
     //msg.data = "linear_move " + std::to_string(distance);
     msg.data = "linear_move";
     pub_status_->publish (msg);
+    HMISendInfo("Finished: Linear move for: " + std::to_string(distance));
     return move_call_.response.done;
 }
 
 bool Skills::angularMove (double angle)
 {
+    HMISendInfo("Starting: Angular move for: " + std::to_string(angle));
     std::cout << "Skill: Angular move for: " << angle << " degrees" << std::endl;
     move_call_.request.linear = 0;
     move_call_.request.angular = angle;
@@ -106,11 +144,13 @@ bool Skills::angularMove (double angle)
     //msg.data = "angular_move " + std::to_string(angle);
     msg.data = "angular_move";
     pub_status_->publish (msg);
+    HMISendInfo("Finished: Angular move for: " + std::to_string(angle));
     return move_call_.response.done;
 }
 
 bool Skills::goToFreePosition (double x, double y, double yaw)
 {
+    HMISendInfo("Starting: Going to free Position: " + std::to_string(x) + "," + std::to_string(y) + ","+ std::to_string(yaw));
     // Update HMI
     HMIUpdateIcons(gps);
 
@@ -131,7 +171,7 @@ bool Skills::goToFreePosition (double x, double y, double yaw)
     {
         move_base_actionclient_->sendGoal (goal);
         bool finished = move_base_actionclient_->waitForResult();
-        // DSW TEsting: move to recovery position then try again
+        // DSW: move to recovery position then try again
         move_base_msgs::MoveBaseGoal recovery;
 
         recovery.target_pose.pose.position.x = 0.46;
@@ -142,6 +182,7 @@ bool Skills::goToFreePosition (double x, double y, double yaw)
 
         while (move_base_actionclient_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
         {
+            HMISendWarning("Going to recovery position, then trying again");
             ROS_WARN ("To recovery=>goal");
             move_base_actionclient_->sendGoal (recovery);
             finished = move_base_actionclient_->waitForResult();
@@ -153,11 +194,13 @@ bool Skills::goToFreePosition (double x, double y, double yaw)
         std_msgs::String msg;
         msg.data = "Free navigation to X:" + std::to_string (x) + ", Y:" +  std::to_string (y);
         pub_status_->publish (msg);
+    	HMISendInfo("Finished: Going to free Position: " + std::to_string(x) + "," + std::to_string(y) + ","+ std::to_string(yaw));
 
     }
     else
     {
         ROS_ERROR ("move_base action server not responding within timeout");
+	HMISendError("Move_Base did not reach location within given time frame");
     }
 
     // Clear
@@ -172,6 +215,7 @@ bool Skills::goToFreePosition (double x, double y, double yaw)
 
 bool Skills::setInitialPoseAMCL (double x, double y, double yaw)
 {
+	HMISendInfo("Initializing AMCL Pose to: " + std::to_string(x) + "," + std::to_string(y) + ","+ std::to_string(yaw));	
 	ROS_INFO ("setting initial pose for AMCL to(%f, %f, %f)", x, y, yaw);
 	std::cout << "setting initial pose for AMCL" << std::endl;
 
@@ -187,6 +231,7 @@ bool Skills::setInitialPoseAMCL (double x, double y, double yaw)
 
 bool Skills::detectObstacles (bool state)
 {
+	HMISendInfo("Enabling obstacle Detection");	
 	detectObstaclesCall.request.enable = state;
 	srv_detect_obstacles_->call(detectObstaclesCall);
 	return detectObstaclesCall.response.done;
@@ -194,6 +239,7 @@ bool Skills::detectObstacles (bool state)
 
 void Skills::enableDeadman()
 {
+    HMISendInfo("enabling Deadman");
     while (true)
     {
         try
@@ -216,6 +262,7 @@ void Skills::enableDeadman()
 
 bool Skills::chargeDectectionAndBackupPlan(double* battery_level, double threshold)
 {   
+	HMISendInfo("Starting: charging behaviour - Battery level: " + std::to_string(*battery_level));	
 	bool keep_trying = true;
 	int tries = 0;
 	std::cout << "battery START: " << *battery_level << std::endl;
@@ -233,10 +280,14 @@ bool Skills::chargeDectectionAndBackupPlan(double* battery_level, double thresho
 		wait(10.0);
 		ros::spinOnce();
 		std::cout << "battery: " << *battery_level << std::endl;
-        if (*battery_level > threshold || tries > 1)
-            keep_trying = false;
+        if (*battery_level > threshold || tries > 1){
+		keep_trying = false;
+		if (*battery_level > threshold) HMISendInfo("Finished: charging behaviour - Battery level: " + std::to_string(*battery_level));
+		else HMISendError("Charging failed");
+	}
         else
         {
+			HMISendWarning("Charging failed - trying again");			
 			tries++;
 			linearMove(-0.4);			
 		}
@@ -247,6 +298,7 @@ bool Skills::chargeDectectionAndBackupPlan(double* battery_level, double thresho
 
 bool Skills::wait(double seconds)
 {
+    HMISendInfo("Waiting for " + std::to_string(seconds) + " seconds");
     // 10 hz
     ros::Rate r(1/seconds);
     r.sleep();

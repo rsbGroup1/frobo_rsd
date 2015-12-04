@@ -80,6 +80,9 @@ public:
      * @param state
      */
     void HMIUpdateIcons(HMI_ICONS state);
+    void HMISendInfo (std::string msg);
+    void HMISendWarning (std::string msg);
+    void HMISendError (std::string msg);
 
     /**
      *

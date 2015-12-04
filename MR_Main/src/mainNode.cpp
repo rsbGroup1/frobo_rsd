@@ -76,7 +76,8 @@ public:
         _pNh.param<std::string> ("battery_sub", _batterySub, "/fmInformation/battery");
         _pNh.param<std::string> ("mode_pub", _modePub, "/mrMain/mode");
         _pNh.param<std::string> ("run_srv", _runSrv, "/mrMain/run");
-        _pNh.param<bool> ("check_battery", _check_battery , false);
+        _pNh.param<bool> ("check_battery_low", _check_battery_low , false);
+        _pNh.param<bool> ("check_battery_critic", _check_battery_critic , false);
         _pNh.param<double> ("battery_low", _batteryLow, 12.4);
         _pNh.param<double> ("battery_critic", _batteryCritic, 12.1);
         _pNh.param<double> ("desired_charge", _desiredCharge, 14.1);
@@ -266,7 +267,7 @@ public:
             // Stores the current position just in case the battery is in
             // the critic level and checks if the battery is the critic level
             action = _currentNode;
-            if (_check_battery) 
+            if (_check_battery_critic) 
                 checkBattery (_batteryCritic, action);
 
             // Go to the dispenser position
@@ -275,7 +276,7 @@ public:
             //_servicePerformAction.call (perform_action_obj);
 	    
             // Checks if the battery is the critic level
-            if (_check_battery) 
+            if (_check_battery_critic) 
                 checkBattery (_batteryCritic, action);
 
             // Send the robot to the correct wc conveyor
@@ -305,7 +306,7 @@ public:
             _serviceTipper.call (tip_obj);
 
             // Checks if the battery is the critic level
-            if (_check_battery) 
+            if (_check_battery_critic) 
                 checkBattery (_batteryCritic, action);
 
             // Go to the robot
@@ -319,7 +320,7 @@ public:
             _servicePerformAction.call (perform_action_obj);
             
             // Checks if the battery is the critic level
-            if (_check_battery) 
+            if (_check_battery_critic) 
 	        checkBattery (_batteryCritic, action);
 
             _new_MESmsg.lock();
@@ -349,8 +350,8 @@ public:
             _new_MESmsg.lock();
 
             // Charges the battery until the threshold
-            /*if (_check_battery)
-                chargeBattery (_batteryLow);*/
+            if (_check_battery_low)
+                chargeBattery (_batteryLow);
         }
     }
 
@@ -510,7 +511,7 @@ private:
     ros::Subscriber _navStatusSubscriber, _navCurrentSubscriber,
         _mesSubscriber, _obstacleDetectorSubscriber, _batterySubscriber;
     ros::Publisher _hmiPublisher, _mesPublisher, _criticalFaultSignalPublisher, _modePublisher;
-    bool _newOrder, _check_battery;
+    bool _newOrder, _check_battery_low, _check_battery_critic;
     std::string safety_status_prev, _currentNode;
     double _batteryLevel, _batteryLow, _batteryCritic, _desiredCharge;
     boost::mutex _runMutex, _new_MESmsg;

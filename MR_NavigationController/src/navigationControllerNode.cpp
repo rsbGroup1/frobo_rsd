@@ -234,8 +234,8 @@ public:
          *
          */
         std::vector<std::function<void() >> line_start_TO_wc1;
-	line_start_TO_wc1.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
-	line_start_TO_wc1.push_back (std::bind (&Skills::setInitialPoseAMCL, &skills_, 13.87, -11.164, 0.149));
+        line_start_TO_wc1.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
+        line_start_TO_wc1.push_back (std::bind (&Skills::setInitialPoseAMCL, &skills_, 13.87, -11.164, 0.149));
         line_start_TO_wc1.push_back (std::bind (&Skills::lineUntilQR, &skills_, "wc_1_entrance"));
         line_start_TO_wc1.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc1"));
 		line_start_TO_wc1.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
@@ -318,7 +318,7 @@ public:
         wc_exit_TO_line_end.push_back (std::bind (&Skills::angularMove, &skills_, 90));
         wc_exit_TO_line_end.push_back (std::bind (&Skills::detectObstacles, &skills_, true));
         //wc_exit_TO_line_end.push_back (std::bind (&Skills::lineUntilQR, &skills_, "line_out"));
-	wc_exit_TO_line_end.push_back (std::bind (&Skills::lineUntilRelative, &skills_, 7.5));
+        wc_exit_TO_line_end.push_back (std::bind (&Skills::lineUntilRelative, &skills_, 7.5));
         wc_exit_TO_line_end.push_back (std::bind (&Graph::setCurrentNode, graph_, "line_end"));
         wc_exit_TO_line_end.push_back (std::bind (&Skills::detectObstacles, &skills_, false));
 
@@ -365,9 +365,8 @@ public:
 
         std::vector<std::function<void() >> pre_charge_TO_LineStart;
         pre_charge_TO_LineStart.push_back (std::bind (&Skills::goToFreePosition, &skills_, 0.46, 1.58 , -1.9));
-	pre_charge_TO_LineStart.push_back (std::bind (&Skills::goToFreePosition, &skills_, 3.3, -2 , -1.2));
+        pre_charge_TO_LineStart.push_back (std::bind (&Skills::goToFreePosition, &skills_, 3.3, -2 , -1.2));
         pre_charge_TO_LineStart.push_back (std::bind (&Graph::setCurrentNode, graph_, "line_start"));
-
 
         std::vector<std::function<void() >> pre_charge_TO_charge;
         //pre_charge_TO_charge.push_back (std::bind (&Skills::linearMove, &skills_, 0.1));
@@ -425,7 +424,7 @@ public:
         graph_->addVertex ("line_end", "box", 1, line_end_TO_box);
 		graph_->addVertex ("line_end", "line_start", 1, line_end_TO_line_start);
         graph_->addVertex ("box", "line_start", 1, box_TO_line_start);
-	graph_->addVertex ("pre_charge", "line_start", 1, pre_charge_TO_LineStart);
+        graph_->addVertex ("pre_charge", "line_start", 1, pre_charge_TO_LineStart);
 
         graph_->addVertex ("box", "pre_charge", 1, box_TO_pre_charge);
         graph_->addVertex ("pre_charge", "box", 1, pre_charge_TO_box);
@@ -439,7 +438,7 @@ public:
         graph_->addVertex ("pre_bricks", "bricks", 1, pre_bricks_TO_bricks);
         graph_->addVertex ("bricks", "pre_bricks", 1, bricks_TO_pre_bricks);
 
-        // alternative charge behavior
+        // Alternative charge behavior
         graph_->addVertex ("box", "pre_charge_line", 1, box_TO_pre_charge_line);
         graph_->addVertex ("pre_charge_line", "charge_line", 1, pre_charge_line_TO_charge_line);
         graph_->addVertex ("pre_charge_line", "box", 1, pre_charge_line_TO_box);

@@ -38,6 +38,35 @@ void Skills::HMIUpdateIcons(HMI_ICONS state)
     pub_hmi_->publish (obj);
 }
 
+/**
+* Sends to the HMI a info message
+*/
+void Skills::HMISendInfo (std::string msg)
+{
+   std_msgs::String obj;
+   obj.data = "1000," + msg + ",";
+   pub_hmi_->publish (obj);
+}
+
+/**
+* Sends to the HMI a warning message
+*/
+void Skills::HMISendWarning (std::string msg)
+{
+   std_msgs::String obj;
+   obj.data = "2000," + msg + ",";
+   pub_hmi_->publish (obj);
+}
+
+/**
+* Sends to the HMI a error message
+*/
+void Skills::HMISendError (std::string msg)
+{
+   std_msgs::String obj;
+   obj.data = "3000," + msg + ",";
+   pub_hmi_->publish (obj);
+}
 
 bool Skills::lineUntilQR (std::string qr)
 {

@@ -401,7 +401,7 @@ public:
         graph_->addVertex ("wc3_robot", "wc_exit", 1, wc3_robot_TO_wc_exit);
 
         graph_->addVertex ("line_end", "box", 1, line_end_TO_box);
-		graph_->addVertex ("line_end", "line_start", 1, line_end_TO_line_start);
+	graph_->addVertex ("line_end", "line_start", 1, line_end_TO_line_start);
         graph_->addVertex ("box", "line_start", 1, box_TO_line_start);
         graph_->addVertex ("pre_charge", "line_start", 1, pre_charge_TO_LineStart);
         graph_->addVertex ("pre_bricks", "line_start", 1, pre_bricks_TO_LineStart);

@@ -250,7 +250,7 @@ public:
         wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Skills::angularMove, &skills_, -50));
         wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Skills::linearMove, &skills_, 0.4));
         wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Skills::angularMove, &skills_, 30));
-        wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.15));
+        wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Skills::lineUntilLidar, &skills_, 0.20));
         wc1_conveyor_TO_wc1_robot.push_back (std::bind (&Graph::setCurrentNode, graph_, "wc1_robot"));
 
         std::vector<std::function<void() >> wc1_robot_TO_wc_exit;
@@ -384,7 +384,7 @@ public:
 
         // Vertices
         graph_->addVertex ("line_start", "wc1", 1, line_start_TO_wc1);
-        graph_->addVertex ("wc1", "wc2", 1, wc1_TO_wc2);
+        //graph_->addVertex ("wc1", "wc2", 1, wc1_TO_wc2);
         graph_->addVertex ("wc2", "wc3", 1, wc2_TO_wc3);
         graph_->addVertex ("wc_exit", "line_end", 1, wc_exit_TO_line_end);
 	

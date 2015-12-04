@@ -281,7 +281,7 @@ bool Skills::chargeDectectionAndBackupPlan(double* battery_level, double thresho
 		std::cout << "battery: " << *battery_level << std::endl;
         if (*battery_level > threshold || tries > 1){
 		keep_trying = false;
-		if (*battery_level > threshold) HMISendInfo("Finished: charging behaviour");
+		if (*battery_level > threshold) HMISendInfo("Finished: charging behaviour - Battery level: " + std::to_string(*battery_level));
 		else HMISendError("Charging failed");
 	}
         else

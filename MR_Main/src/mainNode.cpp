@@ -247,7 +247,8 @@ public:
      */
     void MESProcessOrder()
     {
-        mr_mes_client::server msg;
+        ROS_INFO("MR Ready for an order");
+		mr_mes_client::server msg;
 
         _new_MESmsg.lock();
         msg = _msg_last;
@@ -357,7 +358,7 @@ public:
 
             // Charges the battery until the threshold
             if (_check_battery_low)
-                chargeBattery (_desiredCharge);
+                chargeBattery ();
         }
     }
 
@@ -464,25 +465,26 @@ public:
     /**
      * Charge until it reaches the limit
      */
-    void chargeBattery (float threshold)
+    void chargeBattery()
     {
         // Update HMI
         HMIUpdateIcons(charging);
+		HMISendInfo("MR charging the battery");
 
         if (_batteryLevel == 0)
             std::cout << "No battery level! Waiting..." << std::endl;
 
-        while(_batteryLevel == 0) { // Wait
+        while (_batteryLevel == 0) { // Wait
 			_rate.sleep();
 			ros::spinOnce();
 		}
 
-        if (_batteryLevel < threshold) {
-            while (_batteryLevel < _desiredCharge) // Wait
-				ros::spinOnce();
-                _rate.sleep();
+		while (_batteryLevel < _desiredCharge) {
+			ros::spinOnce();
+			ros::Rate (0.25).sleep();
+			HMISendInfo("MR battery level is " + SSTR(_batteryLevel));
+			ROS_INFO("MR is charging");
 		}
-		
 
         // Update HMI
         HMIUpdateIcons(charging);

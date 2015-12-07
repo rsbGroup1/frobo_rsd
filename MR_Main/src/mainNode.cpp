@@ -329,18 +329,16 @@ public:
             if (_check_battery_critic) 
 				checkBattery (_batteryCritic, action);
 
-            _new_MESmsg.lock();
-            msg = _msg_last;
-            _new_MESmsg.unlock();
             HMISendInfo("Main: Waiting for robot to complete");
-            while(msg.status != 1) 
-            {      	
+            do
+			{      	
             	_new_MESmsg.lock();
             	msg = _msg_last;
             	_new_MESmsg.unlock();
 				ros::spinOnce();
                 _rate.sleep();
-            }
+			}
+			while(msg.status != 1) 
 
             // Go to charge position
             perform_action_obj.request.action = "charge";
@@ -351,10 +349,10 @@ public:
             msg.data = "Ok";
             _mesPublisher.publish(msg);
             
-            // Clear order
-            _new_MESmsg.unlock();
-            _newOrder = false;
-            _new_MESmsg.lock();
+			// Clear order
+			_new_MESmsg.lock();
+			_newOrder = false;
+			_new_MESmsg.unlock();
 
             // Charges the battery until the threshold
             if (_check_battery_low)
@@ -369,7 +367,7 @@ public:
 			ros::Rate (0.25).sleep();
         }
         
-		ROS_INFO("AND EVEN HERE, BITCH");
+		//ROS_INFO("AND EVEN HERE, BITCH");
     }
 
     /**
@@ -576,8 +574,8 @@ int main()
     ros::Rate rate (5);
 
     // Multithreading
-    //ros::AsyncSpinner spinner (0);
-	//spinner.start();
+	ros::AsyncSpinner spinner (0);
+	spinner.start();
 
     // ROS Spin: Handle callbacks
     while (ros::ok())

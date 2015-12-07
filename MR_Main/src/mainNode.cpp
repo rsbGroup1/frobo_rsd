@@ -488,7 +488,7 @@ public:
 			ros::spinOnce();
 			ros::Rate (0.25).sleep();
 			HMISendInfo("MR battery: " + SSTR(_batteryLevel) +  "/" + SSTR(_desiredCharge));
-			ROS_INFO("MR battery: " + SSTR(_batteryLevel) +  "/" + SSTR(_desiredCharge));
+			ROS_INFO("MR battery: %f/%f", _batteryLevel, _desiredCharge);
 		}
 		
         // Update HMI

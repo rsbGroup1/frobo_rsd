@@ -152,11 +152,13 @@ public:
             }
         }
 
+        cv::Mat image_to_show;
+		cvtColor(image_cropped, image_to_show, CV_GRAY2RGB);
         cv::Point detected_point(xLeftWhitePixel + (xRightWhitePixel-xLeftWhitePixel)/2, image_cropped.rows/2 + yOffset);
-        cv::circle(image_cropped, detected_point, 1, cv::Scalar (0, 255, 255), 2);
+        cv::circle(image_to_show, detected_point, 1, cv::Scalar (0, 255, 255), 2);
 
         // Debug
-        //cv::imshow("Output", image_cropped);
+		//cv::imshow("Output", image_to_show);
 
         // DEBUG
         //cv::waitKey(1);
@@ -166,7 +168,7 @@ public:
          */
         // Image
         sensor_msgs::ImagePtr image_msg;
-        image_msg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", image_cropped).toImageMsg();
+		image_msg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", image_to_show).toImageMsg();
         pub_image_line_.publish(image_msg);
 
         // Point

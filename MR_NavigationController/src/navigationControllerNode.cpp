@@ -58,7 +58,7 @@ public:
         pNh_.param<std::string> ("pub_deadman", pub_deadman_name_, "/fmSafe/deadman");
         pNh_.param<std::string> ("sub_battery", sub_battery_name_, "/fmInformation/battery");
         pNh_.param<std::string> ("pub_hmi", pub_hmi_name_, "/mrHMI/status");
-        //std::string path_to_node = ros::package::getPath("mrNavigationController");
+		pNh_.param<std::string> ("start_node", start_node_, "charge");
 
         // Service
         srv_lineUntilQR_ = nh_.serviceClient<mr_line_follower::followUntilQR> (srv_lineUntilQR_name_);
@@ -82,9 +82,7 @@ public:
 
         // Create the graph and put the start node from the launch file
         graph_ = new Graph (&pub_current_node_);
-        std::string start_node;
-        nh_.param<std::string> ("start_node", start_node, "charge");
-        graph_->setCurrentNode (start_node);
+        graph_->setCurrentNode (start_node_);
         createGraph();
         //graph_->showGraph();
 
@@ -472,7 +470,7 @@ private:
     Graph* graph_;
     std::vector<std::function<void() >> solution_;
     int search_limit_;
-    std::string status;
+	std::string status, start_node_;
     geometry_msgs::PoseWithCovarianceStamped currentPose_;
     ros::Subscriber sub_battery_;
     std::string sub_battery_name_;

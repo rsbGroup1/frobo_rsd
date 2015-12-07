@@ -583,9 +583,6 @@ int main()
 		// Start the MES Client
         mn->MESProcessOrder();
 		
-		// Debug
-		ROS_INFO("Spin!");
-		
 		// Spin
 		ros::spinOnce();
 		

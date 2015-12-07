@@ -26,6 +26,7 @@ bool _connected = false;
 bool _waitForServerMsg = true;
 bool _waitForStatusMsg = false;
 bool _waitForConveyerReach = true;
+bool _waitForTwoOk = true;
 int _okCounter = 0;
 
 // Functions
@@ -35,17 +36,29 @@ void sendMsgCallback(std_msgs::String msg)
     {
         // Send data
         write(_socket, msg.data.c_str(), msg.data.size());
-        _okCounter++;
-
-        // Reset
-        if(_okCounter == 2)
-        {
-            _okCounter = 0;
-            // Reset
-            _waitForStatusMsg = _waitForConveyerReach;
-            _waitForServerMsg = true;
-            _waitForConveyerReach = !_waitForConveyerReach;
-        }
+		
+		if(_waitForTwoOk)
+		{
+			_okCounter++;
+			
+			// Reset
+			if(_okCounter == 2)
+			{
+				_okCounter = 0;
+				
+				// Reset
+				_waitForStatusMsg = _waitForConveyerReach;
+				_waitForServerMsg = true;
+				_waitForConveyerReach = !_waitForConveyerReach;
+			}
+		}
+		else
+		{	
+			// Reset
+			_waitForStatusMsg = _waitForConveyerReach;
+			_waitForServerMsg = true;
+			_waitForConveyerReach = !_waitForConveyerReach;	
+		}
     }
 }
 
@@ -157,6 +170,8 @@ int main()
 
                         msg.mobileRobot = 1;
                         msg.status = status;
+						
+						_waitForTwoOk = false;
                     }
                     else
                     {
@@ -173,6 +188,8 @@ int main()
                         msg.yellow = yellow;
                         msg.red = red;
                         msg.status = 0;
+						
+						_waitForTwoOk = true;
                     }
 
                     // Reset

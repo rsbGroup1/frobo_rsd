@@ -231,7 +231,9 @@ public:
     {
         boost::unique_lock<boost::mutex> lock (_new_MESmsg);
         _msg_last = msg;
-        _newOrder = true;
+		
+		if(msg.status == 0)
+			_newOrder = true;
     }
 
     /**
@@ -357,8 +359,6 @@ public:
             // Charges the battery until the threshold
             if (_check_battery_low)
                 chargeBattery ();
-			
-			ROS_INFO("I AM OUT HERE, BITCH");
         } 
         else 
 		{
@@ -476,7 +476,7 @@ public:
     void chargeBattery()
     {
         // Update HMI
-        //HMIUpdateIcons(charging);
+        HMIUpdateIcons(charging);
 		ROS_INFO("MR charging the battery");
 
         if (_batteryLevel == 0)
@@ -497,7 +497,7 @@ public:
 		ROS_INFO("MR charge FINISHED");
 		
         // Update HMI
-        //HMIUpdateIcons(charging);
+        HMIUpdateIcons(charging);
     }
     
     /**
@@ -582,10 +582,13 @@ int main()
     {
 		// Start the MES Client
         mn->MESProcessOrder();
-		//
+		
+		// Debug
 		ROS_INFO("Spin!");
+		
 		// Spin
 		ros::spinOnce();
+		
 		// Sleep
         rate.sleep();
     }

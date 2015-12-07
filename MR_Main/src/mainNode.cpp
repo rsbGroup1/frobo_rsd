@@ -257,6 +257,10 @@ public:
         _runMutex.lock();
         MODE mode = _mode;
         _runMutex.unlock();
+		
+		ROS_INFO("MR waiting for an order");
+		HMISendInfo("MR waiting for an order");
+		ros::Rate (0.25).sleep();
 
         if (msg.mobileRobot == 1 && mode==AUTO && newOrder)
         {

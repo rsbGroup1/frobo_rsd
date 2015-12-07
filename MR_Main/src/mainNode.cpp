@@ -76,7 +76,7 @@ public:
         _pNh.param<std::string> ("battery_sub", _batterySub, "/fmInformation/battery");
         _pNh.param<std::string> ("mode_pub", _modePub, "/mrMain/mode");
         _pNh.param<std::string> ("run_srv", _runSrv, "/mrMain/run");
-        _pNh.param<bool> ("check_battery_low", _check_battery_low , false);
+		_pNh.param<bool> ("check_battery_low", _check_battery_low , true);
         _pNh.param<bool> ("check_battery_critic", _check_battery_critic , false);
         _pNh.param<double> ("battery_low", _batteryLow, 12.4);
         _pNh.param<double> ("battery_critic", _batteryCritic, 12.1);
@@ -357,8 +357,15 @@ public:
             _new_MESmsg.lock();
 
             // Charges the battery until the threshold
-            if (_check_battery_low)
+            if (_check_battery_low){
+				HMISendInfo("CHARGING DEBUG");
+				ROS_INFO("CHARGING DEBUG");
+				
                 chargeBattery ();
+				
+				HMISendInfo("UNCHARGING DEBUG");
+				ROS_INFO("UNCHARGING DEBUG");
+			}
         }
     }
 
@@ -468,8 +475,9 @@ public:
     void chargeBattery()
     {
         // Update HMI
-        HMIUpdateIcons(charging);
+        //HMIUpdateIcons(charging);
 		HMISendInfo("MR charging the battery");
+		ROS_INFO("MR charging the battery");
 
         if (_batteryLevel == 0)
             std::cout << "No battery level! Waiting..." << std::endl;
@@ -487,7 +495,7 @@ public:
 		}
 
         // Update HMI
-        HMIUpdateIcons(charging);
+        //HMIUpdateIcons(charging);
     }
     
     /**

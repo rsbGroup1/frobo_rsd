@@ -266,13 +266,17 @@ bool Skills::chargeDectectionAndBackupPlan(double* battery_level, double thresho
 	bool keep_trying = true;
 	int tries = 0;
 	std::cout << "battery START: " << *battery_level << std::endl;
-	double initialLevel = *battery_level;	
+	double initialLevel = *battery_level;
+		
     while (keep_trying)
     {
         //if (battery_level < threshold)
         //{
 		//linearMove(-0.2);
-		goToFreePosition(-0.56, -2.44 , -0.2);
+		if(tries == 0)
+			goToFreePosition(-0.56, -2.48 , -0.2);
+		else
+			goToFreePosition(-0.56, -2.43 , -0.2);
 		lineUntilLidar(0.45);
 		linearMove(0.25);
 		wait(10.0);

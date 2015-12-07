@@ -79,8 +79,8 @@ public:
 		_pNh.param<bool> ("check_battery_low", _check_battery_low , true);
         _pNh.param<bool> ("check_battery_critic", _check_battery_critic , false);
         _pNh.param<double> ("battery_low", _batteryLow, 12.4);
-        _pNh.param<double> ("battery_critic", _batteryCritic, 12.1);
-        _pNh.param<double> ("desired_charge", _desiredCharge, 14.1);
+        _pNh.param<double> ("battery_critic", _batteryCritic, 12.0);
+        _pNh.param<double> ("desired_charge", _desiredCharge, 13.9);
 
         // Service subscribers
         _servicePerformAction = _nh.serviceClient<mr_navigation_controller::performAction> (_performActionString);
@@ -357,15 +357,8 @@ public:
             _new_MESmsg.lock();
 
             // Charges the battery until the threshold
-            if (_check_battery_low){
-				HMISendInfo("CHARGING DEBUG");
-				ROS_INFO("CHARGING DEBUG");
-				
+            if (_check_battery_low)
                 chargeBattery ();
-				
-				HMISendInfo("UNCHARGING DEBUG");
-				ROS_INFO("UNCHARGING DEBUG");
-			}
         }
     }
 
@@ -494,6 +487,7 @@ public:
 			ROS_INFO("MR is charging");
 		}
 
+		
         // Update HMI
         //HMIUpdateIcons(charging);
     }

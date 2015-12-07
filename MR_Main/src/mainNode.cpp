@@ -80,7 +80,7 @@ public:
         _pNh.param<bool> ("check_battery_critic", _check_battery_critic , false);
         _pNh.param<double> ("battery_low", _batteryLow, 12.4);
         _pNh.param<double> ("battery_critic", _batteryCritic, 12.0);
-        _pNh.param<double> ("desired_charge", _desiredCharge, 13.9);
+        _pNh.param<double> ("desired_charge", _desiredCharge, 13.5);
 
         // Service subscribers
         _servicePerformAction = _nh.serviceClient<mr_navigation_controller::performAction> (_performActionString);

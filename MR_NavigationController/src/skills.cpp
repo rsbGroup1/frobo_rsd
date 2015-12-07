@@ -279,9 +279,9 @@ bool Skills::chargeDectectionAndBackupPlan(double* battery_level, double thresho
 			goToFreePosition(-0.56, -2.43 , -0.2);
 		lineUntilLidar(0.45);
 		linearMove(0.25);
-		wait(10.0);
+		wait(6.0);
 		ros::spinOnce();
-		wait(10.0);
+		wait(6.0);
 		ros::spinOnce();
 		std::cout << "battery: " << *battery_level << std::endl;
         if (*battery_level > initialLevel+0.2 || tries > 1){

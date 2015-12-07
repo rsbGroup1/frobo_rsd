@@ -247,7 +247,6 @@ public:
      */
     void MESProcessOrder()
     {
-        ROS_INFO("MR Ready for an order");
 		mr_mes_client::server msg;
 
         _new_MESmsg.lock();
@@ -261,6 +260,7 @@ public:
 
         if (msg.mobileRobot == 1 && mode==AUTO && newOrder)
         {
+			ROS_INFO("MR performing an order");
             mr_navigation_controller::performAction perform_action_obj;
             mr_tip_controller::tip tip_obj;
             std::string action;

@@ -337,6 +337,7 @@ public:
             	_new_MESmsg.lock();
             	msg = _msg_last;
             	_new_MESmsg.unlock();
+				ros::spinOnce();
                 _rate.sleep();
             }
 
@@ -356,7 +357,7 @@ public:
 
             // Charges the battery until the threshold
             if (_check_battery_low)
-                chargeBattery (_batteryLow);
+                chargeBattery (_desiredCharge);
         }
     }
 
@@ -440,17 +441,21 @@ public:
         if (_batteryLevel == 0)
             std::cout << "No battery level! Waiting..." << std::endl;
 
-        while (_batteryLevel == 0) // Wait
-            _rate.sleep();
+        while (_batteryLevel == 0) { // Wait
+			_rate.sleep();
+			ros::spinOnce();
+		}
 
         if (_batteryLevel < threshold)
         {
             perform_action_obj.request.action = "charge";
             _servicePerformAction.call (perform_action_obj);
 
-            while (_batteryLevel < _desiredCharge) // Wait
-            _rate.sleep();
-        }
+            while (_batteryLevel < _desiredCharge){
+				_rate.sleep();
+				ros::spinOnce();
+			}
+		}
 
         perform_action_obj.request.action = prev_pos;
         _servicePerformAction.call (perform_action_obj);
@@ -467,12 +472,17 @@ public:
         if (_batteryLevel == 0)
             std::cout << "No battery level! Waiting..." << std::endl;
 
-        while(_batteryLevel == 0) // Wait
-            _rate.sleep();
+        while(_batteryLevel == 0) { // Wait
+			_rate.sleep();
+			ros::spinOnce();
+		}
 
-        if (_batteryLevel < threshold)
+        if (_batteryLevel < threshold) {
             while (_batteryLevel < _desiredCharge) // Wait
+				ros::spinOnce();
                 _rate.sleep();
+		}
+		
 
         // Update HMI
         HMIUpdateIcons(charging);
@@ -557,10 +567,13 @@ int main()
     // ROS Spin: Handle callbacks
     while (!ros::isShuttingDown())
     {
-        mn->MESProcessOrder();
-
         // Spin
         spinner.start();
+		
+		// Start the MES Client
+        mn->MESProcessOrder();
+
+		// Sleep
         rate.sleep();
     }
 

@@ -360,7 +360,6 @@ public:
             if (_check_battery_low)
                 chargeBattery ();
 			
-			HMISendInfo("I AM OUT HERE, BITCH");
 			ROS_INFO("I AM OUT HERE, BITCH");
         } 
         else 
@@ -370,8 +369,6 @@ public:
 			ros::Rate (0.25).sleep();
         }
         
-        
-        HMISendInfo("AND EVEN HERE, BITCH");
 		ROS_INFO("AND EVEN HERE, BITCH");
     }
 
@@ -482,7 +479,6 @@ public:
     {
         // Update HMI
         //HMIUpdateIcons(charging);
-		HMISendInfo("MR charging the battery");
 		ROS_INFO("MR charging the battery");
 
         if (_batteryLevel == 0)
@@ -500,7 +496,6 @@ public:
 			ROS_INFO("MR battery: %f/%f", _batteryLevel, _desiredCharge);
 		}
 		
-		HMISendInfo("MR charge FINISHED");
 		ROS_INFO("MR charge FINISHED");
 		
         // Update HMI
@@ -578,18 +573,21 @@ int main()
     MainNode* mn = new MainNode();
 
     // Rate
-    ros::Rate rate (30);
+    ros::Rate rate (5);
 
     // Multithreading
-    ros::AsyncSpinner spinner (0);
-	// Spin
-	spinner.start();
+    //ros::AsyncSpinner spinner (0);
+	//spinner.start();
 
     // ROS Spin: Handle callbacks
     while (ros::ok())
     {
 		// Start the MES Client
         mn->MESProcessOrder();
+		//
+		ROS_INFO("Spin!");
+		// Spin
+		ros::spinOnce();
 		// Sleep
         rate.sleep();
     }

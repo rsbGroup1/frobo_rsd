@@ -483,10 +483,9 @@ public:
 		while (_batteryLevel < _desiredCharge) {
 			ros::spinOnce();
 			ros::Rate (0.25).sleep();
-			HMISendInfo("MR battery level is " + SSTR(_batteryLevel));
-			ROS_INFO("MR is charging");
+			HMISendInfo("MR battery: " + SSTR(_batteryLevel) +  "/" + SSTR(_desiredCharge));
+			ROS_INFO("MR battery: " + SSTR(_batteryLevel) +  "/" + SSTR(_desiredCharge));
 		}
-
 		
         // Update HMI
         //HMIUpdateIcons(charging);

@@ -331,7 +331,7 @@ public:
             
             // Checks if the battery is the critic level
             if (_check_battery_critic) 
-	        checkBattery (_batteryCritic, action);
+				checkBattery (_batteryCritic, action);
 
             _new_MESmsg.lock();
             msg = _msg_last;
@@ -363,7 +363,14 @@ public:
             // Charges the battery until the threshold
             if (_check_battery_low)
                 chargeBattery ();
+			
+			HMISendInfo("I AM OUT HERE, BITCH");
+			ROS_INFO("I AM OUT HERE, BITCH");
         }
+        
+        
+        HMISendInfo("AND EVEN HERE, BITCH");
+		ROS_INFO("AND EVEN HERE, BITCH");
     }
 
     /**
@@ -490,6 +497,9 @@ public:
 			HMISendInfo("MR battery: " + SSTR(_batteryLevel) +  "/" + SSTR(_desiredCharge));
 			ROS_INFO("MR battery: %f/%f", _batteryLevel, _desiredCharge);
 		}
+		
+		HMISendInfo("MR charge FINISHED");
+		ROS_INFO("MR charge FINISHED");
 		
         // Update HMI
         //HMIUpdateIcons(charging);

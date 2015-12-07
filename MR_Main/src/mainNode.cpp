@@ -338,7 +338,7 @@ public:
 				ros::spinOnce();
                 _rate.sleep();
 			}
-			while(msg.status != 1) 
+			while(msg.status != 1);
 
             // Go to charge position
             perform_action_obj.request.action = "charge";

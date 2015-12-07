@@ -258,10 +258,6 @@ public:
         MODE mode = _mode;
         _runMutex.unlock();
 		
-		ROS_INFO("MR waiting for an order");
-		HMISendInfo("MR waiting for an order");
-		ros::Rate (0.25).sleep();
-
         if (msg.mobileRobot == 1 && mode==AUTO && newOrder)
         {
 			ROS_INFO("MR performing an order");
@@ -366,6 +362,12 @@ public:
 			
 			HMISendInfo("I AM OUT HERE, BITCH");
 			ROS_INFO("I AM OUT HERE, BITCH");
+        } 
+        else 
+		{
+			ROS_INFO("MR waiting for an order");
+			HMISendInfo("MR waiting for an order");
+			ros::Rate (0.25).sleep();
         }
         
         
@@ -580,16 +582,14 @@ int main()
 
     // Multithreading
     ros::AsyncSpinner spinner (0);
+	// Spin
+	spinner.start();
 
     // ROS Spin: Handle callbacks
-    while (!ros::isShuttingDown())
+    while (ros::ok())
     {
-        // Spin
-        spinner.start();
-		
 		// Start the MES Client
         mn->MESProcessOrder();
-
 		// Sleep
         rate.sleep();
     }

@@ -83,7 +83,7 @@ public:
         // Create the graph and put the start node from the launch file
         graph_ = new Graph (&pub_current_node_);
         std::string start_node;
-        nh_.param<std::string> ("start_node", start_node, "line_start");
+        nh_.param<std::string> ("start_node", start_node, "charge");
         graph_->setCurrentNode (start_node);
         createGraph();
         //graph_->showGraph();

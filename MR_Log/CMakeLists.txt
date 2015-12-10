@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(mr_log)
 
 ## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg mr_main)
 
 catkin_package()
 
